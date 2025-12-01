@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Funciones de Ayuda ---
+
+    // Verifica si el usuario está autenticado
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Obtiene los datos del usuario actual desde la colección 'users'
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Verifica si es Super Admin
+    function isSuperAdmin() {
+      return isSignedIn() && getUserData().role == 'SUPER_ADMIN';
+    }
+
+    // Verifica si el usuario pertenece al Tenant (Iglesia) del documento que intenta acceder
+    function belongsToTenant(resourceTenantId) {
+      return isSignedIn() && (getUserData().tenantId == resourceTenantId || isSuperAdmin());
+    }
+
+    // --- Reglas por Colección ---
+
+    // 1. Colección de Usuarios (Perfiles)
+    match /users/{userId} {
+      // Cada uno puede leer su propio perfil. Super Admin puede leer todos.
+      // Miembros de la misma iglesia pueden leer perfiles de sus compañeros (para el Roster, etc.)
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || 
+        isSuperAdmin() || 
+        (resource.data.tenantId == getUserData().tenantId)
+      );
+      
+      // Solo el usuario o Super Admin pueden editar el perfil
+      allow write: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+    }
+
+    // 2. Colección de Tenants (Iglesias)
+    match /tenants/{tenantId} {
+      // Cualquiera autenticado puede leer la info básica de su iglesia (para config, nombre, etc)
+      allow read: if isSignedIn();
+      // Solo Super Admin puede crear o editar iglesias
+      allow write: if isSuperAdmin();
+    }
+
+    // 3. Colecciones de Datos de la Iglesia (Eventos, Canciones, etc.)
+    // Estas reglas asumen que los documentos tienen un campo 'tenantId'
+    
+    match /events/{eventId} {
+      allow read: if belongsToTenant(resource.data.tenantId);
+      allow write: if belongsToTenant(request.resource.data.tenantId);
+    }
+
+    match /servicePlans/{planId} {
+      allow read: if belongsToTenant(resource.data.tenantId);
+      allow write: if belongsToTenant(request.resource.data.tenantId);
+    }
+    
+    match /songs/{songId} {
+      allow read: if belongsToTenant(resource.data.tenantId);
+      allow write: if belongsToTenant(request.resource.data.tenantId);
+    }
+
+    // 4. Invitaciones
+    match /invitations/{invitationId} {
+      // Permitir leer públicamente para validar el código en /join
+      allow read: if true;
+      
+      // Permitir crear solo a usuarios autenticados (Admins)
+      allow create: if isSignedIn();
+      
+      // Permitir actualizar (marcar como usada) a usuarios autenticados
+      allow update: if isSignedIn();
+    }
+
+    // Regla por defecto: Bloquear todo lo demás por seguridad
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
