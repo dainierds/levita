@@ -3,8 +3,10 @@ import { ChurchTenant, SubscriptionTier, TIER_LIMITS } from '../types';
 import { Building2, ShieldCheck, Mail, Lock, Trash2, Plus, Ban, CheckCircle2, Crown, Zap } from 'lucide-react';
 import { sendNewTenantEmail } from '../services/emailService';
 import { useNotification } from './NotificationSystem';
-import { db } from '../services/firebase';
+import { db, firebaseConfig } from '../services/firebase';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, setDoc } from 'firebase/firestore';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 interface SuperAdminDashboardProps {
     tenants: ChurchTenant[];
@@ -71,51 +73,25 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ tenants, setT
             const newTenant: ChurchTenant = { id: docRef.id, ...newTenantData } as ChurchTenant;
 
             // 2. Create User in Auth (using secondary app to avoid logging out Super Admin)
-            // Note: In a real production app, this should be done via a Cloud Function (backend).
-            // For this prototype, we'll create the user document but the actual Auth user 
-            // creation is tricky client-side without logging out.
+            const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
+            const secondaryAuth = getAuth(secondaryApp);
 
-            // WORKAROUND: We will create the Firestore User Document now.
-            // The user will need to "Sign Up" or we use a separate tool to seed them.
-            // BUT, to make it seamless for you now, I will assume you will create the Auth user
-            // manually or we use a Cloud Function later.
+            let newUserUid;
 
-            // WAIT! Better approach for Prototype:
-            // We will create the Firestore Document for the user.
-            // When the user tries to login, if they don't exist in Auth, they can't.
+            try {
+                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, formData.pastorEmail, tempPass);
+                newUserUid = userCredential.user.uid;
+                await signOut(secondaryAuth);
+            } catch (authError) {
+                console.error("Error creating auth user:", authError);
+                throw new Error("Error creating user in Authentication system.");
+            } finally {
+                await deleteApp(secondaryApp);
+            }
 
-            // Let's try to use a secondary app instance if possible, or just warn the admin.
-            // Since we can't easily do secondary app in client-side without config issues,
-            // let's create the Firestore Data and ask you to create the Auth user via the Seeder 
-            // OR just use the Seeder for the Pastor too? No, Seeder is for Super Admin.
-
-            // Let's stick to the plan: Create Firestore Data.
-            // AND display the password.
-            // BUT the Auth user won't exist.
-
-            // CRITICAL FIX: We need to create the Auth User.
-            // Since I cannot execute 'firebase-admin' here, and client SDK signs out...
-            // I will create a special "Invitation Link" logic or...
-
-            // SIMPLEST FIX FOR NOW:
-            // I will create the Firestore User Document with a placeholder ID.
-            // You will need to create the user in Firebase Console manually with the email/pass displayed.
-            // OR use the /seed page again but that overwrites Super Admin? No.
-
-            // Let's automate the Firestore part at least.
-            // We'll use a random ID for now, and when the user actually signs up/is created, 
-            // we might need to link them.
-
-            // ACTUALLY: The best way right now without a backend is:
-            // 1. Create Tenant (Done)
-            // 2. Create User Document in 'users' collection with email as ID (temporary) or random ID.
-            // 3. Tell Super Admin to create the user in Firebase Console.
-
-            // Let's refine the alert message to be honest.
-
-            const fakeUserId = Math.random().toString(36).substr(2, 9);
-            await setDoc(doc(db, 'users', fakeUserId), {
-                id: fakeUserId,
+            // 3. Create Firestore User Document with REAL UID
+            await setDoc(doc(db, 'users', newUserUid), {
+                id: newUserUid,
                 name: formData.pastorName,
                 email: formData.pastorEmail,
                 role: 'ADMIN',
