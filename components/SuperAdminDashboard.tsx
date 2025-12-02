@@ -3,10 +3,9 @@ import { ChurchTenant, SubscriptionTier, TIER_LIMITS } from '../types';
 import { Building2, ShieldCheck, Mail, Lock, Trash2, Plus, Ban, CheckCircle2, Crown, Zap } from 'lucide-react';
 import { sendNewTenantEmail } from '../services/emailService';
 import { useNotification } from './NotificationSystem';
-import { db, firebaseConfig } from '../services/firebase';
+import { db } from '../services/firebase';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, setDoc } from 'firebase/firestore';
-import { initializeApp, deleteApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createInvitation } from '../services/invitationService';
 
 interface SuperAdminDashboardProps {
     tenants: ChurchTenant[];
@@ -72,48 +71,33 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ tenants, setT
             const docRef = await addDoc(collection(db, 'tenants'), newTenantData);
             const newTenant: ChurchTenant = { id: docRef.id, ...newTenantData } as ChurchTenant;
 
-            // 2. Create User in Auth (using secondary app to avoid logging out Super Admin)
-            const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
-            const secondaryAuth = getAuth(secondaryApp);
+            // 2. Create Invitation
+            const invitationCode = await createInvitation(
+                docRef.id, // tenantId
+                'ADMIN', // role
+                formData.pastorName,
+                'SUPER_ADMIN' // createdBy
+            );
 
-            let newUserUid;
+            // Construct Link
+            const origin = window.location.origin;
+            const invitationLink = `${origin}/join?code=${invitationCode}`;
 
-            try {
-                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, formData.pastorEmail, tempPass);
-                newUserUid = userCredential.user.uid;
-                await signOut(secondaryAuth);
-            } catch (authError) {
-                console.error("Error creating auth user:", authError);
-                throw new Error("Error creating user in Authentication system.");
-            } finally {
-                await deleteApp(secondaryApp);
-            }
-
-            // 3. Create Firestore User Document with REAL UID
-            await setDoc(doc(db, 'users', newUserUid), {
-                id: newUserUid,
-                name: formData.pastorName,
-                email: formData.pastorEmail,
-                role: 'ADMIN',
-                tenantId: docRef.id,
-                status: 'ACTIVE'
-            });
-
-            // 2. Send Email (Simulated)
+            // 3. Send Email
             await sendNewTenantEmail(
                 formData.pastorEmail,
                 formData.pastorName,
                 formData.churchName,
                 formData.tier,
-                tempPass
+                invitationLink
             );
 
-            // 3. Update State
+            // 4. Update State
             setTenants([newTenant, ...tenants]);
-            addNotification('success', 'Iglesia Creada', `Se envió el acceso a ${formData.pastorEmail}`);
+            addNotification('success', 'Iglesia Creada', `Se envió la invitación a ${formData.pastorEmail}`);
 
-            // TEMPORARY: Show password to Super Admin for testing
-            alert(`⚠️ MODO PRUEBA ⚠️\n\nIglesia creada con éxito.\n\nCredenciales del Pastor:\nEmail: ${formData.pastorEmail}\nPassword: ${tempPass}\n\nGuarda esta contraseña, no se volverá a mostrar.`);
+            // Show Link to Super Admin for testing
+            alert(`⚠️ MODO PRUEBA ⚠️\n\nIglesia creada con éxito.\n\nEnlace de Invitación:\n${invitationLink}\n\nEste enlace se ha enviado por correo.`);
 
             setShowModal(false);
             setFormData({ churchName: '', pastorName: '', pastorEmail: '', tier: 'GOLD' });

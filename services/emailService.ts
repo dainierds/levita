@@ -61,23 +61,24 @@ export const sendRosterNotification = async (email: string, name: string, date: 
   });
 };
 
-export const sendNewTenantEmail = async (email: string, pastorName: string, churchName: string, tier: string, tempPass: string) => {
+export const sendNewTenantEmail = async (email: string, pastorName: string, churchName: string, tier: string, invitationLink: string) => {
   const html = `
       <div style="font-family: sans-serif; color: #333;">
         <h1>¡Bienvenido Pastor ${pastorName}!</h1>
         <p>Su iglesia <strong>${churchName}</strong> ha sido registrada en LEVITA OS con el plan <strong>${tier}</strong>.</p>
-        <p>Sus credenciales de acceso son:</p>
-        <ul>
-            <li><strong>Usuario:</strong> ${email}</li>
-            <li><strong>Contraseña Temporal:</strong> ${tempPass}</li>
-        </ul>
-        <p>Por favor ingrese y configure su iglesia.</p>
+        <p>Para activar su cuenta y configurar su iglesia, por favor haga clic en el siguiente enlace:</p>
+        <p style="margin: 24px 0;">
+            <a href="${invitationLink}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Activar Cuenta</a>
+        </p>
+        <p>O copie y pegue este enlace en su navegador:</p>
+        <p style="color: #666; word-break: break-all;">${invitationLink}</p>
+        <p>Este enlace es de un solo uso.</p>
       </div>
     `;
 
   return sendEmail({
     to: email,
-    subject: 'Bienvenido a Levita - Nueva Iglesia Registrada',
+    subject: 'Active su cuenta en Levita - Nueva Iglesia Registrada',
     html
   });
 };
