@@ -7,10 +7,10 @@ import { usePlans } from '../hooks/usePlans';
 import { Link, useNavigate } from 'react-router-dom';
 
 const SUPPORTED_LANGUAGES = [
-    { code: 'es', label: 'Español', flag: '🇪🇸' },
-    { code: 'en', label: 'English', flag: '🇺🇸' },
-    { code: 'pt', label: 'Português', flag: '🇧🇷' },
-    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+    { code: 'es', label: 'Español', flagUrl: 'https://flagcdn.com/w80/es.png' },
+    { code: 'en', label: 'English', flagUrl: 'https://flagcdn.com/w80/us.png' },
+    { code: 'pt', label: 'Português', flagUrl: 'https://flagcdn.com/w80/br.png' },
+    { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/w80/fr.png' },
 ];
 
 const VisitorLanding: React.FC = () => {
@@ -53,7 +53,11 @@ const VisitorLanding: React.FC = () => {
                                 onClick={() => handleLanguageSelect(lang.code)}
                                 className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200 text-left"
                             >
-                                <span className="text-2xl">{lang.flag}</span>
+                                <img
+                                    src={lang.flagUrl}
+                                    alt={lang.label}
+                                    className="w-8 h-6 object-cover rounded shadow-sm"
+                                />
                                 <span className="text-lg font-bold text-slate-700 group-hover:text-indigo-900">{lang.label}</span>
                                 <div className="absolute right-4 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <ArrowRight size={20} />
