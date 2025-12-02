@@ -7,6 +7,7 @@ interface VisitorAppProps {
   events: ChurchEvent[];
   onLoginRequest: () => void;
   nextPreacher?: string;
+  initialLanguage?: LanguageCode;
 }
 
 type LanguageCode = 'es' | 'en' | 'pt' | 'fr';
@@ -69,8 +70,8 @@ const TRANSLATIONS: Record<LanguageCode, any> = {
   }
 };
 
-const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPreacher = 'Por definir' }) => {
-  const [selectedLang, setSelectedLang] = useState<LanguageCode | null>(null);
+const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPreacher = 'Por definir', initialLanguage }) => {
+  const [selectedLang, setSelectedLang] = useState<LanguageCode | null>(initialLanguage || null);
 
   // If no language selected, show selection screen
   if (!selectedLang) {

@@ -82,15 +82,27 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
         }
     };
 
+    const [deleteConfirmation, setDeleteConfirmation] = useState<string | null>(null);
+
     const handleDeleteEvent = async (eventId: string) => {
-        if (confirm('¿Estás seguro de eliminar este evento?')) {
+        // If already confirming this event, proceed to delete
+        if (deleteConfirmation === eventId) {
             try {
                 await deleteDoc(doc(db, 'events', eventId));
+                setDeleteConfirmation(null);
             } catch (error) {
                 console.error("Error deleting event:", error);
+                alert("Error al eliminar. Verifica tu conexión o permisos.");
             }
+        } else {
+            // Otherwise, set confirmation state
+            setDeleteConfirmation(eventId);
+            // Auto-reset after 3 seconds
+            setTimeout(() => setDeleteConfirmation(null), 3000);
         }
     };
+
+
 
     const toggleBannerStatus = async (event: ChurchEvent) => {
         try {
@@ -120,8 +132,8 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-full mx-auto pb-20">
-            <div className="flex justify-between items-center mb-8">
+        <div className="p-4 md:p-8 pt-32 max-w-full mx-auto pb-20">
+            <div className="flex flex-col items-start gap-6 mb-8">
                 <div>
                     <h2 className="text-3xl font-bold text-slate-800">Eventos y Banner</h2>
                     <p className="text-slate-500">Gestiona los eventos y el banner rotativo de la app.</p>
@@ -141,10 +153,20 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                         <div className={`h-24 bg-gradient-to-r ${ev.bannerGradient || 'from-indigo-500 to-purple-500'} p-6 relative`}>
                             <div className="absolute top-4 right-4 flex gap-2">
                                 <button
-                                    onClick={() => handleDeleteEvent(ev.id)}
-                                    className="p-2 bg-white/20 backdrop-blur-md text-white rounded-lg hover:bg-red-500 transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteEvent(ev.id);
+                                    }}
+                                    className={`p-2 backdrop-blur-md rounded-lg transition-all z-50 flex items-center gap-1 ${deleteConfirmation === ev.id
+                                            ? 'bg-red-600 text-white w-auto px-3'
+                                            : 'bg-white/20 text-white hover:bg-red-500'
+                                        }`}
                                 >
-                                    <Trash2 size={16} />
+                                    {deleteConfirmation === ev.id ? (
+                                        <span className="text-xs font-bold">¿Borrar?</span>
+                                    ) : (
+                                        <Trash2 size={16} />
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -257,6 +279,30 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                                         onChange={e => setNewEvent({ ...newEvent, time: e.target.value })}
                                         className="input-soft"
                                     />
+                                </div>
+
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Visibilidad (Audiencia)</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, targetAudience: 'PUBLIC' })}
+                                            className={`p-3 rounded-xl border-2 text-xs font-bold transition-all ${newEvent.targetAudience === 'PUBLIC' ? 'border-indigo-500 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                        >
+                                            🌍 Todo Público
+                                        </button>
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, targetAudience: 'STAFF_ONLY' })}
+                                            className={`p-3 rounded-xl border-2 text-xs font-bold transition-all ${newEvent.targetAudience === 'STAFF_ONLY' ? 'border-indigo-500 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                        >
+                                            🛡️ Solo Staff
+                                        </button>
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, targetAudience: 'ELDERS_ONLY' })}
+                                            className={`p-3 rounded-xl border-2 text-xs font-bold transition-all ${newEvent.targetAudience === 'ELDERS_ONLY' ? 'border-indigo-500 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                        >
+                                            👑 Solo Ancianos
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

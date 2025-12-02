@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Radio, Clock, CheckCircle2, Music, Mic2, Calendar, Loader2, User } from 'lucide-react';
+import { Radio, Clock, CheckCircle2, Music, Mic2, Calendar, Loader2, User, FileText, UserCheck, Mic, BookOpen } from 'lucide-react';
 import { useEvents } from '../hooks/useEvents';
 import { usePlans } from '../hooks/usePlans';
 import { Role } from '../types';
@@ -95,63 +95,136 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN' })
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Live Status Card */}
-        <div className="lg:col-span-2 card-soft p-8 relative overflow-hidden">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h3 className="text-xl font-bold text-slate-800">Estado del Culto</h3>
-              <p className="text-slate-400 text-sm">Monitor de servicio en tiempo real</p>
-            </div>
+        {/* Live Status Section - Split into 2 Cards */}
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* Card 1: Service Order Timeline */}
+          <div className="card-soft p-6 relative overflow-hidden h-full">
             {activePlan ? (
-              <span className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-500 rounded-full text-sm font-bold animate-pulse">
-                <Radio size={16} /> EN VIVO
-              </span>
+              <>
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-50 text-red-500 rounded-full text-[10px] font-bold animate-pulse uppercase tracking-wider">
+                        <Radio size={10} /> En Vivo
+                      </span>
+                      <span className="text-xs font-bold text-slate-400 uppercase">{activePlan.date}</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-800 leading-tight">{activePlan.title}</h3>
+                  </div>
+                  <button
+                    onClick={() => setCurrentView('planner')}
+                    className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                    title="Ver Completo"
+                  >
+                    <FileText size={18} />
+                  </button>
+                </div>
+
+                <div className="space-y-0 relative pl-2">
+                  {/* Vertical Line */}
+                  <div className="absolute left-[3.5rem] top-2 bottom-2 w-0.5 bg-slate-100"></div>
+
+                  {(() => {
+                    let currentTime = new Date(`2000-01-01T${activePlan.startTime}`);
+                    return activePlan.items.slice(0, 5).map((item, idx) => { // Show max 5 items to keep compact
+                      const timeStr = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      currentTime.setMinutes(currentTime.getMinutes() + item.durationMinutes);
+
+                      return (
+                        <div key={idx} className="relative flex items-center gap-4 py-2 group">
+                          <div className="w-10 text-right text-[10px] font-bold text-slate-400 font-mono">
+                            {timeStr}
+                          </div>
+                          <div className={`w-2.5 h-2.5 rounded-full border-2 border-white shadow-sm z-10 ${item.type === 'WORSHIP' ? 'bg-pink-400' :
+                            item.type === 'PREACHING' ? 'bg-indigo-500' : 'bg-slate-300'
+                            }`}></div>
+                          <div className="flex-1 bg-white rounded-lg px-3 py-1.5 border border-slate-100 shadow-sm group-hover:border-indigo-200 transition-colors">
+                            <p className="text-sm font-bold text-slate-700 truncate">{item.title}</p>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                  {activePlan.items.length > 5 && (
+                    <div className="pl-14 pt-2 text-xs text-slate-400 italic">
+                      + {activePlan.items.length - 5} elementos más...
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
-              <span className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-400 rounded-full text-sm font-bold">
-                <Radio size={16} /> SIN ACTIVIDAD
-              </span>
+              <div className="flex flex-col items-center justify-center h-full py-12 text-slate-400 gap-4">
+                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
+                  <Clock size={32} />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-bold text-slate-600 text-lg">Sin Servicio Activo</h3>
+                  <p className="text-sm">Activa un plan en Orden de Cultos.</p>
+                </div>
+              </div>
             )}
           </div>
 
-          {activePlan ? (
-            <div className="space-y-6">
-              <div>
-                <p className="text-sm font-semibold text-indigo-500 uppercase tracking-wide">Predicando Ahora</p>
-                <h4 className="text-2xl font-bold text-slate-800 mt-1">{activePlan.team.preacher}</h4>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-3xl">
-                  <div className="flex items-center gap-2 text-slate-500 mb-1">
-                    <Music size={16} />
-                    <span className="text-xs font-bold uppercase">Música</span>
+          {/* Card 2: Active Team Roster */}
+          <div className="card-soft p-6 h-full">
+            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <UserCheck size={18} className="text-indigo-500" /> Equipo Oficial
+            </h3>
+
+            {activePlan ? (
+              <div className="space-y-4">
+                {/* Preacher */}
+                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                    <Mic2 size={18} />
                   </div>
-                  <p className="font-semibold text-slate-700">{activePlan.team.musicDirector}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-3xl">
-                  <div className="flex items-center gap-2 text-slate-500 mb-1">
-                    <Mic2 size={16} />
-                    <span className="text-xs font-bold uppercase">Audio</span>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Predicador</span>
+                    <p className="font-bold text-slate-800">{activePlan.team.preacher || 'No asignado'}</p>
                   </div>
-                  <p className="font-semibold text-slate-700">{activePlan.team.audioOperator}</p>
+                </div>
+
+                {/* Music Director */}
+                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
+                    <Music size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Director Música</span>
+                    <p className="font-bold text-slate-800">{activePlan.team.musicDirector || 'No asignado'}</p>
+                  </div>
+                </div>
+
+                {/* Audio */}
+                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                    <Mic size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Audio</span>
+                    <p className="font-bold text-slate-800">{activePlan.team.audioOperator || 'No asignado'}</p>
+                  </div>
+                </div>
+
+                {/* Elder */}
+                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                    <UserCheck size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Anciano de Turno</span>
+                    <p className="font-bold text-slate-800">{activePlan.team.elder || 'No asignado'}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                <Clock size={32} />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                <p className="text-sm">No hay equipo asignado.</p>
               </div>
-              <p className="text-slate-500">No hay servicio activo en este momento.</p>
-              {nextPlan && (
-                <button
-                  onClick={() => setCurrentView('planner')}
-                  className="mt-4 text-indigo-600 font-semibold hover:underline"
-                >
-                  Ver próximo: {nextPlan.title}
-                </button>
-              )}
-            </div>
-          )}
+            )}
+          </div>
+
         </div>
 
         {/* Quick Actions / Metrics */}
@@ -165,12 +238,22 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN' })
                 </div>
                 <span className="text-sm font-bold text-indigo-900">Ver Turnos</span>
               </button>
-              <button onClick={() => setCurrentView('events')} className="p-4 bg-pink-50 hover:bg-pink-100 transition-colors rounded-3xl text-left">
-                <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-pink-600 mb-2">
-                  <Calendar size={16} />
-                </div>
-                <span className="text-sm font-bold text-pink-900">Crear Evento</span>
-              </button>
+
+              {role === 'ELDER' ? (
+                <button onClick={() => setCurrentView('sermons')} className="p-4 bg-purple-50 hover:bg-purple-100 transition-colors rounded-3xl text-left">
+                  <div className="w-8 h-8 bg-purple-200 rounded-full flex items-center justify-center text-purple-600 mb-2">
+                    <BookOpen size={16} />
+                  </div>
+                  <span className="text-sm font-bold text-purple-900">Crear Sermón</span>
+                </button>
+              ) : (
+                <button onClick={() => setCurrentView('events')} className="p-4 bg-pink-50 hover:bg-pink-100 transition-colors rounded-3xl text-left">
+                  <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-pink-600 mb-2">
+                    <Calendar size={16} />
+                  </div>
+                  <span className="text-sm font-bold text-pink-900">Crear Evento</span>
+                </button>
+              )}
             </div>
           </div>
 

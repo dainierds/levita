@@ -53,17 +53,20 @@ service cloud.firestore {
     
     match /events/{eventId} {
       allow read: if belongsToTenant(resource.data.tenantId);
-      allow write: if belongsToTenant(request.resource.data.tenantId);
+      allow create: if belongsToTenant(request.resource.data.tenantId);
+      allow update, delete: if belongsToTenant(resource.data.tenantId);
     }
 
     match /servicePlans/{planId} {
       allow read: if belongsToTenant(resource.data.tenantId);
-      allow write: if belongsToTenant(request.resource.data.tenantId);
+      allow create: if belongsToTenant(request.resource.data.tenantId);
+      allow update, delete: if belongsToTenant(resource.data.tenantId);
     }
     
     match /songs/{songId} {
       allow read: if belongsToTenant(resource.data.tenantId);
-      allow write: if belongsToTenant(request.resource.data.tenantId);
+      allow create: if belongsToTenant(request.resource.data.tenantId);
+      allow update, delete: if belongsToTenant(resource.data.tenantId);
     }
 
     // 4. Invitaciones

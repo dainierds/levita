@@ -56,6 +56,7 @@ export interface ServicePlan {
   isActive: boolean; // "Live" status
   team: ServiceTeam;
   items: LiturgyItem[];
+  tenantId?: string;
 }
 
 export interface User {
@@ -65,6 +66,7 @@ export interface User {
   role: Role;
   pin?: string; // New field for Member authentication
   tenantId?: string; // For multi-tenancy
+  photoUrl?: string;
   status: 'ACTIVE' | 'PENDING_PASSWORD_CHANGE';
 }
 
@@ -115,9 +117,9 @@ export interface ChurchTenant {
 
 // Feature Flags based on Tier
 export const TIER_FEATURES: Record<SubscriptionTier, string[]> = {
-  BASIC: ['dashboard', 'planner', 'users'],
-  GOLD: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications'],
-  PLATINUM: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'ai_assistant', 'live_translation']
+  BASIC: ['dashboard', 'planner', 'users', 'team'],
+  GOLD: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'team', 'sermons'],
+  PLATINUM: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'ai_assistant', 'live_translation', 'team', 'sermons', 'statistics']
 };
 
 export const TIER_LIMITS: Record<SubscriptionTier, number> = {

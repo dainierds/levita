@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { ServicePlan, ChurchSettings, DayOfWeek, User, Role } from '../types';
 import { User as UserIcon, Mic2, Music, Mic, Sparkles, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
 import { useNotification } from './NotificationSystem';
 
 interface RosterViewProps {
     plans: ServicePlan[];
-    setPlans: React.Dispatch<React.SetStateAction<ServicePlan[]>>;
+    savePlan: (plan: ServicePlan) => Promise<any>;
     settings: ChurchSettings;
     users: User[];
 }
@@ -18,10 +19,15 @@ const ROLES_CONFIG = [
     { key: 'audioOperator', roleType: 'AUDIO' as Role, label: 'Audio', icon: Mic, color: 'bg-orange-50 text-orange-600', border: 'border-orange-100' },
 ];
 
-const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, users }) => {
+const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, users }) => {
     const { addNotification } = useNotification();
     const [currentDate, setCurrentDate] = useState(new Date());
+    const { role, user } = useAuth();
     const [selectedRoleTab, setSelectedRoleTab] = useState('elder');
+
+    // Permission Logic
+    const canEdit = role === 'ADMIN' || role === 'SUPER_ADMIN' || (role === 'ELDER' && selectedRoleTab === 'elder');
+
 
     // --- Date Logic ---
     const getMonthName = (date: Date) => date.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
@@ -59,6 +65,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
 
     // --- Drag & Drop Handlers ---
     const handleDragStart = (e: React.DragEvent, user: User) => {
+        if (!canEdit) return; // Prevent drag if not allowed
         e.dataTransfer.setData('userId', user.id);
         e.dataTransfer.setData('userName', user.name);
         // Determine the mapped key for the user's role
@@ -70,17 +77,18 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
     };
 
     const handleDragOver = (e: React.DragEvent) => {
+        if (!canEdit) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = 'copy';
     };
 
     const handleDrop = (e: React.DragEvent, date: Date, targetRoleKey: string) => {
+        if (!canEdit) return;
         e.preventDefault();
+        // ... (rest of drop logic)
         const volName = e.dataTransfer.getData('userName');
         const droppedRoleKey = e.dataTransfer.getData('roleKey');
 
-        // Validation: Can only drop if roles match
-        // Note: The drag source roleKey must match the drop targetRoleKey
         if (droppedRoleKey !== targetRoleKey) {
             addNotification('warning', 'Rol Incorrecto', `No puedes asignar esta persona a la posición de ${targetRoleKey}`);
             return;
@@ -89,43 +97,47 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
         updateAssignment(date, targetRoleKey, volName);
     };
 
-    const updateAssignment = (date: Date, roleKey: string, name: string) => {
+    const updateAssignment = async (date: Date, roleKey: string, name: string) => {
         const localDateStr = date.toLocaleDateString('en-CA');
+        const existingPlan = plans.find(p => p.date === localDateStr);
 
-        setPlans(prevPlans => {
-            const existingPlanIndex = prevPlans.findIndex(p => p.date === localDateStr);
-            if (existingPlanIndex >= 0) {
-                // Update existing
-                const newPlans = [...prevPlans];
-                newPlans[existingPlanIndex] = {
-                    ...newPlans[existingPlanIndex],
-                    team: {
-                        ...newPlans[existingPlanIndex].team,
-                        [roleKey]: name
-                    }
-                };
-                return newPlans;
-            } else {
-                // Create new plan scaffold
-                const newPlan: ServicePlan = {
-                    id: `auto-${Math.random().toString(36).substr(2, 9)}`,
-                    title: `Servicio ${localDateStr}`,
-                    date: localDateStr,
-                    startTime: settings.meetingTimes[date.toLocaleDateString('es-ES', { weekday: 'long' }) as DayOfWeek] || '10:00',
-                    isActive: false,
-                    items: [], // Empty liturgy
-                    team: {
-                        elder: '', preacher: '', musicDirector: '', audioOperator: '',
-                        [roleKey]: name // Assign the dropped user
-                    }
-                };
-                return [...prevPlans, newPlan];
-            }
-        });
+        let planToSave: ServicePlan;
+
+        if (existingPlan) {
+            planToSave = {
+                ...existingPlan,
+                team: {
+                    ...existingPlan.team,
+                    [roleKey]: name
+                }
+            };
+        } else {
+            planToSave = {
+                id: `auto-${Math.random().toString(36).substr(2, 9)}`,
+                title: `Servicio ${localDateStr}`,
+                date: localDateStr,
+                startTime: settings.meetingTimes[date.toLocaleDateString('es-ES', { weekday: 'long' }) as DayOfWeek] || '10:00',
+                isActive: false,
+                items: [],
+                tenantId: user?.tenantId,
+                team: {
+                    elder: '', preacher: '', musicDirector: '', audioOperator: '',
+                    [roleKey]: name
+                }
+            };
+        }
+
+        try {
+            await savePlan(planToSave);
+            addNotification('success', 'Guardado', 'Asignación actualizada.');
+        } catch (error) {
+            console.error(error);
+            addNotification('error', 'Error', 'No se pudo guardar la asignación.');
+        }
     };
 
     // --- Auto Assign Logic ---
-    const handleAutoAssign = () => {
+    const handleAutoAssign = async () => {
         const targetRoleConfig = ROLES_CONFIG.find(r => r.key === selectedRoleTab);
 
         if (!targetRoleConfig) {
@@ -136,21 +148,25 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
         addNotification('info', 'Autocompletando...', `Asignando turnos de ${targetRoleConfig.label} para este mes.`);
 
         let updatesCount = 0;
+        const promises: Promise<any>[] = [];
 
-        const newPlans = [...plans];
-
-        serviceDates.forEach(date => {
+        for (const date of serviceDates) {
             const localDateStr = date.toLocaleDateString('en-CA');
-            let planIndex = newPlans.findIndex(p => p.date === localDateStr);
-            let plan = planIndex >= 0 ? newPlans[planIndex] : {
-                id: `auto-${Math.random().toString(36).substr(2, 9)}`,
-                title: `Servicio ${localDateStr}`,
-                date: localDateStr,
-                startTime: '10:00',
-                isActive: false,
-                items: [],
-                team: { elder: '', preacher: '', musicDirector: '', audioOperator: '' }
-            };
+            let plan = plans.find(p => p.date === localDateStr);
+
+            // If plan doesn't exist, create scaffold
+            if (!plan) {
+                plan = {
+                    id: `auto-${Math.random().toString(36).substr(2, 9)}`,
+                    title: `Servicio ${localDateStr}`,
+                    date: localDateStr,
+                    startTime: '10:00',
+                    isActive: false,
+                    items: [],
+                    tenantId: user?.tenantId,
+                    team: { elder: '', preacher: '', musicDirector: '', audioOperator: '' }
+                };
+            }
 
             const roleKey = targetRoleConfig.key as keyof typeof plan.team;
 
@@ -160,29 +176,34 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
                 const candidates = users.filter(u => u.role === targetRoleConfig.roleType);
 
                 if (candidates.length > 0) {
-                    // Ensure randomness but try not to repeat same person consecutive weeks if possible (simple random for now)
                     const randomUser = candidates[Math.floor(Math.random() * candidates.length)];
-                    plan.team[roleKey] = randomUser.name;
+
+                    // Create a new object to save
+                    const updatedPlan = {
+                        ...plan,
+                        team: {
+                            ...plan.team,
+                            [roleKey]: randomUser.name
+                        }
+                    };
+
+                    promises.push(savePlan(updatedPlan));
                     updatesCount++;
                 }
             }
+        }
 
-            if (planIndex >= 0) {
-                newPlans[planIndex] = plan as ServicePlan;
-            } else {
-                newPlans.push(plan as ServicePlan);
-            }
-        });
-
-        setPlans(newPlans);
-
-        setTimeout(() => {
+        try {
+            await Promise.all(promises);
             if (updatesCount > 0) {
                 addNotification('success', 'Completado', `Se asignaron ${updatesCount} turnos de ${targetRoleConfig.label}.`);
             } else {
                 addNotification('info', 'Sin cambios', `No habían espacios vacíos de ${targetRoleConfig.label} o no hay voluntarios disponibles.`);
             }
-        }, 500);
+        } catch (error) {
+            console.error(error);
+            addNotification('error', 'Error', 'Hubo un problema al guardar los cambios automáticos.');
+        }
     };
 
     const changeMonth = (delta: number) => {
@@ -198,7 +219,9 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
     const availableVolunteers = users.filter(u => u.role === currentRoleConfig?.roleType);
 
     return (
-        <div className="p-4 md:p-8 max-w-full mx-auto space-y-6 h-screen flex flex-col overflow-hidden pb-4">
+        <div className="p-4 md:p-8 max-w-full mx-auto space-y-1 h-screen flex flex-col overflow-hidden pb-4">
+            {/* Spacer for Global Header */}
+            <div className="h-2 md:h-4 w-full flex-shrink-0"></div>
 
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0">
@@ -239,9 +262,10 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
                             availableVolunteers.map(vol => (
                                 <div
                                     key={vol.id}
-                                    draggable
+                                    draggable={canEdit}
                                     onDragStart={(e) => handleDragStart(e, vol)}
-                                    className="bg-slate-50 hover:bg-white border border-slate-100 p-4 rounded-2xl cursor-grab active:cursor-grabbing hover:shadow-md transition-all group flex items-center justify-between"
+                                    className={`bg-slate-50 border border-slate-100 p-4 rounded-2xl transition-all group flex items-center justify-between ${canEdit ? 'hover:bg-white cursor-grab active:cursor-grabbing hover:shadow-md' : 'opacity-60 cursor-not-allowed'
+                                        }`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${currentRoleConfig?.color.replace('text-', 'bg-').split(' ')[0]} text-white`}>
@@ -249,7 +273,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
                                         </div>
                                         <span className="text-sm font-bold text-slate-700">{vol.name}</span>
                                     </div>
-                                    <GripVertical size={16} className="text-slate-300 group-hover:text-slate-400" />
+                                    {canEdit && <GripVertical size={16} className="text-slate-300 group-hover:text-slate-400" />}
                                 </div>
                             ))
                         ) : (
@@ -260,7 +284,6 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
                         )}
                     </div>
                 </div>
-
                 {/* Right Col: Calendar Grid (Scrollable) */}
                 <div className="flex-1 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
 
@@ -275,15 +298,19 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
                             <button className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 rounded-xl border border-slate-200">
                                 Historial
                             </button>
-                            <button
-                                onClick={handleAutoAssign}
-                                className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center gap-2"
-                            >
-                                <Sparkles size={14} /> Auto Asignar {currentRoleConfig?.label}
-                            </button>
-                            <button className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200">
-                                + Asignar Manual
-                            </button>
+                            {canEdit && (
+                                <>
+                                    <button
+                                        onClick={handleAutoAssign}
+                                        className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center gap-2"
+                                    >
+                                        <Sparkles size={14} /> Auto Asignar {currentRoleConfig?.label}
+                                    </button>
+                                    <button className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200">
+                                        + Asignar Manual
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -309,7 +336,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
                                             h-32 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-2
                                             ${getAssignment(date, selectedRoleTab)
                                                         ? 'border-indigo-200 bg-indigo-50/30'
-                                                        : 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50'
+                                                        : canEdit ? 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50' : 'border-slate-100 bg-slate-50/50'
                                                     }
                                         `}
                                             >
@@ -319,16 +346,18 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
                                                             {getAssignment(date, selectedRoleTab)?.charAt(0)}
                                                         </div>
                                                         <span className="font-bold text-slate-700">{getAssignment(date, selectedRoleTab)}</span>
-                                                        <button
-                                                            onClick={() => updateAssignment(date, selectedRoleTab, '')}
-                                                            className="text-[10px] text-red-400 font-bold hover:underline"
-                                                        >
-                                                            Remover
-                                                        </button>
+                                                        {canEdit && (
+                                                            <button
+                                                                onClick={() => updateAssignment(date, selectedRoleTab, '')}
+                                                                className="text-[10px] text-red-400 font-bold hover:underline"
+                                                            >
+                                                                Remover
+                                                            </button>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <p className="text-xs text-slate-400">Arrastra un miembro aquí</p>
+                                                        <p className="text-xs text-slate-400">{canEdit ? 'Arrastra un miembro aquí' : 'Sin asignar'}</p>
                                                     </>
                                                 )}
                                             </div>
@@ -345,8 +374,8 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, setPlans, settings, user
                     </div>
 
                 </div>
-            </div>
 
+            </div>
         </div>
     );
 };

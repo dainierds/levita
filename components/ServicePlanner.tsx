@@ -1,29 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { ServicePlan, SubscriptionTier, User } from '../types';
-import { Plus, Trash2, Wand2, Music, Mic, User as UserIcon, Mic2, UserCheck, PlayCircle, Lock, Loader2, Paperclip, FileText, X, Hand, BookOpen, DollarSign, Megaphone, MessageCircle, Gift, Heart, Star, PenTool } from 'lucide-react';
-import { generateSermonOutline } from '../services/geminiService';
+import { Plus, Trash2, Music, Mic, Mic2, PlayCircle, Loader2, X, Hand, BookOpen, DollarSign, Megaphone, MessageCircle, Gift, Heart, Star, PenTool } from 'lucide-react';
 import { usePlans } from '../hooks/usePlans';
-import { uploadFile, deleteFile } from '../services/storageService';
 
 interface ServicePlannerProps {
   tier: SubscriptionTier;
   users: User[];
 }
 
-const ROLES_CONFIG = [
-  { key: 'elder', label: 'Anciano de Turno', icon: UserCheck, color: 'text-blue-500 bg-blue-50', role: 'ELDER' },
-  { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-purple-500 bg-purple-50', role: 'PREACHER' },
-  { key: 'worshipLeader', label: 'Director de Música', icon: Music, color: 'text-pink-500 bg-pink-50', role: 'MUSIC' },
-  { key: 'audioOperator', label: 'Operador de Audio', icon: Mic, color: 'text-orange-500 bg-orange-50', role: 'AUDIO' },
-];
-
 const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
   const { plans, loading, savePlan, deletePlan } = usePlans();
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
-
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [showAiModal, setShowAiModal] = useState(false);
-  const [aiParams, setAiParams] = useState({ passage: '', tone: 'Exhortativo', targetItemId: '' });
 
   // Add Item State
   const [showAddItemModal, setShowAddItemModal] = useState(false);
@@ -63,16 +50,21 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
     }
   }, [plans, selectedPlanId]);
 
-  // Feature Flag
-  const canUseAI = tier === 'PLATINUM';
-
   const toggleActivePlan = async (id: string) => {
     if (!selectedPlan) return;
 
-    // If we are activating this plan, we should deactivate others (optional but good practice)
-    // For now, just toggle current
-    const updated = { ...selectedPlan, isActive: !selectedPlan.isActive };
-    await savePlan(updated);
+    const newStatus = !selectedPlan.isActive;
+
+    // 1. Update current plan
+    await savePlan({ ...selectedPlan, isActive: newStatus });
+
+    // 2. If activating, deactivate others
+    if (newStatus) {
+      const otherActivePlans = plans.filter(p => p.id !== id && p.isActive);
+      for (const p of otherActivePlans) {
+        await savePlan({ ...p, isActive: false });
+      }
+    }
   };
 
   const calculateTimeline = (plan: ServicePlan) => {
@@ -82,40 +74,6 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
       currentTime.setMinutes(currentTime.getMinutes() + item.durationMinutes);
       return { ...item, calculatedTime: timeStr };
     });
-  };
-
-  const handleAiGenerate = async () => {
-    setIsAiLoading(true);
-    try {
-      const outline = await generateSermonOutline(aiParams.passage, aiParams.tone);
-
-      if (selectedPlan) {
-        const updatedItems = selectedPlan.items.map(item =>
-          item.id === aiParams.targetItemId ? { ...item, notes: outline } : item
-        );
-        await savePlan({ ...selectedPlan, items: updatedItems });
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsAiLoading(false);
-      setShowAiModal(false);
-    }
-  };
-
-  const openAiModal = (itemId: string) => {
-    if (!canUseAI) return;
-    setAiParams(prev => ({ ...prev, targetItemId: itemId }));
-    setShowAiModal(true);
-  }
-
-  const handleTeamChange = async (roleKey: string, value: string) => {
-    if (!selectedPlan) return;
-    const updated = {
-      ...selectedPlan,
-      team: { ...selectedPlan.team, [roleKey]: value }
-    };
-    await savePlan(updated);
   };
 
   const handleCreatePlan = async () => {
@@ -161,12 +119,6 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
     );
   }
 
-  const handleTeamUpdate = async (roleKey: string, name: string) => {
-    if (!selectedPlan) return;
-    const updatedTeam = { ...selectedPlan.team, [roleKey]: name };
-    await savePlan({ ...selectedPlan, team: updatedTeam });
-  };
-
   const timelineItems = selectedPlan ? calculateTimeline(selectedPlan) : [];
 
   return (
@@ -174,7 +126,7 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-slate-800">Orden de Cultos</h2>
-          <p className="text-slate-500">Diseña el flujo del servicio y gestiona el equipo.</p>
+          <p className="text-slate-500">Diseña el flujo del servicio.</p>
         </div>
 
         <div className="flex items-center gap-2 bg-white p-1 rounded-full border border-slate-200 shadow-sm">
@@ -221,10 +173,39 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Left Col: Roster & Controls */}
+        {/* Left Col: Controls */}
         <div className="space-y-6">
+
+          {/* Title & Date Edit */}
+          <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-slate-500 mb-2 uppercase">Nombre del Servicio</label>
+              <input
+                type="text"
+                defaultValue={selectedPlan.title}
+                key={selectedPlan.id} // Force re-render on plan change
+                onBlur={(e) => {
+                  if (e.target.value !== selectedPlan.title) {
+                    savePlan({ ...selectedPlan, title: e.target.value });
+                  }
+                }}
+                className="w-full text-xl font-bold text-slate-800 border-b-2 border-slate-100 focus:border-indigo-500 outline-none py-2 transition-colors"
+                placeholder="Ej. Culto Dominical"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-2 uppercase">Fecha</label>
+              <input
+                type="date"
+                value={selectedPlan.date}
+                onChange={(e) => savePlan({ ...selectedPlan, date: e.target.value })}
+                className="w-full px-4 py-2 bg-slate-50 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
           {/* Active Toggle Card (Only Admin/Tech) */}
-          {tier !== 'BASIC' && ( // Example condition, refine based on role prop if available
+          {tier !== 'BASIC' && (
             <div className="card-soft p-6 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-slate-800">Estado Oficial</h3>
@@ -240,44 +221,6 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
               </button>
             </div>
           )}
-
-          {/* Team Widget */}
-          <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
-            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <UserCheck className="text-indigo-500" size={20} /> Equipo de Turno
-            </h3>
-            <div className="space-y-4">
-              {ROLES_CONFIG.map(role => {
-                // Filter users for this role
-                const roleUsers = users.filter(u => u.role === role.role);
-
-                return (
-                  <div key={role.key}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className={`p-1.5 rounded-lg ${role.color}`}>
-                        <role.icon size={14} />
-                      </div>
-                      <span className="text-xs font-bold text-slate-600 uppercase">{role.label}</span>
-                    </div>
-                    <select
-                      value={(selectedPlan?.team as any)?.[role.key] || ''}
-                      onChange={(e) => handleTeamUpdate(role.key, e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 text-sm font-medium text-slate-700"
-                    >
-                      <option value="">Seleccionar...</option>
-                      {roleUsers.map(u => (
-                        <option key={u.id} value={u.name}>{u.name}</option>
-                      ))}
-                      {/* Fallback if current assigned user is not in list */}
-                      {(selectedPlan?.team as any)?.[role.key] && !roleUsers.find(u => u.name === (selectedPlan?.team as any)?.[role.key]) && (
-                        <option value={(selectedPlan?.team as any)?.[role.key]}>{(selectedPlan?.team as any)?.[role.key]}</option>
-                      )}
-                    </select>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
         {/* Right Col: Timeline */}
@@ -383,21 +326,12 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
                     <div className="mt-4 bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-xs font-bold text-indigo-400 uppercase">Notas & Bosquejo</span>
-                        {canUseAI ? (
-                          <button
-                            onClick={() => openAiModal(item.id)}
-                            className="flex items-center gap-1 text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg shadow-sm shadow-indigo-200 hover:bg-indigo-700 transition-colors"
-                          >
-                            <Wand2 size={12} /> Generar con IA
-                          </button>
-                        ) : (
-                          <div className="flex items-center gap-1 text-xs text-slate-400 bg-slate-200 px-3 py-1.5 rounded-lg cursor-not-allowed">
-                            <Lock size={12} /> Plan Platinum
-                          </div>
-                        )}
+                        <div className="text-xs text-slate-400 italic">
+                          Usa la sección "Sermones" para generar contenido con IA.
+                        </div>
                       </div>
                       <div className="text-sm text-slate-600 whitespace-pre-wrap font-serif">
-                        {item.notes || <span className="text-slate-400 italic">No hay notas. {canUseAI ? 'Usa el asistente de IA para comenzar.' : 'Actualiza a Platinum para usar IA.'}</span>}
+                        {item.notes || <span className="text-slate-400 italic">No hay notas adjuntas.</span>}
                       </div>
                     </div>
                   )}
@@ -518,65 +452,6 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
                 </div>
               </div>
 
-            </div>
-          </div>
-        )
-      }
-
-      {/* AI Modal */}
-      {
-        showAiModal && (
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2rem] w-full max-w-lg p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
-                  <Wand2 size={20} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-800">Asistente Levita AI</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-600 mb-2">Pasaje Bíblico</label>
-                  <input
-                    type="text"
-                    value={aiParams.passage}
-                    onChange={(e) => setAiParams({ ...aiParams, passage: e.target.value })}
-                    placeholder="Ej. Salmos 23:1-4"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-600 mb-2">Tono del Sermón</label>
-                  <select
-                    value={aiParams.tone}
-                    onChange={(e) => setAiParams({ ...aiParams, tone: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500"
-                  >
-                    <option>Exhortativo</option>
-                    <option>Consolador</option>
-                    <option>Evangelístico</option>
-                    <option>Doctrinal</option>
-                    <option>Narrativo</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-8">
-                <button
-                  onClick={() => setShowAiModal(false)}
-                  className="flex-1 py-3 text-slate-500 font-semibold hover:bg-slate-50 rounded-xl transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleAiGenerate}
-                  disabled={isAiLoading || !aiParams.passage}
-                  className="flex-1 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:scale-100"
-                >
-                  {isAiLoading ? 'Generando...' : 'Generar Bosquejo'}
-                </button>
-              </div>
             </div>
           </div>
         )

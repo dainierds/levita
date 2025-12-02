@@ -24,6 +24,8 @@ import AudioDashboard from './components/AudioDashboard';
 import StatisticsPanel from './components/StatisticsPanel';
 import DbSeeder from './components/DbSeeder';
 import JoinPage from './pages/JoinPage';
+import TeamRoster from './components/TeamRoster';
+import SermonManager from './components/SermonManager';
 
 // Components acting as Pages
 import VisitorLanding from './pages/VisitorLanding';
@@ -147,6 +149,7 @@ const ProtectedApp: React.FC = () => {
           setCurrentView={setCurrentView}
           role={role}
           tier={currentTenantTier}
+          user={user!}
         />
 
         <main className="flex-1 md:ml-64 relative">
@@ -160,20 +163,9 @@ const ProtectedApp: React.FC = () => {
 
           {/* Desktop Top Bar */}
           <div className="hidden md:flex absolute top-6 right-8 z-50 items-center gap-4">
-            {role === 'ADMIN' && (
-              <select
-                value={currentTenantTier}
-                onChange={(e) => setCurrentTenantTier(e.target.value as SubscriptionTier)}
-                className="bg-white border border-slate-200 text-xs font-bold rounded-full px-3 py-2 text-slate-500 outline-none shadow-sm"
-              >
-                <option value="BASIC">Simulate: Basic</option>
-                <option value="GOLD">Simulate: Gold</option>
-                <option value="PLATINUM">Simulate: Platinum</option>
-              </select>
-            )}
-
-            <div className="px-4 py-2 bg-white rounded-full text-xs font-bold text-slate-500 shadow-sm border border-slate-100 uppercase">
-              {role}
+            <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100">
+              <span className="text-xs font-bold text-slate-400 uppercase">Iglesia:</span>
+              <span className="text-sm font-bold text-indigo-600">{settings?.churchName || 'Mi Iglesia'}</span>
             </div>
 
             <button onClick={logout} className="text-xs font-bold text-red-400 hover:text-red-600">
@@ -214,7 +206,7 @@ const ProtectedApp: React.FC = () => {
           {currentView === 'roster' && (
             <RosterView
               plans={plans}
-              setPlans={() => { }}
+              savePlan={savePlan}
               settings={settings}
               users={users}
             />
@@ -224,10 +216,20 @@ const ProtectedApp: React.FC = () => {
             <NotificationAdmin users={users} />
           )}
 
+
+
           {currentView === 'statistics' && (role === 'ADMIN') && (
             <div className="p-8 max-w-full mx-auto">
               <StatisticsPanel plans={plans} />
             </div>
+          )}
+
+          {currentView === 'team' && (
+            <TeamRoster users={users} />
+          )}
+
+          {currentView === 'sermons' && (
+            <SermonManager />
           )}
 
         </main>
