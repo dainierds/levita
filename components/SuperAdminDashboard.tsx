@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChurchTenant, SubscriptionTier, TIER_LIMITS } from '../types';
-import { Building2, ShieldCheck, Mail, Lock, Trash2, Plus, Ban, CheckCircle2, Crown, Zap } from 'lucide-react';
-import { sendNewTenantEmail } from '../services/emailService';
+import { Building2, ShieldCheck, Lock, Trash2, Plus, Ban, CheckCircle2, Crown, Zap, Link as LinkIcon, Copy, Check } from 'lucide-react';
 import { useNotification } from './NotificationSystem';
 import { db } from '../services/firebase';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, setDoc } from 'firebase/firestore';
@@ -29,6 +28,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ tenants, setT
         pastorEmail: '',
         tier: 'GOLD' as SubscriptionTier
     });
+    const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+    const [copySuccess, setCopySuccess] = useState(false);
 
     // Fetch Tenants from Firestore on Mount
     useEffect(() => {
@@ -55,8 +56,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ tenants, setT
         setIsLoading(true);
 
         try {
-            const tempPass = Math.random().toString(36).slice(-8);
-
             // Prepare Data
             const newTenantData = {
                 name: formData.churchName,
@@ -81,26 +80,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ tenants, setT
 
             // Construct Link
             const origin = window.location.origin;
-            const invitationLink = `${origin}/join?code=${invitationCode}`;
+            const link = `${origin}/join?code=${invitationCode}`;
+            setGeneratedLink(link);
 
-            // 3. Send Email
-            await sendNewTenantEmail(
-                formData.pastorEmail,
-                formData.pastorName,
-                formData.churchName,
-                formData.tier,
-                invitationLink
-            );
-
-            // 4. Update State
+            // 3. Update State
             setTenants([newTenant, ...tenants]);
-            addNotification('success', 'Iglesia Creada', `Se envió la invitación a ${formData.pastorEmail}`);
-
-            // Show Link to Super Admin for testing
-            alert(`⚠️ MODO PRUEBA ⚠️\n\nIglesia creada con éxito.\n\nEnlace de Invitación:\n${invitationLink}\n\nEste enlace se ha enviado por correo.`);
-
-            setShowModal(false);
-            setFormData({ churchName: '', pastorName: '', pastorEmail: '', tier: 'GOLD' });
+            addNotification('success', 'Iglesia Creada', 'Copia el enlace de invitación.');
 
         } catch (error) {
             console.error(error);
@@ -108,6 +93,21 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ tenants, setT
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const copyToClipboard = () => {
+        if (generatedLink) {
+            navigator.clipboard.writeText(generatedLink);
+            setCopySuccess(true);
+            setTimeout(() => setCopySuccess(false), 2000);
+            addNotification('success', 'Copiado', 'Enlace copiado al portapapeles');
+        }
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setGeneratedLink(null);
+        setFormData({ churchName: '', pastorName: '', pastorEmail: '', tier: 'GOLD' });
     };
 
     const toggleStatus = async (id: string, currentStatus: string) => {
@@ -265,86 +265,119 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ tenants, setT
                     <div className="bg-slate-800 border border-slate-700 rounded-[2rem] max-w-lg w-full p-8 shadow-2xl">
                         <h2 className="text-2xl font-bold text-white mb-6">Registrar Nueva Iglesia</h2>
 
-                        <form onSubmit={handleCreateChurch} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre de la Iglesia</label>
-                                <input
-                                    required
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500"
-                                    placeholder="Ej. Iglesia Vida Nueva"
-                                    value={formData.churchName}
-                                    onChange={e => setFormData({ ...formData, churchName: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
+                        {generatedLink ? (
+                            <div className="text-center space-y-6 animate-in fade-in zoom-in duration-300">
+                                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                                    <CheckCircle2 size={40} />
+                                </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre Pastor</label>
+                                    <h3 className="text-2xl font-bold text-white mb-2">¡Iglesia Registrada!</h3>
+                                    <p className="text-slate-400">Comparte este enlace con el pastor para que active su cuenta.</p>
+                                </div>
+
+                                <div className="bg-slate-900 p-4 rounded-xl border border-slate-700 flex items-center gap-3">
+                                    <input
+                                        readOnly
+                                        value={generatedLink}
+                                        className="bg-transparent w-full text-slate-300 text-sm outline-none"
+                                    />
+                                    <button
+                                        onClick={copyToClipboard}
+                                        className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors"
+                                    >
+                                        {copySuccess ? <Check size={18} /> : <Copy size={18} />}
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={handleCloseModal}
+                                    className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleCreateChurch} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre de la Iglesia</label>
                                     <input
                                         required
                                         className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500"
-                                        placeholder="Ej. Juan Pérez"
-                                        value={formData.pastorName}
-                                        onChange={e => setFormData({ ...formData, pastorName: e.target.value })}
+                                        placeholder="Ej. Iglesia Vida Nueva"
+                                        value={formData.churchName}
+                                        onChange={e => setFormData({ ...formData, churchName: e.target.value })}
                                     />
                                 </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre Pastor</label>
+                                        <input
+                                            required
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500"
+                                            placeholder="Ej. Juan Pérez"
+                                            value={formData.pastorName}
+                                            onChange={e => setFormData({ ...formData, pastorName: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email Pastor</label>
+                                        <input
+                                            required
+                                            type="email"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500"
+                                            placeholder="juan@iglesia.com"
+                                            value={formData.pastorEmail}
+                                            onChange={e => setFormData({ ...formData, pastorEmail: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email Pastor</label>
-                                    <input
-                                        required
-                                        type="email"
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500"
-                                        placeholder="juan@iglesia.com"
-                                        value={formData.pastorEmail}
-                                        onChange={e => setFormData({ ...formData, pastorEmail: e.target.value })}
-                                    />
-                                </div>
-                            </div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Nivel de Suscripción</label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {(['BASIC', 'GOLD', 'PLATINUM'] as SubscriptionTier[]).map(tier => (
+                                            <button
+                                                key={tier}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, tier })}
+                                                className={`
+                                            p-3 rounded-xl border-2 text-sm font-bold transition-all
+                                            ${formData.tier === tier
+                                                        ? 'border-indigo-500 bg-indigo-500/20 text-white'
+                                                        : 'border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600'}
+                                        `}
+                                            >
+                                                {tier}
+                                            </button>
+                                        ))}
+                                    </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Nivel de Suscripción</label>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {(['BASIC', 'GOLD', 'PLATINUM'] as SubscriptionTier[]).map(tier => (
-                                        <button
-                                            key={tier}
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, tier })}
-                                            className={`
-                                        p-3 rounded-xl border-2 text-sm font-bold transition-all
-                                        ${formData.tier === tier
-                                                    ? 'border-indigo-500 bg-indigo-500/20 text-white'
-                                                    : 'border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600'}
-                                    `}
-                                        >
-                                            {tier}
-                                        </button>
-                                    ))}
+                                    <div className="mt-3 p-4 bg-slate-900/50 rounded-xl border border-slate-700 text-xs text-slate-400">
+                                        {formData.tier === 'BASIC' && <ul className="list-disc pl-4"><li>Hasta {TIER_LIMITS.BASIC} Usuarios</li><li>Dashboard</li><li>Liturgia Básica</li></ul>}
+                                        {formData.tier === 'GOLD' && <ul className="list-disc pl-4 text-yellow-500"><li>Hasta {TIER_LIMITS.GOLD} Usuarios</li><li>Eventos Admin</li><li>Gestión de Turnos</li></ul>}
+                                        {formData.tier === 'PLATINUM' && <ul className="list-disc pl-4 text-indigo-400"><li>Usuarios Ilimitados</li><li>IA para Sermones</li><li>Traducción en Vivo</li></ul>}
+                                    </div>
                                 </div>
 
-                                <div className="mt-3 p-4 bg-slate-900/50 rounded-xl border border-slate-700 text-xs text-slate-400">
-                                    {formData.tier === 'BASIC' && <ul className="list-disc pl-4"><li>Hasta {TIER_LIMITS.BASIC} Usuarios</li><li>Dashboard</li><li>Liturgia Básica</li></ul>}
-                                    {formData.tier === 'GOLD' && <ul className="list-disc pl-4 text-yellow-500"><li>Hasta {TIER_LIMITS.GOLD} Usuarios</li><li>Eventos Admin</li><li>Gestión de Turnos</li></ul>}
-                                    {formData.tier === 'PLATINUM' && <ul className="list-disc pl-4 text-indigo-400"><li>Usuarios Ilimitados</li><li>IA para Sermones</li><li>Traducción en Vivo</li></ul>}
+                                <div className="flex gap-4 mt-8 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={handleCloseModal}
+                                        className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-colors shadow-lg shadow-indigo-900/20 flex justify-center gap-2 items-center"
+                                    >
+                                        {isLoading ? 'Procesando...' : <><LinkIcon size={16} /> Crear & Generar Enlace</>}
+                                    </button>
                                 </div>
-                            </div>
-
-                            <div className="flex gap-4 mt-8 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-colors shadow-lg shadow-indigo-900/20 flex justify-center gap-2 items-center"
-                                >
-                                    {isLoading ? 'Procesando...' : <><Mail size={16} /> Crear & Enviar</>}
-                                </button>
-                            </div>
-                        </form>
+                            </form>
+                        )}
                     </div>
                 </div>
             )}
