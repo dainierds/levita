@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChurchEvent } from '../types';
 import { Calendar, Heart, Globe, ArrowRight, Check, User } from 'lucide-react';
 import LiveTranslation from './LiveTranslation';
+import PrayerRequestModal from './PrayerRequestModal';
 
 interface VisitorAppProps {
   events: ChurchEvent[];
@@ -87,6 +88,7 @@ const getEmbedUrl = (url: string) => {
 
 const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPreacher = 'Por definir', initialLanguage, youtubeLiveUrl }) => {
   const [selectedLang, setSelectedLang] = useState<LanguageCode | null>(initialLanguage || null);
+  const [showPrayerModal, setShowPrayerModal] = useState(false);
 
   // If no language selected, show selection screen
   if (!selectedLang) {
@@ -229,12 +231,16 @@ const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPre
           <Heart className="mb-4 text-red-400 fill-red-400" size={32} />
           <h3 className="text-xl font-bold mb-2">{t.prayer_title}</h3>
           <p className="text-slate-400 text-sm mb-4">{t.prayer_desc}</p>
-          <button className="w-full py-3 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors">
+          <button
+            onClick={() => setShowPrayerModal(true)}
+            className="w-full py-3 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors"
+          >
             {t.connect_btn}
           </button>
         </div>
       </div>
 
+      {showPrayerModal && <PrayerRequestModal onClose={() => setShowPrayerModal(false)} />}
     </div>
   );
 };

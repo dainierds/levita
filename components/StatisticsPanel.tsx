@@ -131,50 +131,68 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ plans }) => {
         if (stats.durationTrend.length < 2) return <div className="h-full flex items-center justify-center text-slate-400 text-sm">Insuficientes datos</div>;
 
         const maxDuration = Math.max(...stats.durationTrend.map(d => d.duration)) * 1.2;
-        const points = stats.durationTrend.map((d, i) => {
+
+        const chartPoints = stats.durationTrend.map((d, i) => {
             const x = (i / (stats.durationTrend.length - 1)) * 100;
             const y = 100 - (d.duration / maxDuration) * 100;
-            return `${x},${y}`;
-        }).join(' ');
+            return { x, y, ...d };
+        });
+
+        // Create Path Command
+        const linePath = chartPoints.map((p, i) =>
+            `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
+        ).join(' ');
+
+        // Area Path (Close the loop)
+        const areaPath = `${linePath} L 100 100 L 0 100 Z`;
 
         return (
             <div className="relative h-40 w-full">
                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full overflow-visible">
+                    <defs>
+                        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.2" />
+                            <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+                        </linearGradient>
+                    </defs>
+
                     {/* Grid lines */}
-                    <line x1="0" y1="25" x2="100" y2="25" stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" />
-                    <line x1="0" y1="50" x2="100" y2="50" stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" />
-                    <line x1="0" y1="75" x2="100" y2="75" stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" />
+                    <line x1="0" y1="25" x2="100" y2="25" stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" />
+                    <line x1="0" y1="50" x2="100" y2="50" stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" />
+                    <line x1="0" y1="75" x2="100" y2="75" stroke="#f1f5f9" strokeWidth="0.5" strokeDasharray="2" />
+
+                    {/* Area */}
+                    <path d={areaPath} fill="url(#chartGradient)" />
 
                     {/* Line */}
-                    <polyline
+                    <path
+                        d={linePath}
                         fill="none"
-                        stroke="#6366f1"
-                        strokeWidth="2"
-                        points={points}
-                        className="drop-shadow-md"
+                        stroke="#8b5cf6"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="drop-shadow-sm"
                     />
+
                     {/* Points */}
-                    {stats.durationTrend.map((d, i) => {
-                        const x = (i / (stats.durationTrend.length - 1)) * 100;
-                        const y = 100 - (d.duration / maxDuration) * 100;
-                        return (
-                            <circle
-                                key={i}
-                                cx={x}
-                                cy={y}
-                                r="1.5"
-                                fill="#fff"
-                                stroke="#6366f1"
-                                strokeWidth="1"
-                                className="hover:r-2 transition-all"
-                            >
-                                <title>{d.date}: {d.duration} min</title>
-                            </circle>
-                        );
-                    })}
+                    {chartPoints.map((p, i) => (
+                        <circle
+                            key={i}
+                            cx={p.x}
+                            cy={p.y}
+                            r="2"
+                            fill="#fff"
+                            stroke="#8b5cf6"
+                            strokeWidth="1.5"
+                            className="hover:r-3 transition-all cursor-pointer"
+                        >
+                            <title>{p.date}: {p.duration} min</title>
+                        </circle>
+                    ))}
                 </svg>
                 {/* X Axis Labels */}
-                <div className="flex justify-between mt-2 text-[10px] text-slate-400">
+                <div className="flex justify-between mt-2 text-[10px] text-slate-400 font-medium">
                     {stats.durationTrend.map((d, i) => (
                         <span key={i}>{new Date(d.date).getDate()}</span>
                     ))}

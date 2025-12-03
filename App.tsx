@@ -26,6 +26,7 @@ import DbSeeder from './components/DbSeeder';
 import JoinPage from './pages/JoinPage';
 import TeamRoster from './components/TeamRoster';
 import SermonManager from './components/SermonManager';
+import PrayerRequestsAdmin from './components/PrayerRequestsAdmin';
 
 // Components acting as Pages
 import VisitorLanding from './pages/VisitorLanding';
