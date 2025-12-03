@@ -56,8 +56,12 @@ service cloud.firestore {
     match /tenants/{tenantId} {
       // Cualquiera autenticado puede leer la info básica de su iglesia (para config, nombre, etc)
       allow read: if true;
-      // Solo Super Admin puede crear o editar iglesias
-      allow write: if isSuperAdmin();
+      
+      // Super Admin puede todo. Admin puede editar SU propia iglesia.
+      allow write: if isSignedIn() && (
+        isSuperAdmin() ||
+        (isAdmin() && tenantId == getUserData().tenantId)
+      );
     }
 
     // 3. Colecciones de Datos de la Iglesia (Eventos, Canciones, etc.)
