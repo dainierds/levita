@@ -27,6 +27,11 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
     const [selectedPlanId, setSelectedPlanId] = useState<string>('');
     const [showTeamManager, setShowTeamManager] = useState(false);
 
+    // Local state for batch updates
+    const [draftTeam, setDraftTeam] = useState<any>(null);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
     // Auto-select first plan if available
     React.useEffect(() => {
         if (plans.length > 0 && !selectedPlanId) {
@@ -36,24 +41,47 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
 
     const selectedPlan = plans.find(p => p.id === selectedPlanId);
 
-    const handleTeamUpdate = async (roleKey: string, name: string) => {
-        if (!selectedPlan) return;
-        const updatedTeam = { ...selectedPlan.team, [roleKey]: name };
-        await savePlan({ ...selectedPlan, team: updatedTeam });
+    // Sync draft when selected plan changes
+    React.useEffect(() => {
+        if (selectedPlan) {
+            setDraftTeam(JSON.parse(JSON.stringify(selectedPlan.team))); // Deep copy
+            setHasChanges(false);
+        }
+    }, [selectedPlanId, plans]);
+
+    const handleTeamUpdate = (roleKey: string, name: string) => {
+        if (!draftTeam) return;
+        setDraftTeam({ ...draftTeam, [roleKey]: name });
+        setHasChanges(true);
     };
 
-    const applyTeamTemplate = async (team: ShiftTeam) => {
-        if (!selectedPlan) return;
-        if (!confirm(`¿Aplicar plantilla "${team.name}" a este servicio? Esto sobrescribirá las asignaciones actuales.`)) return;
+    const handleSave = async () => {
+        if (!selectedPlan || !draftTeam) return;
+        setIsSaving(true);
+        try {
+            await savePlan({ ...selectedPlan, team: draftTeam });
+            setHasChanges(false);
+        } catch (error) {
+            console.error(error);
+            alert("Error al guardar cambios");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const applyTeamTemplate = (team: ShiftTeam) => {
+        if (!draftTeam) return;
+        if (!confirm(`¿Aplicar plantilla "${team.name}"? (Recuerda guardar los cambios)`)) return;
 
         const updatedTeam = {
-            ...selectedPlan.team,
+            ...draftTeam,
             elder: team.members.elder || '',
             preacher: team.members.preacher || '',
             musicDirector: team.members.musicDirector || '',
             audioOperator: team.members.audioOperator || '',
         };
-        await savePlan({ ...selectedPlan, team: updatedTeam });
+        setDraftTeam(updatedTeam);
+        setHasChanges(true);
     };
 
     if (loading) {
@@ -71,14 +99,26 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                     <h2 className="text-3xl font-bold text-slate-800">Equipo de Turno</h2>
                     <p className="text-slate-500">Gestiona las asignaciones para los próximos servicios.</p>
                 </div>
-                {(role === 'ADMIN' || role === 'SUPER_ADMIN') && (
-                    <button
-                        onClick={() => setShowTeamManager(true)}
-                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
-                    >
-                        <Settings size={18} /> Gestionar Plantillas
-                    </button>
-                )}
+                <div className="flex gap-3">
+                    {hasChanges && (
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:scale-105 transition-all flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2"
+                        >
+                            {isSaving ? <Loader2 className="animate-spin" size={18} /> : <UsersIcon size={18} />}
+                            Guardar Cambios
+                        </button>
+                    )}
+                    {(role === 'ADMIN' || role === 'SUPER_ADMIN') && (
+                        <button
+                            onClick={() => setShowTeamManager(true)}
+                            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
+                        >
+                            <Settings size={18} /> Gestionar Plantillas
+                        </button>
+                    )}
+                </div>
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -89,7 +129,12 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                         {plans.map(plan => (
                             <button
                                 key={plan.id}
-                                onClick={() => setSelectedPlanId(plan.id)}
+                                onClick={() => {
+                                    if (hasChanges) {
+                                        if (!confirm("Tienes cambios sin guardar. ¿Deseas descartarlos?")) return;
+                                    }
+                                    setSelectedPlanId(plan.id);
+                                }}
                                 className={`w-full text-left p-4 rounded-2xl transition-all border ${selectedPlanId === plan.id
                                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-200'
                                     : 'bg-white text-slate-600 border-slate-100 hover:border-indigo-200 hover:bg-indigo-50'
@@ -117,8 +162,12 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
 
                 {/* Team Editor */}
                 <div className="lg:col-span-2">
-                    {selectedPlan ? (
-                        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                    {selectedPlan && draftTeam ? (
+                        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 relative overflow-hidden">
+                            {hasChanges && (
+                                <div className="absolute top-0 left-0 w-full h-1 bg-indigo-500 animate-pulse" />
+                            )}
+
                             <div className="flex justify-between items-start mb-8 pb-6 border-b border-slate-100">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
@@ -153,7 +202,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {ROLES_CONFIG.map(roleConfig => {
                                     const roleUsers = users.filter(u => u.role === roleConfig.role);
-                                    const currentValue = (selectedPlan.team as any)?.[roleConfig.key] || '';
+                                    const currentValue = draftTeam[roleConfig.key] || '';
 
                                     // Permission Logic
                                     const isEditable =
@@ -176,7 +225,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                                                 onChange={(e) => handleTeamUpdate(roleConfig.key, e.target.value)}
                                                 disabled={!isEditable}
                                                 className={`w-full px-4 py-3 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 text-sm font-medium text-slate-700 transition-all ${!isEditable ? 'bg-slate-100 cursor-not-allowed text-slate-500' : 'bg-white'
-                                                    }`}
+                                                    } ${hasChanges && draftTeam[roleConfig.key] !== (selectedPlan.team as any)[roleConfig.key] ? 'border-indigo-300 bg-indigo-50/30' : ''}`}
                                             >
                                                 <option value="">Sin asignar</option>
                                                 {roleUsers.map(u => (
