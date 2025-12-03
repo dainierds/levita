@@ -34,6 +34,7 @@ const VisitorLanding: React.FC = () => {
     const [selectedLang, setSelectedLang] = useState<string>('es');
     const [showMemberLogin, setShowMemberLogin] = useState(false);
     const [settings, setSettings] = useState<ChurchSettings | null>(null);
+    const [tenantId, setTenantId] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         const fetchPublicSettings = async () => {
@@ -41,8 +42,9 @@ const VisitorLanding: React.FC = () => {
                 const q = query(collection(db, 'tenants'), limit(1));
                 const snapshot = await getDocs(q);
                 if (!snapshot.empty) {
-                    const tenantId = snapshot.docs[0].id;
-                    const settingsDoc = await getDoc(doc(db, 'churchSettings', tenantId));
+                    const tid = snapshot.docs[0].id;
+                    setTenantId(tid);
+                    const settingsDoc = await getDoc(doc(db, 'churchSettings', tid));
                     if (settingsDoc.exists()) {
                         setSettings(settingsDoc.data() as ChurchSettings);
                     }
@@ -158,7 +160,7 @@ const VisitorLanding: React.FC = () => {
                         Volver / Back
                     </button>
                 </div>
-                {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} />}
+                {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} initialTenantId={tenantId} initialChurchName={settings?.churchName} />}
             </div>
         );
     }
@@ -172,7 +174,7 @@ const VisitorLanding: React.FC = () => {
                 initialLanguage={selectedLang as any}
                 youtubeLiveUrl={settings?.youtubeLiveUrl}
             />
-            {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} />}
+            {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} initialTenantId={tenantId} initialChurchName={settings?.churchName} />}
         </div>
     );
 };

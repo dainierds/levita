@@ -7,16 +7,18 @@ import { useNavigate } from 'react-router-dom';
 
 interface MemberLoginModalProps {
     onClose: () => void;
+    initialTenantId?: string;
+    initialChurchName?: string;
 }
 
-const MemberLoginModal: React.FC<MemberLoginModalProps> = ({ onClose }) => {
+const MemberLoginModal: React.FC<MemberLoginModalProps> = ({ onClose, initialTenantId, initialChurchName }) => {
     const { loginAsMember } = useAuth();
     const navigate = useNavigate();
 
-    const [step, setStep] = useState<'search' | 'pin'>('search');
+    const [step, setStep] = useState<'search' | 'pin'>(initialTenantId ? 'pin' : 'search');
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [selectedChurch, setSelectedChurch] = useState<any>(null);
+    const [selectedChurch, setSelectedChurch] = useState<any>(initialTenantId ? { id: initialTenantId, name: initialChurchName || 'Tu Iglesia' } : null);
     const [pin, setPin] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
