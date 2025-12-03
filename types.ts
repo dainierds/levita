@@ -90,6 +90,7 @@ export interface ChurchSettings {
   rosterAutoNotifications: boolean;
   memberPin?: string; // PIN for member access
   teams?: ShiftTeam[];
+  activeTeamId?: string;
 }
 
 export interface ShiftTeam {
