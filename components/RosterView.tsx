@@ -58,11 +58,15 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     const serviceDates = getServiceDaysInMonth();
 
     // --- Helper to get assigned person for a specific date and role ---
-    const getAssignment = (date: Date, roleKey: string) => {
-        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD matches plan date format roughly or simplified
-        const localDateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD
+    const getPlanForDate = (date: Date) => {
+        const localDateStr = date.toLocaleDateString('en-CA');
+        const dayPlans = plans.filter(p => p.date === localDateStr);
+        if (dayPlans.length === 0) return null;
+        return dayPlans.find(p => p.isActive) || dayPlans[0];
+    };
 
-        const plan = plans.find(p => p.date === localDateStr);
+    const getAssignment = (date: Date, roleKey: string) => {
+        const plan = getPlanForDate(date);
         if (!plan) return null;
         return (plan.team as any)[roleKey];
     };
@@ -127,7 +131,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
     const applyTeam = async (date: Date, team: ShiftTeam) => {
         const localDateStr = date.toLocaleDateString('en-CA');
-        const existingPlan = plans.find(p => p.date === localDateStr);
+        const existingPlan = getPlanForDate(date);
 
         let planToSave: ServicePlan;
 
@@ -172,7 +176,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
     const updateAssignment = async (date: Date, roleKey: string, name: string) => {
         const localDateStr = date.toLocaleDateString('en-CA');
-        const existingPlan = plans.find(p => p.date === localDateStr);
+        const existingPlan = getPlanForDate(date);
 
         let planToSave: ServicePlan;
 
