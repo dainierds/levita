@@ -4,8 +4,14 @@ import { usePlans } from '../hooks/usePlans';
 import { User } from '../types';
 import { UserCheck, Calendar, Mic2, Music, Mic, Loader2, Users } from 'lucide-react';
 
+import TeamManager from './TeamManager';
+import { ChurchSettings, ShiftTeam } from '../types';
+import { Settings, Users as UsersIcon } from 'lucide-react';
+
 interface TeamRosterProps {
     users: User[];
+    settings: ChurchSettings;
+    onSaveSettings: (settings: ChurchSettings) => Promise<void>;
 }
 
 const ROLES_CONFIG = [
@@ -15,10 +21,11 @@ const ROLES_CONFIG = [
     { key: 'audioOperator', label: 'Operador de Audio', icon: Mic, color: 'text-orange-500 bg-orange-50', role: 'AUDIO' },
 ];
 
-const TeamRoster: React.FC<TeamRosterProps> = ({ users }) => {
+const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings }) => {
     const { plans, loading, savePlan } = usePlans();
     const { role } = useAuth();
     const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+    const [showTeamManager, setShowTeamManager] = useState(false);
 
     // Auto-select first plan if available
     React.useEffect(() => {
@@ -35,6 +42,20 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users }) => {
         await savePlan({ ...selectedPlan, team: updatedTeam });
     };
 
+    const applyTeamTemplate = async (team: ShiftTeam) => {
+        if (!selectedPlan) return;
+        if (!confirm(`¿Aplicar plantilla "${team.name}" a este servicio? Esto sobrescribirá las asignaciones actuales.`)) return;
+
+        const updatedTeam = {
+            ...selectedPlan.team,
+            elder: team.members.elder || '',
+            preacher: team.members.preacher || '',
+            musicDirector: team.members.musicDirector || '',
+            audioOperator: team.members.audioOperator || '',
+        };
+        await savePlan({ ...selectedPlan, team: updatedTeam });
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -45,9 +66,19 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users }) => {
 
     return (
         <div className="p-4 md:p-8 space-y-8 max-w-full mx-auto">
-            <header>
-                <h2 className="text-3xl font-bold text-slate-800">Equipo de Turno</h2>
-                <p className="text-slate-500">Gestiona las asignaciones para los próximos servicios.</p>
+            <header className="flex justify-between items-center">
+                <div>
+                    <h2 className="text-3xl font-bold text-slate-800">Equipo de Turno</h2>
+                    <p className="text-slate-500">Gestiona las asignaciones para los próximos servicios.</p>
+                </div>
+                {(role === 'ADMIN' || role === 'SUPER_ADMIN') && (
+                    <button
+                        onClick={() => setShowTeamManager(true)}
+                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
+                    >
+                        <Settings size={18} /> Gestionar Plantillas
+                    </button>
+                )}
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -88,14 +119,35 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users }) => {
                 <div className="lg:col-span-2">
                     {selectedPlan ? (
                         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                            <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-100">
-                                <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
-                                    <Users size={24} />
+                            <div className="flex justify-between items-start mb-8 pb-6 border-b border-slate-100">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
+                                        <Users size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-slate-800">Asignaciones</h3>
+                                        <p className="text-slate-500">Editando equipo para: <span className="font-semibold text-indigo-600">{selectedPlan.title}</span></p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold text-slate-800">Asignaciones</h3>
-                                    <p className="text-slate-500">Editando equipo para: <span className="font-semibold text-indigo-600">{selectedPlan.title}</span></p>
-                                </div>
+
+                                {/* Quick Template Apply */}
+                                {(settings.teams && settings.teams.length > 0) && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-slate-400 uppercase">Cargar Plantilla:</span>
+                                        <div className="flex gap-1">
+                                            {settings.teams.map(team => (
+                                                <button
+                                                    key={team.id}
+                                                    onClick={() => applyTeamTemplate(team)}
+                                                    className="px-3 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 text-xs font-bold rounded-lg transition-colors border border-slate-200"
+                                                    title={`Cargar ${team.name}`}
+                                                >
+                                                    {team.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -147,6 +199,15 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users }) => {
                     )}
                 </div>
             </div>
+
+            {showTeamManager && (
+                <TeamManager
+                    settings={settings}
+                    users={users}
+                    onSave={onSaveSettings}
+                    onClose={() => setShowTeamManager(false)}
+                />
+            )}
         </div>
     );
 };

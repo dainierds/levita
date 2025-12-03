@@ -247,7 +247,11 @@ const ProtectedApp: React.FC = () => {
           )}
 
           {currentView === 'team' && (
-            <TeamRoster users={users} />
+            <TeamRoster
+              users={users}
+              settings={settings}
+              onSaveSettings={handleSaveSettings}
+            />
           )}
 
           {currentView === 'sermons' && (
