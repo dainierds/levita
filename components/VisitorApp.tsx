@@ -145,11 +145,11 @@ const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPre
           <p className="text-xs text-slate-400 font-medium">Comunidad de Fe</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setSelectedLang(null)} className="text-xs font-bold text-slate-300 hover:text-indigo-600 flex items-center gap-1">
-            {SUPPORTED_LANGUAGES.find(l => l.code === selectedLang)?.flag} {selectedLang.toUpperCase()}
-          </button>
-          <button onClick={onLoginRequest} className="text-sm font-bold text-slate-300 hover:text-indigo-600">
-            {t.member_btn}
+          <button
+            onClick={() => setSelectedLang(null)}
+            className="px-3 py-1 bg-red-50 text-red-500 rounded-full text-xs font-bold hover:bg-red-100 transition-colors"
+          >
+            Salir
           </button>
         </div>
       </div>
