@@ -229,6 +229,7 @@ const ProtectedApp: React.FC = () => {
               savePlan={savePlan}
               settings={settings}
               users={users}
+              onSaveSettings={handleSaveSettings}
             />
           )}
 

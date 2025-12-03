@@ -170,6 +170,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN' })
           <div className="card-soft p-6 h-full">
             <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
               <UserCheck size={18} className="text-indigo-500" /> Equipo Oficial
+              {activePlan?.team.teamName && (
+                <span className="ml-auto text-xs bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full uppercase tracking-wider">
+                  {activePlan.team.teamName}
+                </span>
+              )}
             </h3>
 
             {activePlan ? (

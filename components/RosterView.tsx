@@ -1,15 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ServicePlan, ChurchSettings, DayOfWeek, User, Role } from '../types';
-import { User as UserIcon, Mic2, Music, Mic, Sparkles, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
+import { ServicePlan, ChurchSettings, DayOfWeek, User, Role, ShiftTeam } from '../types';
+import { User as UserIcon, Mic2, Music, Mic, Sparkles, ChevronLeft, ChevronRight, GripVertical, Users, Settings } from 'lucide-react';
 import { useNotification } from './NotificationSystem';
+import TeamManager from './TeamManager';
 
 interface RosterViewProps {
     plans: ServicePlan[];
     savePlan: (plan: ServicePlan) => Promise<any>;
     settings: ChurchSettings;
     users: User[];
+    onSaveSettings: (settings: ChurchSettings) => Promise<void>;
 }
 
 const ROLES_CONFIG = [
@@ -17,13 +19,15 @@ const ROLES_CONFIG = [
     { key: 'preacher', roleType: 'PREACHER' as Role, label: 'Predicadores', icon: Mic2, color: 'bg-violet-50 text-violet-600', border: 'border-violet-100' },
     { key: 'musicDirector', roleType: 'MUSIC' as Role, label: 'Música', icon: Music, color: 'bg-pink-50 text-pink-600', border: 'border-pink-100' },
     { key: 'audioOperator', roleType: 'AUDIO' as Role, label: 'Audio', icon: Mic, color: 'bg-orange-50 text-orange-600', border: 'border-orange-100' },
+    { key: 'teams', roleType: 'TEAM' as any, label: 'Equipos', icon: Users, color: 'bg-indigo-50 text-indigo-600', border: 'border-indigo-100' },
 ];
 
-const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, users }) => {
+const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, users, onSaveSettings }) => {
     const { addNotification } = useNotification();
     const [currentDate, setCurrentDate] = useState(new Date());
     const { role, user } = useAuth();
     const [selectedRoleTab, setSelectedRoleTab] = useState('elder');
+    const [showTeamManager, setShowTeamManager] = useState(false);
 
     // Permission Logic
     const canEdit = role === 'ADMIN' || role === 'SUPER_ADMIN' || (role === 'ELDER' && selectedRoleTab === 'elder');
@@ -64,14 +68,23 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     };
 
     // --- Drag & Drop Handlers ---
-    const handleDragStart = (e: React.DragEvent, user: User) => {
+    const handleDragStart = (e: React.DragEvent, item: User | ShiftTeam, type: 'USER' | 'TEAM') => {
         if (!canEdit) return; // Prevent drag if not allowed
-        e.dataTransfer.setData('userId', user.id);
-        e.dataTransfer.setData('userName', user.name);
-        // Determine the mapped key for the user's role
-        const config = ROLES_CONFIG.find(r => r.roleType === user.role);
-        if (config) {
-            e.dataTransfer.setData('roleKey', config.key);
+        e.dataTransfer.setData('type', type);
+
+        if (type === 'USER') {
+            const user = item as User;
+            e.dataTransfer.setData('userId', user.id);
+            e.dataTransfer.setData('userName', user.name);
+            // Determine the mapped key for the user's role
+            const config = ROLES_CONFIG.find(r => r.roleType === user.role);
+            if (config) {
+                e.dataTransfer.setData('roleKey', config.key);
+            }
+        } else {
+            const team = item as ShiftTeam;
+            e.dataTransfer.setData('teamId', team.id);
+            e.dataTransfer.setData('teamData', JSON.stringify(team));
         }
         e.dataTransfer.effectAllowed = 'copy';
     };
@@ -85,7 +98,22 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     const handleDrop = (e: React.DragEvent, date: Date, targetRoleKey: string) => {
         if (!canEdit) return;
         e.preventDefault();
-        // ... (rest of drop logic)
+
+        const type = e.dataTransfer.getData('type');
+
+        if (type === 'TEAM') {
+            if (targetRoleKey !== 'teams') {
+                // Allow dropping team anywhere? Or only when tab is Teams?
+                // Ideally, if tab is Teams, we drop entire team.
+                // If tab is specific role, we shouldn't drop a team?
+                // Let's assume we can only drop team when tab is 'teams'.
+            }
+            const teamData = JSON.parse(e.dataTransfer.getData('teamData')) as ShiftTeam;
+            applyTeam(date, teamData);
+            return;
+        }
+
+        // User Drop Logic
         const volName = e.dataTransfer.getData('userName');
         const droppedRoleKey = e.dataTransfer.getData('roleKey');
 
@@ -95,6 +123,51 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         }
 
         updateAssignment(date, targetRoleKey, volName);
+    };
+
+    const applyTeam = async (date: Date, team: ShiftTeam) => {
+        const localDateStr = date.toLocaleDateString('en-CA');
+        const existingPlan = plans.find(p => p.date === localDateStr);
+
+        let planToSave: ServicePlan;
+
+        // Merge team members into existing team or new team
+        const newTeamMembers = {
+            elder: team.members.elder || '',
+            preacher: team.members.preacher || '',
+            musicDirector: team.members.musicDirector || '',
+            audioOperator: team.members.audioOperator || '',
+            teamName: team.name
+        };
+
+        if (existingPlan) {
+            planToSave = {
+                ...existingPlan,
+                team: {
+                    ...existingPlan.team,
+                    ...newTeamMembers
+                }
+            };
+        } else {
+            planToSave = {
+                id: `auto-${Math.random().toString(36).substr(2, 9)}`,
+                title: `Servicio ${localDateStr}`,
+                date: localDateStr,
+                startTime: settings.meetingTimes[date.toLocaleDateString('es-ES', { weekday: 'long' }) as DayOfWeek] || '10:00',
+                isActive: false,
+                items: [],
+                tenantId: user?.tenantId,
+                team: newTeamMembers
+            };
+        }
+
+        try {
+            await savePlan(planToSave);
+            addNotification('success', 'Equipo Asignado', `Se asignó el ${team.name}.`);
+        } catch (error) {
+            console.error(error);
+            addNotification('error', 'Error', 'No se pudo asignar el equipo.');
+        }
     };
 
     const updateAssignment = async (date: Date, roleKey: string, name: string) => {
@@ -140,8 +213,8 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     const handleAutoAssign = async () => {
         const targetRoleConfig = ROLES_CONFIG.find(r => r.key === selectedRoleTab);
 
-        if (!targetRoleConfig) {
-            addNotification('error', 'Error', 'Selecciona una pestaña de rol válida.');
+        if (!targetRoleConfig || targetRoleConfig.key === 'teams') {
+            addNotification('error', 'Error', 'Selecciona un rol específico para auto-asignar (no Equipos).');
             return;
         }
 
@@ -150,9 +223,54 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         let updatesCount = 0;
         const promises: Promise<any>[] = [];
 
+        // Track locally modified plans to prevent duplicates during this batch
+        const batchPlans = [...plans];
+
+        // Helper to find candidate with least assignments
+        const getBestCandidate = (candidates: User[], roleKey: string) => {
+            if (candidates.length === 0) return null;
+
+            // Count assignments in the last 60 days
+            const usageCount: Record<string, number> = {};
+            candidates.forEach(c => usageCount[c.id] = 0);
+
+            const twoMonthsAgo = new Date();
+            twoMonthsAgo.setDate(twoMonthsAgo.getDate() - 60);
+
+            plans.forEach(p => {
+                if (new Date(p.date) >= twoMonthsAgo) {
+                    const assignedName = (p.team as any)[roleKey];
+                    if (assignedName) {
+                        const user = candidates.find(c => c.name === assignedName);
+                        if (user) usageCount[user.id]++;
+                    }
+                }
+            });
+
+            // Also count assignments in the CURRENT batch to balance this month
+            batchPlans.forEach(p => {
+                const assignedName = (p.team as any)[roleKey];
+                if (assignedName) {
+                    const user = candidates.find(c => c.name === assignedName);
+                    if (user) usageCount[user.id]++;
+                }
+            });
+
+            // Sort by usage (asc) -> random
+            const sorted = [...candidates].sort((a, b) => {
+                const countDiff = usageCount[a.id] - usageCount[b.id];
+                if (countDiff !== 0) return countDiff;
+                return Math.random() - 0.5;
+            });
+
+            return sorted[0];
+        };
+
         for (const date of serviceDates) {
             const localDateStr = date.toLocaleDateString('en-CA');
-            let plan = plans.find(p => p.date === localDateStr);
+
+            // Check in batchPlans first (which starts as copy of plans)
+            let plan = batchPlans.find(p => p.date === localDateStr);
 
             // If plan doesn't exist, create scaffold
             if (!plan) {
@@ -160,12 +278,13 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                     id: `auto-${Math.random().toString(36).substr(2, 9)}`,
                     title: `Servicio ${localDateStr}`,
                     date: localDateStr,
-                    startTime: '10:00',
+                    startTime: settings.meetingTimes[date.toLocaleDateString('es-ES', { weekday: 'long' }) as DayOfWeek] || '10:00',
                     isActive: false,
                     items: [],
                     tenantId: user?.tenantId,
                     team: { elder: '', preacher: '', musicDirector: '', audioOperator: '' }
                 };
+                batchPlans.push(plan); // Add to batch so next iteration sees it
             }
 
             const roleKey = targetRoleConfig.key as keyof typeof plan.team;
@@ -175,17 +294,21 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                 // Find candidates specifically for this role
                 const candidates = users.filter(u => u.role === targetRoleConfig.roleType);
 
-                if (candidates.length > 0) {
-                    const randomUser = candidates[Math.floor(Math.random() * candidates.length)];
+                const bestCandidate = getBestCandidate(candidates, roleKey);
 
+                if (bestCandidate) {
                     // Create a new object to save
                     const updatedPlan = {
                         ...plan,
                         team: {
                             ...plan.team,
-                            [roleKey]: randomUser.name
+                            [roleKey]: bestCandidate.name
                         }
                     };
+
+                    // Update batchPlans
+                    const idx = batchPlans.findIndex(p => p.id === plan!.id);
+                    if (idx >= 0) batchPlans[idx] = updatedPlan;
 
                     promises.push(savePlan(updatedPlan));
                     updatesCount++;
@@ -196,7 +319,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         try {
             await Promise.all(promises);
             if (updatesCount > 0) {
-                addNotification('success', 'Completado', `Se asignaron ${updatesCount} turnos de ${targetRoleConfig.label}.`);
+                addNotification('success', 'Completado', `Se asignaron ${updatesCount} turnos de ${targetRoleConfig.label} equitativamente.`);
             } else {
                 addNotification('info', 'Sin cambios', `No habían espacios vacíos de ${targetRoleConfig.label} o no hay voluntarios disponibles.`);
             }
@@ -215,8 +338,9 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     const currentRoleConfig = ROLES_CONFIG.find(r => r.key === selectedRoleTab);
 
     // Filter users based on selected Tab
-    // currentRoleConfig.roleType is what we need to match against user.role
-    const availableVolunteers = users.filter(u => u.role === currentRoleConfig?.roleType);
+    const availableItems = selectedRoleTab === 'teams'
+        ? (settings.teams || [])
+        : users.filter(u => u.role === currentRoleConfig?.roleType);
 
     return (
         <div className="p-4 md:p-8 max-w-full mx-auto space-y-1 h-screen flex flex-col overflow-hidden pb-4">
@@ -229,6 +353,14 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                     <h2 className="text-3xl font-bold text-slate-800">Itinerario de Turnos</h2>
                     <p className="text-slate-500">Arrastra y asigna roles a los servicios del calendario.</p>
                 </div>
+                {canEdit && (
+                    <button
+                        onClick={() => setShowTeamManager(true)}
+                        className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
+                    >
+                        <Settings size={18} /> Gestionar Equipos
+                    </button>
+                )}
             </div>
 
             {/* Role Tabs */}
@@ -258,28 +390,35 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                         <p className="text-xs text-slate-400">Arrastra al calendario</p>
                     </div>
                     <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
-                        {availableVolunteers.length > 0 ? (
-                            availableVolunteers.map(vol => (
-                                <div
-                                    key={vol.id}
-                                    draggable={canEdit}
-                                    onDragStart={(e) => handleDragStart(e, vol)}
-                                    className={`bg-slate-50 border border-slate-100 p-4 rounded-2xl transition-all group flex items-center justify-between ${canEdit ? 'hover:bg-white cursor-grab active:cursor-grabbing hover:shadow-md' : 'opacity-60 cursor-not-allowed'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${currentRoleConfig?.color.replace('text-', 'bg-').split(' ')[0]} text-white`}>
-                                            {vol.name.charAt(0)}
+                        {availableItems.length > 0 ? (
+                            availableItems.map(item => {
+                                const isTeam = selectedRoleTab === 'teams';
+                                const team = item as ShiftTeam;
+                                const user = item as User;
+
+                                return (
+                                    <div
+                                        key={isTeam ? team.id : user.id}
+                                        draggable={canEdit}
+                                        onDragStart={(e) => handleDragStart(e, item, isTeam ? 'TEAM' : 'USER')}
+                                        className={`bg-slate-50 border border-slate-100 p-4 rounded-2xl transition-all group flex items-center justify-between ${canEdit ? 'hover:bg-white cursor-grab active:cursor-grabbing hover:shadow-md' : 'opacity-60 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${currentRoleConfig?.color.replace('text-', 'bg-').split(' ')[0]} text-white`}>
+                                                {isTeam ? <Users size={14} /> : user.name.charAt(0)}
+                                            </div>
+                                            <span className="text-sm font-bold text-slate-700">{isTeam ? team.name : user.name}</span>
                                         </div>
-                                        <span className="text-sm font-bold text-slate-700">{vol.name}</span>
+                                        {canEdit && <GripVertical size={16} className="text-slate-300 group-hover:text-slate-400" />}
                                     </div>
-                                    {canEdit && <GripVertical size={16} className="text-slate-300 group-hover:text-slate-400" />}
-                                </div>
-                            ))
+                                );
+                            })
                         ) : (
                             <div className="text-center p-4 text-xs text-slate-400">
-                                No hay usuarios con el rol <span className="font-bold">{currentRoleConfig?.label}</span>.
-                                <br />Ve a Gestión de Usuarios para crearlos.
+                                No hay {selectedRoleTab === 'teams' ? 'equipos' : 'usuarios'} disponibles.
+                                <br />
+                                {selectedRoleTab === 'teams' ? 'Crea uno en Gestionar Equipos.' : 'Ve a Gestión de Usuarios.'}
                             </div>
                         )}
                     </div>
@@ -298,18 +437,13 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                             <button className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 rounded-xl border border-slate-200">
                                 Historial
                             </button>
-                            {canEdit && (
-                                <>
-                                    <button
-                                        onClick={handleAutoAssign}
-                                        className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center gap-2"
-                                    >
-                                        <Sparkles size={14} /> Auto Asignar {currentRoleConfig?.label}
-                                    </button>
-                                    <button className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200">
-                                        + Asignar Manual
-                                    </button>
-                                </>
+                            {canEdit && selectedRoleTab !== 'teams' && (
+                                <button
+                                    onClick={handleAutoAssign}
+                                    className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center gap-2"
+                                >
+                                    <Sparkles size={14} /> Auto Asignar {currentRoleConfig?.label}
+                                </button>
                             )}
                         </div>
                     </div>
@@ -334,13 +468,26 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                                 onDrop={(e) => handleDrop(e, date, selectedRoleTab)}
                                                 className={`
                                             h-32 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-2
-                                            ${getAssignment(date, selectedRoleTab)
+                                            ${(selectedRoleTab !== 'teams' && getAssignment(date, selectedRoleTab))
                                                         ? 'border-indigo-200 bg-indigo-50/30'
                                                         : canEdit ? 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50' : 'border-slate-100 bg-slate-50/50'
                                                     }
                                         `}
                                             >
-                                                {getAssignment(date, selectedRoleTab) ? (
+                                                {selectedRoleTab === 'teams' ? (
+                                                    <div className="text-center p-2">
+                                                        <p className="text-xs text-slate-400 mb-2">Arrastra un equipo para asignar todos los roles.</p>
+                                                        {/* Preview current assignments */}
+                                                        <div className="flex gap-1 justify-center">
+                                                            {['elder', 'preacher', 'musicDirector', 'audioOperator'].map(r => {
+                                                                const val = getAssignment(date, r);
+                                                                return val ? (
+                                                                    <div key={r} className="w-2 h-2 rounded-full bg-indigo-400" title={`${r}: ${val}`} />
+                                                                ) : null;
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                ) : getAssignment(date, selectedRoleTab) ? (
                                                     <>
                                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold shadow-sm ${currentRoleConfig?.color.replace('text-', 'bg-').split(' ')[0]} text-white`}>
                                                             {getAssignment(date, selectedRoleTab)?.charAt(0)}
@@ -376,6 +523,15 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                 </div>
 
             </div>
+
+            {showTeamManager && (
+                <TeamManager
+                    settings={settings}
+                    users={users}
+                    onSave={onSaveSettings}
+                    onClose={() => setShowTeamManager(false)}
+                />
+            )}
         </div>
     );
 };

@@ -46,6 +46,7 @@ export interface ServiceTeam {
   preacher: string;
   musicDirector: string;
   audioOperator: string;
+  teamName?: string;
 }
 
 export interface ServicePlan {
@@ -87,6 +88,13 @@ export interface ChurchSettings {
   rosterDays: DayOfWeek[];
   rosterAutoNotifications: boolean;
   memberPin?: string; // PIN for member access
+  teams?: ShiftTeam[];
+}
+
+export interface ShiftTeam {
+  id: string;
+  name: string;
+  members: Partial<ServiceTeam>;
 }
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
