@@ -24,7 +24,10 @@ service cloud.firestore {
       return isSignedIn() && (getUserData().tenantId == resourceTenantId || isSuperAdmin());
     }
 
-    // --- Reglas por Colección ---
+    // Verifica si es Admin de su iglesia
+    function isAdmin() {
+      return isSignedIn() && getUserData().role == 'ADMIN';
+    }
 
     // 1. Colección de Usuarios (Perfiles)
     match /users/{userId} {
@@ -36,8 +39,17 @@ service cloud.firestore {
         (resource.data.tenantId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId)
       );
       
-      // Solo el usuario o Super Admin pueden editar el perfil
-      allow write: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+      // Solo el usuario, Super Admin o Admin de la misma iglesia pueden editar
+      allow write: if isSignedIn() && (
+        request.auth.uid == userId || 
+        isSuperAdmin() ||
+        (isAdmin() && (
+          // Create:
+          (resource == null && request.resource.data.tenantId == getUserData().tenantId) ||
+          // Update/Delete:
+          (resource != null && resource.data.tenantId == getUserData().tenantId)
+        ))
+      );
     }
 
     // 2. Colección de Tenants (Iglesias)
