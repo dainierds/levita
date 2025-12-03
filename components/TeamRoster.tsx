@@ -65,7 +65,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
     }
 
     return (
-        <div className="p-4 md:p-8 space-y-8 max-w-full mx-auto">
+        <div className="p-4 md:p-8 md:pt-24 space-y-8 max-w-full mx-auto">
             <header className="flex justify-between items-center">
                 <div>
                     <h2 className="text-3xl font-bold text-slate-800">Equipo de Turno</h2>
