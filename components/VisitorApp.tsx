@@ -119,28 +119,58 @@ const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPre
     .slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] md:max-w-md md:mx-auto md:shadow-2xl md:my-8 md:rounded-[3rem] overflow-hidden relative pb-20">
+    <div className="min-h-screen bg-white md:max-w-md md:mx-auto md:shadow-2xl md:my-8 md:rounded-[3rem] overflow-hidden relative pb-20">
 
-      {/* Welcome Header */}
-      <div className="bg-white rounded-b-[2.5rem] shadow-sm p-8 pb-10">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <span className="text-xs font-bold text-indigo-500 tracking-wider uppercase">{t.welcome_label}</span>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tighter">LEVITA</h1>
-          </div>
+      {/* Header */}
+      <div className="px-6 pt-12 pb-6 flex justify-between items-center bg-white sticky top-0 z-10">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tighter">LEVITA</h1>
+          <p className="text-xs text-slate-400 font-medium">Comunidad de Fe</p>
+        </div>
+        <div className="flex items-center gap-3">
           <button onClick={() => setSelectedLang(null)} className="text-xs font-bold text-slate-300 hover:text-indigo-600 flex items-center gap-1">
             {SUPPORTED_LANGUAGES.find(l => l.code === selectedLang)?.flag} {selectedLang.toUpperCase()}
           </button>
+          <button onClick={onLoginRequest} className="text-sm font-bold text-slate-300 hover:text-indigo-600">
+            {t.member_btn}
+          </button>
         </div>
-        <p className="text-slate-500 leading-relaxed font-medium">
-          {t.intro}
-        </p>
       </div>
 
-      <div className="p-6 space-y-8 h-[calc(100vh-250px)] overflow-y-auto no-scrollbar pb-24">
+      <div className="px-6 space-y-8 overflow-y-auto pb-24 h-[calc(100vh-100px)] no-scrollbar">
 
-        {/* Translation Widget (Auto-configured to selected language) */}
+        {/* Live Stream / YouTube Embed */}
+        <div className="w-full bg-black rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-300 aspect-video relative">
+          <iframe
+            width="100%"
+            height="100%"
+            src="https://www.youtube.com/embed/live_stream?channel=UCjaxadventista7morenacersda63"
+            title="Live Service"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
+
+          {/* Live Indicator (Mock logic as we don't have activePlan here yet) */}
+          <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            <span className="text-[10px] font-bold text-white tracking-wider">EN VIVO</span>
+          </div>
+        </div>
+
+        {/* Translation Widget */}
         <section>
+          <div className="flex items-center justify-between mb-2 px-2">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+              <Globe size={18} className="text-indigo-500" /> Traducción en Vivo
+            </h3>
+            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full">
+              Silencia el video para escuchar
+            </span>
+          </div>
           <LiveTranslation initialLanguage={selectedLang} />
         </section>
 
@@ -150,14 +180,14 @@ const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPre
             <User size={24} />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Next Preacher</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Próximo Predicador</p>
             <h3 className="text-lg font-bold text-slate-800">{nextPreacher}</h3>
           </div>
         </div>
 
-        {/* Next Steps / Events */}
+        {/* Upcoming Events */}
         <section>
-          <h3 className="text-lg font-bold text-slate-800 mb-4 px-2 flex items-center gap-2">
+          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
             <Calendar size={18} className="text-pink-500" /> {t.upcoming}
           </h3>
           <div className="space-y-3">
@@ -173,6 +203,9 @@ const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPre
                 </div>
               </div>
             ))}
+            {upcomingEvents.length === 0 && (
+              <div className="w-full text-center text-slate-400 italic py-4">No hay eventos próximos.</div>
+            )}
           </div>
         </section>
 
@@ -185,10 +218,6 @@ const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPre
             {t.connect_btn}
           </button>
         </div>
-
-        <button onClick={onLoginRequest} className="w-full py-4 text-center text-xs font-bold text-slate-300 hover:text-indigo-600">
-          {t.member_btn}
-        </button>
       </div>
 
     </div>

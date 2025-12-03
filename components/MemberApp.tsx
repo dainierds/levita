@@ -9,9 +9,10 @@ interface MemberAppProps {
   events: ChurchEvent[];
   onLoginRequest: () => void;
   nextPreacher?: string;
+  address?: string;
 }
 
-const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginRequest, nextPreacher = 'Por definir' }) => {
+const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginRequest, nextPreacher = 'Por definir', address }) => {
   // Filter events for members (Public + Members Only)
   const activeEvents = events.filter(e => e.activeInBanner && (e.targetAudience === 'PUBLIC' || e.targetAudience === 'MEMBERS_ONLY'));
 
@@ -79,6 +80,25 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
             </div>
           )}
         </div>
+
+        {/* Address Card */}
+        {address && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-3 hover:bg-slate-100 transition-colors"
+          >
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 shadow-sm">
+              <MapPin size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-bold text-slate-400 uppercase">Ubicación</p>
+              <p className="font-bold text-slate-700 line-clamp-1">{address}</p>
+            </div>
+            <ChevronRight size={16} className="text-slate-300" />
+          </a>
+        )}
 
         {/* Read-Only Service Plan */}
         <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100">

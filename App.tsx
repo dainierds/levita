@@ -85,17 +85,36 @@ const ProtectedApp: React.FC = () => {
   const nextPreacher = nextPlan?.team.preacher || 'Por definir';
 
   // Redirect logic for restricted roles
+  // Redirect logic for restricted roles
+  // Removed MUSIC and PREACHER redirect as they now have no interface access.
   useEffect(() => {
-    // ELDER is allowed in Dashboard, so we remove it from here.
-    if (role === 'MUSIC' || role === 'PREACHER') {
-      if (currentView === 'dashboard' || currentView === 'events') {
-        setCurrentView('planner');
-      }
-    }
+    // ELDER is allowed in Dashboard.
   }, [role, currentView]);
 
   if (!user) {
     return <Navigate to="/portal" replace />;
+  }
+
+  // 0. NO INTERFACE ROLES
+  if (role === 'MUSIC' || role === 'PREACHER') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 text-center">
+        <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
+          <Shield size={32} />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-800 mb-2">Acceso Restringido</h1>
+        <p className="text-slate-500 mb-6 max-w-md">
+          Este rol no tiene acceso a la plataforma administrativa.
+          Si crees que es un error, contacta a tu administrador.
+        </p>
+        <button
+          onClick={logout}
+          className="px-6 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors"
+        >
+          Cerrar Sesión
+        </button>
+      </div>
+    );
   }
 
   // 1.5 AUDIO View
@@ -121,6 +140,7 @@ const ProtectedApp: React.FC = () => {
           events={events}
           onLoginRequest={() => logout()}
           nextPreacher={nextPreacher}
+          address={settings?.address}
         />
       </NotificationProvider>
     );

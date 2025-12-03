@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Globe, ArrowRight, Heart } from 'lucide-react';
+import { Globe, ArrowRight, Heart, User, Lock } from 'lucide-react';
 import VisitorApp from '../components/VisitorApp';
+import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
 import { usePlans } from '../hooks/usePlans';
 import { Link, useNavigate } from 'react-router-dom';
@@ -13,6 +14,13 @@ const SUPPORTED_LANGUAGES = [
     { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/w80/fr.png' },
 ];
 
+const WELCOME_MESSAGES = {
+    es: { title: "BIENVENIDO", subtitle: "Estamos felices de verte. Disfruta de la experiencia." },
+    en: { title: "WELCOME", subtitle: "We are happy to see you. Enjoy the experience." },
+    pt: { title: "BEM-VINDO", subtitle: "Estamos felizes em vê-lo. Aproveite a experiência." },
+    fr: { title: "BIENVENUE", subtitle: "Nous sommes heureux de vous voir. Profitez de l'expérience." }
+};
+
 const VisitorLanding: React.FC = () => {
     const { setLanguage } = useLanguage();
     const { events } = useEvents();
@@ -22,6 +30,7 @@ const VisitorLanding: React.FC = () => {
     // Steps: 'language' -> 'app'
     const [step, setStep] = useState<'language' | 'app'>('language');
     const [selectedLang, setSelectedLang] = useState<string>('es');
+    const [showMemberLogin, setShowMemberLogin] = useState(false);
 
     // Calculate next preacher
     const nextPlan = plans.find(p => !p.isActive && new Date(p.date) >= new Date()) || plans[0];
@@ -65,16 +74,12 @@ const VisitorLanding: React.FC = () => {
                             </button>
                         ))}
                     </div>
-
-                    <div className="mt-8 text-center">
-                        <Link to="/portal" className="text-xs font-bold text-slate-300 hover:text-indigo-500 transition-colors">
-                            Administración / Miembros
-                        </Link>
-                    </div>
                 </div>
             </div>
         );
     }
+
+    const t = WELCOME_MESSAGES[selectedLang as keyof typeof WELCOME_MESSAGES] || WELCOME_MESSAGES.es;
 
     // STEP 2: WELCOME SCREEN + APP (Split Layout)
     return (
@@ -88,20 +93,31 @@ const VisitorLanding: React.FC = () => {
                     </div>
                     <div>
                         <h1 className="text-6xl font-black text-slate-800 tracking-tighter mb-4">
-                            BIENVENIDO
+                            {t.title}
                         </h1>
                         <p className="text-2xl text-slate-500 font-medium max-w-md leading-relaxed">
-                            Estamos felices de verte. Disfruta de la experiencia.
+                            {t.subtitle}
                         </p>
                     </div>
 
-                    {/* Optional: Back to language selection */}
-                    <button
-                        onClick={() => setStep('language')}
-                        className="text-sm font-bold text-slate-400 hover:text-indigo-500 flex items-center gap-2 mt-8"
-                    >
-                        <Globe size={16} /> Cambiar idioma
-                    </button>
+                    {/* Actions */}
+                    <div className="flex flex-wrap gap-6 mt-8">
+                        <button
+                            onClick={() => setStep('language')}
+                            className="text-sm font-bold text-slate-400 hover:text-indigo-500 flex items-center gap-2"
+                        >
+                            <Globe size={16} /> Cambiar idioma
+                        </button>
+                        <button
+                            onClick={() => setShowMemberLogin(true)}
+                            className="text-sm font-bold text-slate-400 hover:text-pink-500 flex items-center gap-2"
+                        >
+                            <User size={16} /> Soy Miembro
+                        </button>
+                        <Link to="/portal" className="text-sm font-bold text-slate-400 hover:text-slate-600 flex items-center gap-2">
+                            <Lock size={16} /> Administración
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Right: The Visitor App (Embedded) */}
@@ -117,6 +133,8 @@ const VisitorLanding: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} />}
         </div>
     );
 };

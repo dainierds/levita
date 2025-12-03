@@ -33,7 +33,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && (
         request.auth.uid == userId || 
         isSuperAdmin() || 
-        (resource.data.tenantId == getUserData().tenantId)
+        (resource.data.tenantId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId)
       );
       
       // Solo el usuario o Super Admin pueden editar el perfil
@@ -43,7 +43,7 @@ service cloud.firestore {
     // 2. Colección de Tenants (Iglesias)
     match /tenants/{tenantId} {
       // Cualquiera autenticado puede leer la info básica de su iglesia (para config, nombre, etc)
-      allow read: if isSignedIn();
+      allow read: if true;
       // Solo Super Admin puede crear o editar iglesias
       allow write: if isSuperAdmin();
     }

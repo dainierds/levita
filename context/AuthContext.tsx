@@ -14,6 +14,7 @@ interface AuthContextType {
     role: Role;
     isLoading: boolean;
     login: (email: string, password?: string) => Promise<void>;
+    loginAsMember: (tenantId: string, pin: string) => Promise<void>;
     logout: () => Promise<void>;
     cycleRole: () => void; // Deprecated but kept to avoid breaking UI immediately
 }
@@ -49,14 +50,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         });
                         setRole('VISITOR');
                     }
+                    // Clear member session if real login occurs
+                    localStorage.removeItem('memberSession');
                 } catch (error) {
                     console.error("Error fetching user profile:", error);
                     setUser(null);
                     setRole('VISITOR');
                 }
             } else {
-                setUser(null);
-                setRole('VISITOR');
+                // Check for Member Session
+                const memberSession = localStorage.getItem('memberSession');
+                if (memberSession) {
+                    try {
+                        const { tenantId } = JSON.parse(memberSession);
+                        setUser({
+                            id: 'member-guest',
+                            name: 'Miembro',
+                            email: '',
+                            role: 'MEMBER',
+                            tenantId: tenantId,
+                            status: 'ACTIVE'
+                        });
+                        setRole('MEMBER');
+                    } catch (e) {
+                        console.error("Invalid member session", e);
+                        localStorage.removeItem('memberSession');
+                        setUser(null);
+                        setRole('VISITOR');
+                    }
+                } else {
+                    setUser(null);
+                    setRole('VISITOR');
+                }
             }
             setIsLoading(false);
         });
@@ -80,11 +105,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const loginAsMember = async (tenantId: string, pin: string) => {
+        setIsLoading(true);
+        try {
+            // Verify PIN
+            const tenantDoc = await getDoc(doc(db, 'tenants', tenantId));
+            if (!tenantDoc.exists()) throw new Error("Iglesia no encontrada");
+
+            const data = tenantDoc.data();
+            // Check PIN (assuming settings.memberPin exists)
+            if (data.settings?.memberPin !== pin) {
+                throw new Error("PIN Incorrecto");
+            }
+
+            // Success
+            const memberUser: User = {
+                id: 'member-guest',
+                name: 'Miembro',
+                email: '',
+                role: 'MEMBER',
+                tenantId: tenantId,
+                status: 'ACTIVE'
+            };
+            setUser(memberUser);
+            setRole('MEMBER');
+            localStorage.setItem('memberSession', JSON.stringify({ tenantId }));
+        } catch (error) {
+            console.error(error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const logout = async () => {
         setIsLoading(true);
         try {
             await signOut(auth);
-            // State update happens in onAuthStateChanged
+            localStorage.removeItem('memberSession');
+            setUser(null);
+            setRole('VISITOR');
         } finally {
             setIsLoading(false);
         }
@@ -96,7 +156,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     return (
-        <AuthContext.Provider value={{ user, role, isLoading, login, logout, cycleRole }}>
+        <AuthContext.Provider value={{ user, role, isLoading, login, loginAsMember, logout, cycleRole }}>
             {children}
         </AuthContext.Provider>
     );

@@ -86,6 +86,7 @@ export interface ChurchSettings {
   rosterFrequency: 'Semanal' | 'Quincenal' | 'Mensual';
   rosterDays: DayOfWeek[];
   rosterAutoNotifications: boolean;
+  memberPin?: string; // PIN for member access
 }
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';

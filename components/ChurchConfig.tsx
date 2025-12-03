@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ChurchSettings, DayOfWeek } from '../types';
-import { Calendar, Clock, BookOpen, Mic2, Save, Check, BellRing, Church, Facebook, Instagram, Youtube } from 'lucide-react';
+import { Calendar, Clock, BookOpen, Mic2, Save, Check, BellRing, Church, Facebook, Instagram, Youtube, Shield } from 'lucide-react';
 import { useNotification } from './NotificationSystem';
 
 interface ChurchConfigProps {
@@ -265,6 +265,28 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
             activeColorClass="bg-green-50 border-green-500 text-green-700"
             icon={<Mic2 size={16} />}
           />
+        </div>
+      </section>
+
+      {/* 5. Member Access */}
+      <section className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+        <div className="flex items-center gap-2 mb-6 text-slate-800">
+          <Shield className="text-pink-500" size={24} />
+          <h3 className="text-xl font-bold">Acceso de Miembros</h3>
+        </div>
+        <p className="text-sm text-slate-500 mb-6">Configura el PIN único para que los miembros accedan a la app.</p>
+
+        <div className="max-w-xs">
+          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">PIN de Acceso</label>
+          <input
+            type="text"
+            value={config.memberPin || ''}
+            onChange={(e) => setConfig({ ...config, memberPin: e.target.value })}
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-100 transition-all font-mono text-lg tracking-widest text-center"
+            placeholder="0000"
+            maxLength={6}
+          />
+          <p className="text-xs text-slate-400 mt-2">Comparte este PIN con tu congregación.</p>
         </div>
       </section>
 

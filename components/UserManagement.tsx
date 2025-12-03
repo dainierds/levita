@@ -4,7 +4,7 @@ import { UserPlus, Link, Shield, CheckCircle, Copy, Check, Trash2, AlertTriangle
 import { createInvitation } from '../services/invitationService';
 import { useNotification } from './NotificationSystem';
 import { db } from '../services/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, setDoc } from 'firebase/firestore';
 
 interface UserManagementProps {
   users: User[];
@@ -46,6 +46,26 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
     try {
       // Use current user's tenantId. If not set (e.g. Super Admin or mock), fallback to 'default'
       const tenantId = currentUser.tenantId || 'default';
+
+      // Special handling for roles without interface (MUSIC, PREACHER)
+      // These roles don't need an invitation link, they are just created directly for rostering.
+      if (['MUSIC', 'PREACHER'].includes(formData.role)) {
+        const newUserId = `local-${Math.random().toString(36).substr(2, 9)}`;
+        const newUser: User = {
+          id: newUserId,
+          name: formData.name,
+          email: '', // No email required for these roles
+          role: formData.role,
+          tenantId,
+          status: 'ACTIVE'
+        };
+
+        await setDoc(doc(db, 'users', newUserId), newUser);
+        addNotification('success', 'Usuario Agregado', `${formData.name} ha sido añadido al equipo.`);
+        setFormData({ name: '', role: 'MEMBER' });
+        setIsLoading(false);
+        return;
+      }
 
       const code = await createInvitation(tenantId, formData.role, formData.name, currentUser.id);
 
@@ -151,7 +171,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                 disabled={isLoading}
                 className="w-full py-3 mt-4 bg-slate-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isLoading ? 'Generando...' : 'Generar Link'}
+                {isLoading ? 'Procesando...' :
+                  ['MUSIC', 'PREACHER'].includes(formData.role) ? 'Agregar al Equipo' : 'Generar Link'}
               </button>
             </form>
           ) : (
