@@ -170,6 +170,7 @@ const VisitorLanding: React.FC = () => {
             <VisitorApp
                 events={events}
                 onLoginRequest={() => setShowMemberLogin(true)}
+                onExit={() => setStep('language')}
                 nextPreacher={nextPreacher}
                 initialLanguage={selectedLang as any}
                 youtubeLiveUrl={settings?.youtubeLiveUrl}

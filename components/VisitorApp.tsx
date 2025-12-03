@@ -7,6 +7,7 @@ import PrayerRequestModal from './PrayerRequestModal';
 interface VisitorAppProps {
   events: ChurchEvent[];
   onLoginRequest: () => void;
+  onExit: () => void;
   nextPreacher?: string;
   initialLanguage?: LanguageCode;
   youtubeLiveUrl?: string;
@@ -19,6 +20,7 @@ const SUPPORTED_LANGUAGES: { code: LanguageCode; label: string; flag: string }[]
   { code: 'en', label: 'English', flag: '🇺🇸' },
   { code: 'pt', label: 'Português', flag: '🇧🇷' },
   { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  // Note: Flags here are emojis, but VisitorLanding uses images. We should probably unify, but for now this is fine as this component doesn't show the selection screen anymore.
 ];
 
 const TRANSLATIONS: Record<LanguageCode, any> = {
@@ -86,49 +88,9 @@ const getEmbedUrl = (url: string) => {
   return url;
 };
 
-const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPreacher = 'Por definir', initialLanguage, youtubeLiveUrl }) => {
-  const [selectedLang, setSelectedLang] = useState<LanguageCode | null>(initialLanguage || null);
+const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, onExit, nextPreacher = 'Por definir', initialLanguage, youtubeLiveUrl }) => {
+  const [selectedLang, setSelectedLang] = useState<LanguageCode>(initialLanguage || 'es');
   const [showPrayerModal, setShowPrayerModal] = useState(false);
-
-  // If no language selected, show selection screen
-  if (!selectedLang) {
-    return (
-      <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
-          <div className="text-center mb-10">
-            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Globe size={32} />
-            </div>
-            <h1 className="text-2xl font-black text-slate-900 mb-2">LEVITA</h1>
-            <p className="text-slate-500">Church Operating System</p>
-          </div>
-
-          <div className="space-y-4">
-            {SUPPORTED_LANGUAGES.map(lang => (
-              <button
-                key={lang.code}
-                onClick={() => setSelectedLang(lang.code)}
-                className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200 text-left"
-              >
-                <span className="text-2xl">{lang.flag}</span>
-                <span className="text-lg font-bold text-slate-700 group-hover:text-indigo-900">{lang.label}</span>
-                <div className="absolute right-4 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ArrowRight size={20} />
-                </div>
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={onLoginRequest}
-            className="w-full mt-8 text-center text-sm font-bold text-slate-300 hover:text-indigo-500 transition-colors"
-          >
-            Administración / Miembros
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const t = TRANSLATIONS[selectedLang];
   const upcomingEvents = events
@@ -146,7 +108,7 @@ const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPre
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setSelectedLang(null)}
+            onClick={onExit}
             className="px-3 py-1 bg-red-50 text-red-500 rounded-full text-xs font-bold hover:bg-red-100 transition-colors"
           >
             Salir
