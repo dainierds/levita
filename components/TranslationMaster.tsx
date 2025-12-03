@@ -9,6 +9,13 @@ const TranslationMaster: React.FC = () => {
 
     // Simulate audio levels
     const [level, setLevel] = useState(0);
+    const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+
+    useEffect(() => {
+        navigator.mediaDevices.enumerateDevices()
+            .then(devs => setDevices(devs.filter(d => d.kind === 'audioinput')))
+            .catch(console.error);
+    }, []);
 
     useEffect(() => {
         if (!isActive) {
@@ -54,9 +61,12 @@ const TranslationMaster: React.FC = () => {
                                 onChange={(e) => setInputDevice(e.target.value)}
                                 className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-sm font-medium outline-none focus:border-indigo-500 appearance-none"
                             >
-                                <option value="default">Dante Virtual Soundcard (1-2)</option>
-                                <option value="usb">USB Audio Interface</option>
-                                <option value="mic">MacBook Pro Microphone</option>
+                                <option value="default">Por defecto</option>
+                                {devices.map(device => (
+                                    <option key={device.deviceId} value={device.deviceId}>
+                                        {device.label || `Micrófono ${device.deviceId.slice(0, 5)}...`}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -68,8 +78,8 @@ const TranslationMaster: React.FC = () => {
                                 <div
                                     key={i}
                                     className={`flex-1 h-full rounded-sm transition-all duration-75 ${(i / 20) * 100 < level
-                                            ? (i > 15 ? 'bg-red-500' : i > 12 ? 'bg-yellow-500' : 'bg-green-500')
-                                            : 'bg-slate-700'
+                                        ? (i > 15 ? 'bg-red-500' : i > 12 ? 'bg-yellow-500' : 'bg-green-500')
+                                        : 'bg-slate-700'
                                         }`}
                                 />
                             ))}
@@ -87,8 +97,8 @@ const TranslationMaster: React.FC = () => {
                                     key={lang}
                                     onClick={() => setLanguages(prev => ({ ...prev, [lang]: !enabled }))}
                                     className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm font-bold transition-all ${enabled
-                                            ? 'bg-indigo-600 border-indigo-500 text-white'
-                                            : 'bg-slate-800 border-slate-700 text-slate-500'
+                                        ? 'bg-indigo-600 border-indigo-500 text-white'
+                                        : 'bg-slate-800 border-slate-700 text-slate-500'
                                         }`}
                                 >
                                     <span className="uppercase">{lang}</span>

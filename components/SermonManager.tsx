@@ -7,7 +7,7 @@ const SermonManager: React.FC = () => {
     const { sermons, loading, saveSermon, deleteSermon } = useSermons();
     const [selectedSermon, setSelectedSermon] = useState<Sermon | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [aiParams, setAiParams] = useState({ passage: '', tone: 'Exhortativo' });
+    const [aiParams, setAiParams] = useState({ passage: '', tone: 'Exhortativo', language: 'Spanish' });
     const [copied, setCopied] = useState(false);
 
     const handleCreateNew = () => {
@@ -36,7 +36,7 @@ const SermonManager: React.FC = () => {
         if (!aiParams.passage) return;
         setIsGenerating(true);
         try {
-            const outline = await generateSermonOutline(aiParams.passage, aiParams.tone);
+            const outline = await generateSermonOutline(aiParams.passage, aiParams.tone, aiParams.language);
             if (selectedSermon) {
                 setSelectedSermon({
                     ...selectedSermon,
@@ -163,6 +163,18 @@ const SermonManager: React.FC = () => {
                                                 <option>Consolador</option>
                                                 <option>Teológico</option>
                                                 <option>Narrativo</option>
+                                            </select>
+                                        </div>
+                                        <div className="w-full md:w-32">
+                                            <label className="block text-xs font-bold text-indigo-400 uppercase mb-1">Idioma</label>
+                                            <select
+                                                value={aiParams.language}
+                                                onChange={(e) => setAiParams({ ...aiParams, language: e.target.value })}
+                                                className="w-full px-3 py-2 bg-white rounded-xl border border-indigo-200 text-sm outline-none"
+                                            >
+                                                <option value="Spanish">Español</option>
+                                                <option value="English">English</option>
+                                                <option value="Portuguese">Português</option>
                                             </select>
                                         </div>
                                         <button

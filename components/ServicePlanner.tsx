@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ServicePlan, SubscriptionTier, User } from '../types';
-import { Plus, Trash2, Music, Mic, Mic2, PlayCircle, Loader2, X, Hand, BookOpen, DollarSign, Megaphone, MessageCircle, Gift, Heart, Star, PenTool } from 'lucide-react';
+import { Plus, Trash2, Music, Mic, Mic2, PlayCircle, Loader2, X, Hand, BookOpen, DollarSign, Megaphone, MessageCircle, Gift, Heart, Star, PenTool, User as UserIcon } from 'lucide-react';
 import { usePlans } from '../hooks/usePlans';
 
 interface ServicePlannerProps {
@@ -280,13 +280,31 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
                             type="text"
                             placeholder="Pegar link de YouTube y presionar Enter..."
                             className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-indigo-500 transition-all"
-                            onKeyDown={(e) => {
+                            onKeyDown={async (e) => {
                               if (e.key === 'Enter') {
                                 const val = e.currentTarget.value;
                                 if (val) {
+                                  let title = '';
+                                  try {
+                                    const res = await fetch(`https://noembed.com/embed?url=${val}`);
+                                    const data = await res.json();
+                                    title = data.title;
+                                  } catch (err) {
+                                    console.error("Error fetching YouTube title:", err);
+                                  }
+
                                   const newLinks = [...(item.youtubeLinks || []), val];
+
+                                  let updatedItem = { ...item, youtubeLinks: newLinks };
+
+                                  // Update title if found and current title is empty or generic
+                                  if (title && (!item.title || item.title === 'Nuevo Elemento' || item.title === '')) {
+                                    const truncated = title.length > 40 ? title.substring(0, 40) + '...' : title;
+                                    updatedItem.title = truncated;
+                                  }
+
                                   const updatedItems = selectedPlan.items.map(i =>
-                                    i.id === item.id ? { ...i, youtubeLinks: newLinks } : i
+                                    i.id === item.id ? updatedItem : i
                                   );
                                   savePlan({ ...selectedPlan, items: updatedItems });
                                   e.currentTarget.value = '';

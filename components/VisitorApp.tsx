@@ -8,6 +8,7 @@ interface VisitorAppProps {
   onLoginRequest: () => void;
   nextPreacher?: string;
   initialLanguage?: LanguageCode;
+  youtubeLiveUrl?: string;
 }
 
 type LanguageCode = 'es' | 'en' | 'pt' | 'fr';
@@ -70,7 +71,21 @@ const TRANSLATIONS: Record<LanguageCode, any> = {
   }
 };
 
-const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPreacher = 'Por definir', initialLanguage }) => {
+const getEmbedUrl = (url: string) => {
+  if (!url) return '';
+  if (url.includes('embed')) return url;
+  if (url.includes('watch?v=')) {
+    const videoId = url.split('watch?v=')[1].split('&')[0];
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+  if (url.includes('youtu.be/')) {
+    const videoId = url.split('youtu.be/')[1].split('?')[0];
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+  return url;
+};
+
+const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPreacher = 'Por definir', initialLanguage, youtubeLiveUrl }) => {
   const [selectedLang, setSelectedLang] = useState<LanguageCode | null>(initialLanguage || null);
 
   // If no language selected, show selection screen
@@ -144,7 +159,7 @@ const VisitorApp: React.FC<VisitorAppProps> = ({ events, onLoginRequest, nextPre
           <iframe
             width="100%"
             height="100%"
-            src="https://www.youtube.com/embed/live_stream?channel=UCjaxadventista7morenacersda63"
+            src={youtubeLiveUrl ? getEmbedUrl(youtubeLiveUrl) : "https://www.youtube.com/embed/live_stream?channel=UCjaxadventista7morenacersda63"}
             title="Live Service"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Globe, ArrowRight, Heart, User, Lock } from 'lucide-react';
 import VisitorApp from '../components/VisitorApp';
@@ -6,6 +6,9 @@ import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
 import { usePlans } from '../hooks/usePlans';
 import { Link, useNavigate } from 'react-router-dom';
+import { collection, query, limit, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
+import { ChurchSettings } from '../types';
 
 const SUPPORTED_LANGUAGES = [
     { code: 'es', label: 'Español', flagUrl: 'https://flagcdn.com/w80/es.png' },
@@ -31,6 +34,27 @@ const VisitorLanding: React.FC = () => {
     const [step, setStep] = useState<'language' | 'app'>('language');
     const [selectedLang, setSelectedLang] = useState<string>('es');
     const [showMemberLogin, setShowMemberLogin] = useState(false);
+    const [settings, setSettings] = useState<ChurchSettings | null>(null);
+
+    useEffect(() => {
+        const fetchPublicSettings = async () => {
+            try {
+                // Fetch first tenant as public default
+                const q = query(collection(db, 'tenants'), limit(1));
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
+                    const tenantId = snapshot.docs[0].id;
+                    const settingsDoc = await getDoc(doc(db, 'churchSettings', tenantId));
+                    if (settingsDoc.exists()) {
+                        setSettings(settingsDoc.data() as ChurchSettings);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching public settings:", error);
+            }
+        };
+        fetchPublicSettings();
+    }, []);
 
     // Calculate next preacher
     const nextPlan = plans.find(p => !p.isActive && new Date(p.date) >= new Date()) || plans[0];
@@ -129,6 +153,7 @@ const VisitorLanding: React.FC = () => {
                             onLoginRequest={() => navigate('/portal')}
                             nextPreacher={nextPreacher}
                             initialLanguage={selectedLang as any}
+                            youtubeLiveUrl={settings?.youtubeLiveUrl}
                         />
                     </div>
                 </div>

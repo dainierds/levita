@@ -3,12 +3,13 @@ import { GoogleGenAI } from "@google/genai";
 // Initialize the Gemini client
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-export const generateSermonOutline = async (passage: string, tone: string): Promise<string> => {
+export const generateSermonOutline = async (passage: string, tone: string, language: string = 'Spanish'): Promise<string> => {
   try {
     const prompt = `
       Act as a senior theologian and homiletics expert. 
       Create a structured sermon outline for the Bible passage: "${passage}".
       The tone of the sermon should be: "${tone}".
+      The output language MUST be: "${language}".
       
       Structure the output as follows:
       1. Title
