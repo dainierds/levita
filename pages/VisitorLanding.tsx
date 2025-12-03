@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Globe, ArrowRight, Heart, User, Lock } from 'lucide-react';
+import { Globe, ArrowRight, Heart, User, Lock, Users } from 'lucide-react';
 import VisitorApp from '../components/VisitorApp';
 import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
@@ -17,11 +17,11 @@ const SUPPORTED_LANGUAGES = [
     { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/w80/fr.png' },
 ];
 
-const WELCOME_MESSAGES = {
-    es: { title: "BIENVENIDO", subtitle: "Estamos felices de verte. Disfruta de la experiencia." },
-    en: { title: "WELCOME", subtitle: "We are happy to see you. Enjoy the experience." },
-    pt: { title: "BEM-VINDO", subtitle: "Estamos felizes em vê-lo. Aproveite a experiência." },
-    fr: { title: "BIENVENUE", subtitle: "Nous sommes heureux de vous voir. Profitez de l'expérience." }
+const ROLE_MESSAGES = {
+    es: { visitor: "Soy Visitante", member: "Soy Miembro", admin: "Soy Administrador", title: "¿Quién eres?" },
+    en: { visitor: "I am a Visitor", member: "I am a Member", admin: "I am an Admin", title: "Who are you?" },
+    pt: { visitor: "Sou Visitante", member: "Sou Membro", admin: "Sou Administrador", title: "Quem é você?" },
+    fr: { visitor: "Je suis visiteur", member: "Je suis membre", admin: "Je suis administrateur", title: "Qui êtes-vous ?" }
 };
 
 const VisitorLanding: React.FC = () => {
@@ -30,8 +30,7 @@ const VisitorLanding: React.FC = () => {
     const { plans } = usePlans();
     const navigate = useNavigate();
 
-    // Steps: 'language' -> 'app'
-    const [step, setStep] = useState<'language' | 'app'>('language');
+    const [step, setStep] = useState<'language' | 'role_selection' | 'app'>('language');
     const [selectedLang, setSelectedLang] = useState<string>('es');
     const [showMemberLogin, setShowMemberLogin] = useState(false);
     const [settings, setSettings] = useState<ChurchSettings | null>(null);
@@ -39,7 +38,6 @@ const VisitorLanding: React.FC = () => {
     useEffect(() => {
         const fetchPublicSettings = async () => {
             try {
-                // Fetch first tenant as public default
                 const q = query(collection(db, 'tenants'), limit(1));
                 const snapshot = await getDocs(q);
                 if (!snapshot.empty) {
@@ -56,17 +54,17 @@ const VisitorLanding: React.FC = () => {
         fetchPublicSettings();
     }, []);
 
-    // Calculate next preacher
     const nextPlan = plans.find(p => !p.isActive && new Date(p.date) >= new Date()) || plans[0];
     const nextPreacher = nextPlan?.team.preacher || 'Por definir';
 
     const handleLanguageSelect = (code: string) => {
         setLanguage(code as any);
         setSelectedLang(code);
-        setStep('app');
+        setStep('role_selection');
     };
 
-    // STEP 1: LANGUAGE SELECTION (Centered Card)
+    const t = ROLE_MESSAGES[selectedLang as keyof typeof ROLE_MESSAGES] || ROLE_MESSAGES.es;
+
     if (step === 'language') {
         return (
             <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
@@ -103,62 +101,77 @@ const VisitorLanding: React.FC = () => {
         );
     }
 
-    const t = WELCOME_MESSAGES[selectedLang as keyof typeof WELCOME_MESSAGES] || WELCOME_MESSAGES.es;
-
-    // STEP 2: WELCOME SCREEN + APP (Split Layout)
-    return (
-        <div className="min-h-screen bg-[#F2F4F8] flex items-center justify-center p-4">
-            <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-
-                {/* Left: Brand / Welcome Message */}
-                <div className="flex flex-col justify-center items-start space-y-6 lg:pl-12">
-                    <div className="w-20 h-20 bg-pink-500 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-pink-200 rotate-3 hover:rotate-6 transition-transform">
-                        <Heart size={40} fill="currentColor" />
-                    </div>
-                    <div>
-                        <h1 className="text-6xl font-black text-slate-800 tracking-tighter mb-4">
-                            {t.title}
-                        </h1>
-                        <p className="text-2xl text-slate-500 font-medium max-w-md leading-relaxed">
-                            {t.subtitle}
-                        </p>
+    if (step === 'role_selection') {
+        return (
+            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
+                <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
+                    <div className="text-center mb-10">
+                        <h1 className="text-2xl font-black text-slate-900 mb-2">{t.title}</h1>
+                        <p className="text-slate-500">Selecciona tu perfil para continuar</p>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-wrap gap-6 mt-8">
+                    <div className="space-y-4">
                         <button
-                            onClick={() => setStep('language')}
-                            className="text-sm font-bold text-slate-400 hover:text-indigo-500 flex items-center gap-2"
+                            onClick={() => setStep('app')}
+                            className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-pink-500 hover:bg-pink-50 transition-all duration-200 text-left"
                         >
-                            <Globe size={16} /> Cambiar idioma
+                            <div className="w-12 h-12 bg-pink-100 text-pink-500 rounded-xl flex items-center justify-center">
+                                <Heart size={24} />
+                            </div>
+                            <span className="text-lg font-bold text-slate-700 group-hover:text-pink-900">{t.visitor}</span>
+                            <div className="absolute right-4 text-pink-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ArrowRight size={20} />
+                            </div>
                         </button>
+
                         <button
                             onClick={() => setShowMemberLogin(true)}
-                            className="text-sm font-bold text-slate-400 hover:text-pink-500 flex items-center gap-2"
+                            className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200 text-left"
                         >
-                            <User size={16} /> Soy Miembro
+                            <div className="w-12 h-12 bg-indigo-100 text-indigo-500 rounded-xl flex items-center justify-center">
+                                <Users size={24} />
+                            </div>
+                            <span className="text-lg font-bold text-slate-700 group-hover:text-indigo-900">{t.member}</span>
+                            <div className="absolute right-4 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ArrowRight size={20} />
+                            </div>
                         </button>
-                        <Link to="/portal" className="text-sm font-bold text-slate-400 hover:text-slate-600 flex items-center gap-2">
-                            <Lock size={16} /> Administración
-                        </Link>
-                    </div>
-                </div>
 
-                {/* Right: The Visitor App (Embedded) */}
-                <div className="relative w-full max-w-md mx-auto lg:mx-0 lg:ml-auto">
-                    {/* We wrap VisitorApp to constrain its width and make it look like a phone/card */}
-                    <div className="transform scale-95 lg:scale-100 transition-transform origin-top-right">
-                        <VisitorApp
-                            events={events}
-                            onLoginRequest={() => navigate('/portal')}
-                            nextPreacher={nextPreacher}
-                            initialLanguage={selectedLang as any}
-                            youtubeLiveUrl={settings?.youtubeLiveUrl}
-                        />
+                        <button
+                            onClick={() => navigate('/portal')}
+                            className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-slate-500 hover:bg-slate-50 transition-all duration-200 text-left"
+                        >
+                            <div className="w-12 h-12 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center">
+                                <Lock size={24} />
+                            </div>
+                            <span className="text-lg font-bold text-slate-700 group-hover:text-slate-900">{t.admin}</span>
+                            <div className="absolute right-4 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ArrowRight size={20} />
+                            </div>
+                        </button>
                     </div>
+
+                    <button
+                        onClick={() => setStep('language')}
+                        className="w-full mt-8 text-center text-sm font-bold text-slate-300 hover:text-indigo-500 transition-colors"
+                    >
+                        Volver / Back
+                    </button>
                 </div>
+                {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} />}
             </div>
+        );
+    }
 
+    return (
+        <div className="min-h-screen bg-[#F2F4F8] flex items-center justify-center p-4">
+            <VisitorApp
+                events={events}
+                onLoginRequest={() => setShowMemberLogin(true)}
+                nextPreacher={nextPreacher}
+                initialLanguage={selectedLang as any}
+                youtubeLiveUrl={settings?.youtubeLiveUrl}
+            />
             {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} />}
         </div>
     );
