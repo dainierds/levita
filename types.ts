@@ -58,6 +58,7 @@ export interface ServicePlan {
   team: ServiceTeam;
   items: LiturgyItem[];
   tenantId?: string;
+  isRosterDraft?: boolean; // If true, created by RosterView and hidden from Planner until promoted
 }
 
 export interface User {

@@ -161,7 +161,8 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                 isActive: false,
                 items: [],
                 tenantId: user?.tenantId,
-                team: newTeamMembers
+                team: newTeamMembers,
+                isRosterDraft: true
             };
         }
 
@@ -200,7 +201,8 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                 team: {
                     elder: '', preacher: '', musicDirector: '', audioOperator: '',
                     [roleKey]: name
-                }
+                },
+                isRosterDraft: true
             };
         }
 
@@ -286,7 +288,8 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                     isActive: false,
                     items: [],
                     tenantId: user?.tenantId,
-                    team: { elder: '', preacher: '', musicDirector: '', audioOperator: '' }
+                    team: { elder: '', preacher: '', musicDirector: '', audioOperator: '' },
+                    isRosterDraft: true
                 };
                 batchPlans.push(plan); // Add to batch so next iteration sees it
             }
