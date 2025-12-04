@@ -141,7 +141,7 @@ const ProtectedApp: React.FC = () => {
           events={events}
           onLoginRequest={() => logout()}
           nextPreacher={nextPreacher}
-          address={settings?.address}
+          settings={settings}
         />
       </NotificationProvider>
     );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChurchEvent, ServicePlan } from '../types';
+import { ChurchEvent, ServicePlan, ChurchSettings } from '../types';
 import { MapPin, Calendar, Clock, Radio, ChevronRight, Share2, Globe, Bell, User, Mic2, Heart, UserCheck, List } from 'lucide-react';
 import LiveTranslation from './LiveTranslation';
 import { requestNotificationPermission, subscribeToPush, sendLocalNotification } from '../services/notificationService';
@@ -9,15 +9,29 @@ interface MemberAppProps {
   events: ChurchEvent[];
   onLoginRequest: () => void;
   nextPreacher?: string;
-  address?: string;
+  settings?: ChurchSettings;
 }
 
-const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginRequest, nextPreacher = 'Por definir', address }) => {
+const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginRequest, nextPreacher = 'Por definir', settings }) => {
   // Filter events for members (Public + Members Only)
   const activeEvents = events.filter(e => e.activeInBanner && (e.targetAudience === 'PUBLIC' || e.targetAudience === 'MEMBERS_ONLY'));
 
   const [notifPermission, setNotifPermission] = React.useState<NotificationPermission>('default');
   const [showPrayerForm, setShowPrayerForm] = React.useState(false);
+
+  const address = settings?.address;
+
+  // Determine Active Team: Priority to Global Active Team (from settings), fallback to Active Plan Team
+  const globalActiveTeam = settings?.teams?.find(t => t.id === settings.activeTeamId);
+
+  // Construct a displayable team object
+  const displayTeam = globalActiveTeam ? {
+    teamName: globalActiveTeam.name,
+    preacher: globalActiveTeam.members.preacher,
+    musicDirector: globalActiveTeam.members.musicDirector || (globalActiveTeam.members as any).worshipLeader,
+    audioOperator: globalActiveTeam.members.audioOperator,
+    elder: globalActiveTeam.members.elder
+  } : (activePlan?.team || null);
 
   const handleEnableNotifications = async () => {
     const perm = await requestNotificationPermission();
@@ -103,24 +117,25 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
         {/* Read-Only Service Plan */}
         <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100">
           <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <UserCheck size={18} className="text-indigo-500" /> Equipo de Hoy
+            <UserCheck size={18} className="text-indigo-500" />
+            {displayTeam?.teamName || 'Equipo de Hoy'}
           </h3>
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="p-3 bg-slate-50 rounded-2xl">
               <p className="text-xs font-bold text-slate-400 uppercase mb-1">Predicador</p>
-              <p className="font-bold text-slate-700">{activePlan?.team.preacher || '---'}</p>
+              <p className="font-bold text-slate-700">{displayTeam?.preacher || '---'}</p>
             </div>
             <div className="p-3 bg-slate-50 rounded-2xl">
               <p className="text-xs font-bold text-slate-400 uppercase mb-1">Anciano</p>
-              <p className="font-bold text-slate-700">{activePlan?.team.elder || '---'}</p>
+              <p className="font-bold text-slate-700">{displayTeam?.elder || '---'}</p>
             </div>
             <div className="p-3 bg-slate-50 rounded-2xl">
               <p className="text-xs font-bold text-slate-400 uppercase mb-1">Audio</p>
-              <p className="font-bold text-slate-700">{activePlan?.team.audioOperator || '---'}</p>
+              <p className="font-bold text-slate-700">{displayTeam?.audioOperator || '---'}</p>
             </div>
             <div className="p-3 bg-slate-50 rounded-2xl">
               <p className="text-xs font-bold text-slate-400 uppercase mb-1">Música</p>
-              <p className="font-bold text-slate-700">{activePlan?.team.musicDirector || '---'}</p>
+              <p className="font-bold text-slate-700">{displayTeam?.musicDirector || '---'}</p>
             </div>
           </div>
 
@@ -148,6 +163,9 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
                 </div>
               </div>
             ))}
+            {!activePlan && (
+              <div className="text-center text-slate-400 italic py-4">No hay orden del culto activo.</div>
+            )}
           </div>
         </div>
 
