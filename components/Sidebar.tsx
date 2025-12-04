@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { LayoutDashboard, Calendar, FileText, Users, Settings, Church, UserPlus, Bell, BarChart3, Camera, Loader2, UserCheck, BookOpen, Heart } from 'lucide-react';
 import { Role, SubscriptionTier, TIER_FEATURES, User } from '../types';
-import { storage, db } from '../services/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '../services/firebase';
+import { uploadFile } from '../services/storageService';
 import { doc, updateDoc } from 'firebase/firestore';
 
 interface SidebarProps {
@@ -73,27 +73,18 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
 
     setIsUploading(true);
     try {
-      // Create a reference to 'profile_photos/USER_ID'
-      const storageRef = ref(storage, `profile_photos/${user.id}`);
-
-      // Upload the file
-      await uploadBytes(storageRef, file);
-
-      // Get the download URL
-      const downloadURL = await getDownloadURL(storageRef);
+      // Use the centralized storage service
+      const uploaded = await uploadFile(file);
 
       // Update the user document in Firestore
       await updateDoc(doc(db, 'users', user.id), {
-        photoUrl: downloadURL
+        photoUrl: uploaded.url
       });
 
-      // Note: The app should automatically reflect this if it's listening to user changes, 
-      // or we might need to update local state if it's not real-time. 
-      // Assuming App.tsx listens to user changes or we rely on page reload/context update.
-
+      // Note: The app should automatically reflect this if it's listening to user changes
     } catch (error) {
       console.error("Error uploading profile photo:", error);
-      alert("Error al subir la imagen.");
+      alert("Error al subir la imagen. Verifica tus permisos o intenta de nuevo.");
     } finally {
       setIsUploading(false);
     }

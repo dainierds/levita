@@ -482,18 +482,35 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                         `}
                                             >
                                                 {selectedRoleTab === 'teams' ? (
-                                                    <div className="text-center p-2">
-                                                        <p className="text-xs text-slate-400 mb-2">Arrastra un equipo para asignar todos los roles.</p>
-                                                        {/* Preview current assignments */}
-                                                        <div className="flex gap-1 justify-center">
-                                                            {['elder', 'preacher', 'musicDirector', 'audioOperator'].map(r => {
-                                                                const val = getAssignment(date, r);
-                                                                return val ? (
-                                                                    <div key={r} className="w-2 h-2 rounded-full bg-indigo-400" title={`${r}: ${val}`} />
-                                                                ) : null;
-                                                            })}
+                                                    getAssignment(date, 'teamName') ? (
+                                                        <>
+                                                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold shadow-sm bg-indigo-500 text-white">
+                                                                <Users size={20} />
+                                                            </div>
+                                                            <span className="font-bold text-slate-700">{getAssignment(date, 'teamName')}</span>
+                                                            <div className="flex gap-1 justify-center mt-1">
+                                                                {['elder', 'preacher', 'musicDirector', 'audioOperator'].map(r => {
+                                                                    const val = getAssignment(date, r);
+                                                                    return val ? (
+                                                                        <div key={r} className="w-1.5 h-1.5 rounded-full bg-indigo-300" title={`${r}: ${val}`} />
+                                                                    ) : null;
+                                                                })}
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="text-center p-2">
+                                                            <p className="text-xs text-slate-400 mb-2">Arrastra un equipo para asignar todos los roles.</p>
+                                                            {/* Preview current assignments */}
+                                                            <div className="flex gap-1 justify-center">
+                                                                {['elder', 'preacher', 'musicDirector', 'audioOperator'].map(r => {
+                                                                    const val = getAssignment(date, r);
+                                                                    return val ? (
+                                                                        <div key={r} className="w-2 h-2 rounded-full bg-slate-300" title={`${r}: ${val}`} />
+                                                                    ) : null;
+                                                                })}
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    )
                                                 ) : getAssignment(date, selectedRoleTab) ? (
                                                     <>
                                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold shadow-sm ${currentRoleConfig?.color.replace('text-', 'bg-').split(' ')[0]} text-white`}>
