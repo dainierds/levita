@@ -205,7 +205,7 @@ const ProtectedApp: React.FC = () => {
           )}
 
           {currentView === 'dashboard' && (role === 'ADMIN' || role === 'ELDER') && (
-            <Dashboard setCurrentView={setCurrentView} role={role} />
+            <Dashboard setCurrentView={setCurrentView} role={role} settings={settings} />
           )}
 
           {currentView === 'planner' && (

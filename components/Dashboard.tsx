@@ -7,12 +7,15 @@ import { Role } from '../types';
 import StatisticsPanel from './StatisticsPanel';
 import { BarChart3 } from 'lucide-react';
 
+import { ChurchSettings } from '../types';
+
 interface DashboardProps {
   setCurrentView: (view: string) => void;
   role?: Role;
+  settings?: ChurchSettings;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN' }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', settings }) => {
   const { events, loading: eventsLoading } = useEvents();
   const { plans, loading: plansLoading } = usePlans();
 
@@ -21,6 +24,18 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN' })
 
   const activePlan = plans.find(p => p.isActive);
   const nextPlan = plans.find(p => !p.isActive && new Date(p.date) >= new Date()) || plans[0];
+
+  // Determine Active Team: Priority to Global Active Team (from settings), fallback to Active Plan Team
+  const globalActiveTeam = settings?.teams?.find(t => t.id === settings.activeTeamId);
+
+  // Construct a displayable team object
+  const displayTeam = globalActiveTeam ? {
+    teamName: globalActiveTeam.name,
+    preacher: globalActiveTeam.members.preacher,
+    musicDirector: globalActiveTeam.members.worshipLeader, // Note: key mapping might differ
+    audioOperator: globalActiveTeam.members.audioOperator,
+    elder: globalActiveTeam.members.elder
+  } : (activePlan?.team || null);
 
   // Find the *next* preacher (from nextPlan)
   const nextPreacher = nextPlan?.team.preacher || 'Por definir';
@@ -170,14 +185,14 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN' })
           <div className="card-soft p-6 h-full">
             <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
               <UserCheck size={18} className="text-indigo-500" /> Equipo Oficial
-              {activePlan?.team.teamName && (
+              {displayTeam?.teamName && (
                 <span className="ml-auto text-xs bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full uppercase tracking-wider">
-                  {activePlan.team.teamName}
+                  {displayTeam.teamName}
                 </span>
               )}
             </h3>
 
-            {activePlan ? (
+            {displayTeam ? (
               <div className="space-y-4">
                 {/* Preacher */}
                 <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
@@ -186,7 +201,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN' })
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block">Predicador</span>
-                    <p className="font-bold text-slate-800">{activePlan.team.preacher || 'No asignado'}</p>
+                    <p className="font-bold text-slate-800">{displayTeam.preacher || 'No asignado'}</p>
                   </div>
                 </div>
 
@@ -197,7 +212,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN' })
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block">Director Música</span>
-                    <p className="font-bold text-slate-800">{activePlan.team.musicDirector || 'No asignado'}</p>
+                    <p className="font-bold text-slate-800">{displayTeam.musicDirector || 'No asignado'}</p>
                   </div>
                 </div>
 
@@ -208,7 +223,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN' })
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block">Audio</span>
-                    <p className="font-bold text-slate-800">{activePlan.team.audioOperator || 'No asignado'}</p>
+                    <p className="font-bold text-slate-800">{displayTeam.audioOperator || 'No asignado'}</p>
                   </div>
                 </div>
 
@@ -219,7 +234,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN' })
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase block">Anciano de Turno</span>
-                    <p className="font-bold text-slate-800">{activePlan.team.elder || 'No asignado'}</p>
+                    <p className="font-bold text-slate-800">{displayTeam.elder || 'No asignado'}</p>
                   </div>
                 </div>
               </div>
