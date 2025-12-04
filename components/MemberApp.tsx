@@ -4,6 +4,8 @@ import { MapPin, Calendar, Clock, Radio, ChevronRight, Share2, Globe, Bell, User
 import LiveTranslation from './LiveTranslation';
 import { requestNotificationPermission, subscribeToPush, sendLocalNotification } from '../services/notificationService';
 
+import { useLanguage } from '../context/LanguageContext';
+
 interface MemberAppProps {
   activePlan?: ServicePlan;
   events: ChurchEvent[];
@@ -13,6 +15,7 @@ interface MemberAppProps {
 }
 
 const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginRequest, nextPreacher = 'Por definir', settings }) => {
+  const { t } = useLanguage();
   // Filter events for members (Public + Members Only)
   const activeEvents = events.filter(e => e.activeInBanner && (e.targetAudience === 'PUBLIC' || e.targetAudience === 'MEMBERS_ONLY'));
 
@@ -48,8 +51,8 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
       {/* Header */}
       <div className="px-6 pt-12 pb-6 flex justify-between items-center bg-white sticky top-0 z-10">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tighter">LEVITA</h1>
-          <p className="text-xs text-slate-400 font-medium">Comunidad de Fe</p>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tighter">{t('app.name')}</h1>
+          <p className="text-xs text-slate-400 font-medium">{t('app.tagline')}</p>
         </div>
         <div className="flex items-center gap-3">
           {notifPermission !== 'granted' && (
@@ -58,7 +61,7 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
             </button>
           )}
           <button onClick={onLoginRequest} className="text-sm font-bold text-slate-300 hover:text-indigo-600">
-            Salir
+            {t('member.exit')}
           </button>
         </div>
       </div>
@@ -80,7 +83,7 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 bg-slate-900">
               <Radio size={32} className="mb-2 opacity-50" />
-              <p className="text-xs font-bold uppercase tracking-widest">Fuera del Aire</p>
+              <p className="text-xs font-bold uppercase tracking-widest">{t('member.offline')}</p>
             </div>
           )}
 
@@ -90,7 +93,7 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
               </span>
-              <span className="text-[10px] font-bold text-white tracking-wider">EN VIVO</span>
+              <span className="text-[10px] font-bold text-white tracking-wider">{t('member.live')}</span>
             </div>
           )}
         </div>
@@ -107,7 +110,7 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
               <MapPin size={20} />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-bold text-slate-400 uppercase">Ubicación</p>
+              <p className="text-xs font-bold text-slate-400 uppercase">{t('member.location')}</p>
               <p className="font-bold text-slate-700 line-clamp-1">{address}</p>
             </div>
             <ChevronRight size={16} className="text-slate-300" />
@@ -118,23 +121,23 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
         <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100">
           <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
             <UserCheck size={18} className="text-indigo-500" />
-            {displayTeam?.teamName || 'Equipo de Hoy'}
+            {displayTeam?.teamName || t('member.today_team')}
           </h3>
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="p-3 bg-slate-50 rounded-2xl">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-1">Predicador</p>
+              <p className="text-xs font-bold text-slate-400 uppercase mb-1">{t('role.preacher')}</p>
               <p className="font-bold text-slate-700">{displayTeam?.preacher || '---'}</p>
             </div>
             <div className="p-3 bg-slate-50 rounded-2xl">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-1">Anciano</p>
+              <p className="text-xs font-bold text-slate-400 uppercase mb-1">{t('role.elder')}</p>
               <p className="font-bold text-slate-700">{displayTeam?.elder || '---'}</p>
             </div>
             <div className="p-3 bg-slate-50 rounded-2xl">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-1">Audio</p>
+              <p className="text-xs font-bold text-slate-400 uppercase mb-1">{t('role.audio')}</p>
               <p className="font-bold text-slate-700">{displayTeam?.audioOperator || '---'}</p>
             </div>
             <div className="p-3 bg-slate-50 rounded-2xl">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-1">Música</p>
+              <p className="text-xs font-bold text-slate-400 uppercase mb-1">{t('role.music')}</p>
               <p className="font-bold text-slate-700">{displayTeam?.musicDirector || '---'}</p>
             </div>
           </div>
@@ -145,13 +148,13 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
               <User size={20} />
             </div>
             <div>
-              <p className="text-xs font-bold text-indigo-400 uppercase">Próximo Predicador</p>
+              <p className="text-xs font-bold text-indigo-400 uppercase">{t('member.next_preacher')}</p>
               <p className="font-bold text-indigo-900">{nextPreacher}</p>
             </div>
           </div>
 
           <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <List size={18} className="text-pink-500" /> Orden del Culto
+            <List size={18} className="text-pink-500" /> {t('member.order_of_service')}
           </h3>
           <div className="space-y-3">
             {activePlan?.items.map((item, idx) => (
@@ -171,7 +174,7 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
 
         {/* Upcoming Events */}
         <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <Calendar size={18} className="text-teal-500" /> Próximos Eventos
+          <Calendar size={18} className="text-teal-500" /> {t('member.upcoming_events')}
         </h3>
         <div className="space-y-4">
           {activeEvents.map(event => (
@@ -203,14 +206,14 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
         <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] p-6 text-white shadow-lg shadow-indigo-200">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-white/20 rounded-full"><Heart className="text-white fill-white" size={20} /></div>
-            <h3 className="font-bold text-lg">Petición de Oración</h3>
+            <h3 className="font-bold text-lg">{t('member.prayer_request')}</h3>
           </div>
 
           {!showPrayerForm ? (
             <>
               <p className="text-indigo-100 text-sm mb-4">¿Necesitas apoyo? Envíanos tu petición y nuestro equipo orará por ti.</p>
               <button onClick={() => setShowPrayerForm(true)} className="w-full py-3 bg-white text-indigo-600 rounded-xl font-bold text-sm shadow-sm hover:bg-indigo-50 transition-colors">
-                Enviar Petición
+                {t('member.send_request')}
               </button>
             </>
           ) : (
@@ -221,8 +224,8 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
                 rows={3}
               />
               <div className="flex gap-2">
-                <button type="button" onClick={() => setShowPrayerForm(false)} className="flex-1 py-2 bg-transparent border border-white/30 text-white rounded-lg font-bold text-xs">Cancelar</button>
-                <button type="submit" className="flex-1 py-2 bg-white text-indigo-600 rounded-lg font-bold text-xs">Enviar</button>
+                <button type="button" onClick={() => setShowPrayerForm(false)} className="flex-1 py-2 bg-transparent border border-white/30 text-white rounded-lg font-bold text-xs">{t('common.cancel')}</button>
+                <button type="submit" className="flex-1 py-2 bg-white text-indigo-600 rounded-lg font-bold text-xs">{t('member.send_request')}</button>
               </div>
             </form>
           )}

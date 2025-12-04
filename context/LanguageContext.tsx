@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Language = 'es' | 'en' | null;
+import { TRANSLATIONS } from '../utils/translations';
+
+type Language = 'es' | 'en' | 'pt' | 'fr' | null;
 
 interface LanguageContextType {
     language: Language;
     setLanguage: (lang: Language) => void;
-    t: (key: string) => string;
+    t: (key: string, params?: Record<string, string>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -18,42 +20,34 @@ export const useLanguage = () => {
     return context;
 };
 
-// Simple dictionary for the demo
-const TRANSLATIONS: Record<string, Record<string, string>> = {
-    es: {
-        'welcome': 'Bienvenido a Levita',
-        'select_lang': 'Selecciona tu idioma',
-        'visitor': 'Soy Visitante',
-        'member': 'Soy Miembro / Líder',
-        'admin': 'Soy Administrador',
-        'login': 'Iniciar Sesión',
-        'email': 'Correo Electrónico',
-        'password': 'Contraseña',
-        'enter': 'Entrar',
-        'back': 'Volver',
-        'church_os': 'Sistema Operativo para Iglesias',
-    },
-    en: {
-        'welcome': 'Welcome to Levita',
-        'select_lang': 'Select your language',
-        'visitor': 'I am a Visitor',
-        'member': 'I am a Member / Leader',
-        'admin': 'I am an Administrator',
-        'login': 'Login',
-        'email': 'Email',
-        'password': 'Password',
-        'enter': 'Enter',
-        'back': 'Back',
-        'church_os': 'Church Operating System',
-    }
-};
-
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [language, setLanguage] = useState<Language>(null);
 
-    const t = (key: string) => {
-        if (!language) return key;
-        return TRANSLATIONS[language][key] || key;
+    // Load language from local storage on mount
+    useEffect(() => {
+        const savedLang = localStorage.getItem('appLanguage') as Language;
+        if (savedLang) {
+            setLanguage(savedLang);
+        }
+    }, []);
+
+    // Save language to local storage when changed
+    useEffect(() => {
+        if (language) {
+            localStorage.setItem('appLanguage', language);
+        }
+    }, [language]);
+
+    const t = (key: string, params?: Record<string, string>) => {
+        const lang = language || 'es'; // Default to Spanish if null
+        let text = TRANSLATIONS[lang]?.[key] || key;
+
+        if (params) {
+            Object.entries(params).forEach(([k, v]) => {
+                text = text.replace(`{${k}}`, v);
+            });
+        }
+        return text;
     };
 
     return (

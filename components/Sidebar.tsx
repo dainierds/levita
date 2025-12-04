@@ -4,6 +4,7 @@ import { Role, SubscriptionTier, TIER_FEATURES, User } from '../types';
 import { db } from '../services/firebase';
 import { uploadFile } from '../services/storageService';
 import { doc, updateDoc } from 'firebase/firestore';
+import { useLanguage } from '../context/LanguageContext';
 
 interface SidebarProps {
   currentView: string;
@@ -14,6 +15,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, tier, user }) => {
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -23,17 +25,17 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
 
   // 1. Define all possible items
   const allMenuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'planner', label: 'Orden de Cultos', icon: FileText },
-    { id: 'team', label: 'Equipo de Turno', icon: UserCheck },
-    { id: 'sermons', label: 'Sermones & IA', icon: BookOpen },
-    { id: 'roster', label: 'Turnos', icon: Users },
-    { id: 'prayers', label: 'Peticiones', icon: Heart },
-    { id: 'statistics', label: 'Estadísticas', icon: BarChart3 },
-    { id: 'events', label: 'Eventos Admin', icon: Calendar },
-    { id: 'notifications', label: 'Notificaciones', icon: Bell },
-    { id: 'users', label: 'Usuarios & Email', icon: UserPlus },
-    { id: 'settings', label: 'Configuración', icon: Settings },
+    { id: 'dashboard', label: t('menu.dashboard'), icon: LayoutDashboard },
+    { id: 'planner', label: t('menu.planner'), icon: FileText },
+    { id: 'team', label: t('menu.team'), icon: UserCheck },
+    { id: 'sermons', label: t('menu.sermons'), icon: BookOpen },
+    { id: 'roster', label: t('menu.roster'), icon: Users },
+    { id: 'prayers', label: t('menu.prayers'), icon: Heart },
+    { id: 'statistics', label: t('menu.statistics'), icon: BarChart3 },
+    { id: 'events', label: t('menu.events'), icon: Calendar },
+    { id: 'notifications', label: t('menu.notifications'), icon: Bell },
+    { id: 'users', label: t('menu.users'), icon: UserPlus },
+    { id: 'settings', label: t('menu.settings'), icon: Settings },
   ];
 
   // 2. Filter by Role Strictness
