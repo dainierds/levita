@@ -12,7 +12,7 @@ interface TeamRosterProps {
 const ROLES_CONFIG = [
     { key: 'elder', label: 'Anciano de Turno', icon: UserCheck, color: 'text-blue-500 bg-blue-50', role: 'ELDER' },
     { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-purple-500 bg-purple-50', role: 'PREACHER' },
-    { key: 'worshipLeader', label: 'Director de Música', icon: Music, color: 'text-pink-500 bg-pink-50', role: 'MUSIC' },
+    { key: 'musicDirector', label: 'Director de Música', icon: Music, color: 'text-pink-500 bg-pink-50', role: 'MUSIC' },
     { key: 'audioOperator', label: 'Operador de Audio', icon: Mic, color: 'text-orange-500 bg-orange-50', role: 'AUDIO' },
 ];
 
@@ -143,8 +143,8 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                             <div
                                 key={team.id}
                                 className={`relative group w-full text-left p-4 rounded-2xl transition-all border cursor-pointer ${selectedTeamId === team.id
-                                        ? 'bg-white border-indigo-500 shadow-md ring-1 ring-indigo-500'
-                                        : 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-indigo-50'
+                                    ? 'bg-white border-indigo-500 shadow-md ring-1 ring-indigo-500'
+                                    : 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-indigo-50'
                                     }`}
                                 onClick={() => setSelectedTeamId(team.id)}
                             >
@@ -210,8 +210,8 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                                         onClick={() => handleSetActiveTeam(selectedTeam.id)}
                                         disabled={localSettings.activeTeamId === selectedTeam.id}
                                         className={`px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${localSettings.activeTeamId === selectedTeam.id
-                                                ? 'bg-green-100 text-green-700 cursor-default'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-indigo-600 hover:text-white'
+                                            ? 'bg-green-100 text-green-700 cursor-default'
+                                            : 'bg-slate-100 text-slate-600 hover:bg-indigo-600 hover:text-white'
                                             }`}
                                     >
                                         {localSettings.activeTeamId === selectedTeam.id ? (

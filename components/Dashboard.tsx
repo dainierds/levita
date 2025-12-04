@@ -32,7 +32,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
   const displayTeam = globalActiveTeam ? {
     teamName: globalActiveTeam.name,
     preacher: globalActiveTeam.members.preacher,
-    musicDirector: globalActiveTeam.members.worshipLeader, // Note: key mapping might differ
+    musicDirector: globalActiveTeam.members.musicDirector || (globalActiveTeam.members as any).worshipLeader,
     audioOperator: globalActiveTeam.members.audioOperator,
     elder: globalActiveTeam.members.elder
   } : (activePlan?.team || null);
@@ -184,12 +184,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
           {/* Card 2: Active Team Roster */}
           <div className="card-soft p-6 h-full">
             <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-              <UserCheck size={18} className="text-indigo-500" /> Equipo Oficial
-              {displayTeam?.teamName && (
-                <span className="ml-auto text-xs bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full uppercase tracking-wider">
-                  {displayTeam.teamName}
-                </span>
-              )}
+              <UserCheck size={18} className="text-indigo-500" />
+              {displayTeam?.teamName || 'Equipo Oficial'}
             </h3>
 
             {displayTeam ? (
