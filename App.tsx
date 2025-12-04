@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import ServicePlanner from './components/ServicePlanner';
@@ -59,6 +59,7 @@ const MOCK_USERS: User[] = [
 
 const ProtectedApp: React.FC = () => {
   const { role, user, logout } = useAuth();
+  const navigate = useNavigate();
   const { events, loading: eventsLoading, updateEvent } = useEvents();
   const { plans, loading: plansLoading, savePlan } = usePlans();
   const { users, loading: usersLoading } = useUsers();
@@ -139,7 +140,10 @@ const ProtectedApp: React.FC = () => {
         <MemberApp
           activePlan={plans.find(p => p.isActive)}
           events={events}
-          onLoginRequest={() => logout()}
+          onLoginRequest={async () => {
+            navigate('/');
+            await logout();
+          }}
           nextPreacher={nextPreacher}
           settings={settings}
         />
