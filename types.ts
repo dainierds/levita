@@ -25,6 +25,11 @@ export interface Attachment {
   type: string;
 }
 
+export interface LinkItem {
+  url: string;
+  label: string;
+}
+
 export interface LiturgyItem {
   id: string;
   type: LiturgyItemType;
@@ -36,6 +41,7 @@ export interface LiturgyItem {
   key?: string;
   youtubeLink?: string;
   youtubeLinks?: string[];
+  links?: LinkItem[];
   // Preaching specific
   preacher?: string;
   scripture?: string;

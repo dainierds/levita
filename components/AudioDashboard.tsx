@@ -123,17 +123,31 @@ const AudioDashboard: React.FC = () => {
                                                 )}
                                             </div>
                                             {/* YouTube Links Display */}
-                                            {item.type === 'WORSHIP' && item.youtubeLinks && item.youtubeLinks.length > 0 && (
+                                            {item.type === 'WORSHIP' && (
                                                 <div className="flex flex-wrap gap-2 mt-2">
-                                                    {item.youtubeLinks.map((link, lIdx) => (
+                                                    {/* Legacy Links */}
+                                                    {item.youtubeLinks?.map((link, lIdx) => (
                                                         <a
-                                                            key={lIdx}
+                                                            key={`legacy-${lIdx}`}
                                                             href={link}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-1 rounded-full hover:bg-red-500/20 transition-colors flex items-center gap-1"
                                                         >
                                                             <PlayCircle size={10} /> Link {lIdx + 1}
+                                                        </a>
+                                                    ))}
+                                                    {/* New Links with Labels */}
+                                                    {item.links?.map((link, lIdx) => (
+                                                        <a
+                                                            key={lIdx}
+                                                            href={link.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-1 rounded-full hover:bg-indigo-500/20 transition-colors flex items-center gap-1"
+                                                            title={link.url}
+                                                        >
+                                                            <PlayCircle size={10} /> {link.label}
                                                         </a>
                                                     ))}
                                                 </div>
