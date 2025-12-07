@@ -309,11 +309,7 @@ const ProtectedApp: React.FC = () => {
         </main>
 
         {role === 'ELDER' && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
-            <div className="w-full max-w-md pointer-events-auto">
-              <ElderBottomNav currentView={currentView} setCurrentView={setCurrentView} />
-            </div>
-          </div>
+          <ElderBottomNav currentView={currentView} setCurrentView={setCurrentView} />
         )}
       </div>
     </NotificationProvider>

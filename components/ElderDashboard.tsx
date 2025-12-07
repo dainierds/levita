@@ -22,65 +22,68 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50 relative pb-24 max-w-md mx-auto shadow-2xl md:my-8 md:rounded-[2.5rem] md:overflow-hidden md:min-h-[800px] md:border md:border-slate-200">
-            {/* Custom Header */}
-            <div className="bg-indigo-600 px-6 pt-8 pb-10 rounded-b-[2.5rem] shadow-xl relative z-10 transition-all">
-                <div className="flex items-center justify-between">
+        <div className="min-h-screen bg-slate-50/50 pb-32 max-w-md mx-auto md:my-8 md:min-h-[800px] flex flex-col justify-center">
+
+            {/* Header Card */}
+            <div className="bg-[#4F46E5] mx-4 rounded-[2rem] p-6 shadow-xl shadow-indigo-200/50 relative overflow-hidden mb-6 group">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <div className="w-32 h-32 rounded-full bg-white blur-2xl -mr-10 -mt-10"></div>
+                </div>
+
+                <div className="relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-indigo-500 border-2 border-indigo-300 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                        <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-white font-bold text-lg backdrop-blur-sm">
                             {user.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-white">{user.name}</h2>
-                            <p className="text-indigo-200 text-sm font-medium">Anciano</p>
+                            <h2 className="text-lg font-bold text-white">{user.name}</h2>
+                            <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">Anciano</p>
                         </div>
                     </div>
-                    {/* On Desktop/Mobile, X might close app or logout? Screenshot 0 shows X. */}
-                    <button className="p-2 bg-white/10 rounded-xl text-white hover:bg-white/20 transition-colors backdrop-blur-sm">
+                    <button className="p-2 bg-white/10 rounded-xl text-indigo-100 hover:bg-white/20 hover:text-white transition-colors">
                         <X size={20} />
                     </button>
+                </div>
+
+                {/* Active Tab Indicator (Visual) */}
+                <div className="mt-6 bg-[#4338CA] rounded-xl p-3 flex items-center gap-3">
+                    <div className="p-1.5 bg-white/10 rounded-lg text-white">
+                        <Home size={18} />
+                    </div>
+                    <span className="text-white font-bold text-sm">Inicio</span>
                 </div>
             </div>
 
             {/* Menu List */}
-            <div className="px-5 -mt-6 relative z-20">
-                <div className="bg-white rounded-[2rem] shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
-                    {/* Active "Inicio" Banner */}
-                    <div className="bg-indigo-600 p-4 flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg text-white">
-                            <Home size={20} />
-                        </div>
-                        <span className="font-bold text-white">Inicio</span>
-                    </div>
-
-                    <div className="divide-y divide-slate-50">
-                        {menuItems.filter(i => i.id !== 'dashboard').map((item, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => setCurrentView(item.id)}
-                                className="w-full flex items-center justify-between p-5 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <item.icon size={22} className="text-slate-700 group-hover:text-indigo-600 transition-colors" />
-                                    <span className="font-bold text-slate-700 group-hover:text-slate-900">{item.label}</span>
-                                </div>
-                                {item.count !== undefined ? (
-                                    <span className="text-slate-400 font-medium text-sm">{item.count}</span>
-                                ) : (
-                                    <ChevronRight size={18} className="text-slate-300" />
-                                )}
-                            </button>
-                        ))}
-                    </div>
+            <div className="bg-white mx-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+                <div className="divide-y divide-slate-50">
+                    {menuItems.filter(i => i.id !== 'dashboard').map((item, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => setCurrentView(item.id)}
+                            className="w-full flex items-center justify-between p-5 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+                        >
+                            <div className="flex items-center gap-4">
+                                <item.icon size={20} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                                <span className="font-bold text-slate-600 group-hover:text-slate-900 text-sm">{item.label}</span>
+                            </div>
+                            {item.count !== undefined && item.count > 0 ? (
+                                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{item.count}</span>
+                            ) : (
+                                <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-400 transition-colors" />
+                            )}
+                        </button>
+                    ))}
                 </div>
+            </div>
 
-                {/* Logout Button */}
+            {/* Logout */}
+            <div className="mt-8 px-8">
                 <button
                     onClick={logout}
-                    className="w-full mt-6 flex items-center gap-3 p-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-colors"
+                    className="flex items-center gap-2 text-red-500 font-bold text-sm hover:text-red-600 transition-colors"
                 >
-                    <LogOut size={20} />
-                    <span>Cerrar Sesión</span>
+                    <LogOut size={16} /> Cerrar Sesión
                 </button>
             </div>
         </div>
