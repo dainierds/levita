@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Calendar, TrendingUp, Bell, AlignJustify } from 'lucide-react'; // Menu icon
+import { FileText, Calendar, TrendingUp, Bell, BarChart3, Download } from 'lucide-react';
 
 interface ElderBottomNavProps {
     currentView: string;
@@ -9,15 +9,15 @@ interface ElderBottomNavProps {
 
 const ElderBottomNav: React.FC<ElderBottomNavProps> = ({ currentView, setCurrentView, notificationCount = 0 }) => {
     const navItems = [
-        { id: 'dashboard', label: 'Inicio', icon: AlignJustify },
-        { id: 'planner', label: 'Orden', icon: FileText },
-        { id: 'events', label: 'Itinerario', icon: Calendar },
+        { id: 'dashboard', label: 'Inicio', icon: BarChart3 },
+        { id: 'events', label: 'Itinerario', icon: FileText },
+        { id: 'roster', label: 'Mi Turno', icon: Calendar },
         { id: 'statistics', label: 'Stats', icon: TrendingUp },
-        { id: 'notifications', label: 'Avisos', icon: Bell },
+        { id: 'notifications', label: 'Avisos', icon: Bell, badge: notificationCount },
     ];
 
     return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white px-8 py-3 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] flex items-center gap-8 z-[100] border border-slate-100">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex justify-around shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-50">
             {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.id;
@@ -26,15 +26,15 @@ const ElderBottomNav: React.FC<ElderBottomNavProps> = ({ currentView, setCurrent
                     <button
                         key={item.id}
                         onClick={() => setCurrentView(item.id)}
-                        className={`flex flex-col items-center gap-1 transition-all ${isActive ? 'text-blue-600 scale-105' : 'text-slate-300 hover:text-slate-400'}`}
+                        className={`relative flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
                     >
-                        <div className="relative p-1">
-                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                            {item.id === 'notifications' && notificationCount > 0 && (
-                                <span className="absolute -top-0 -right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-                            )}
-                        </div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider">{item.label}</span>
+                        <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                        {item.badge !== undefined && item.badge > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+                                {item.badge}
+                            </span>
+                        )}
+                        {/* Optional label if space permits, AncianoLayout code didn't use labels on bottom nav, only icons */}
                     </button>
                 );
             })}

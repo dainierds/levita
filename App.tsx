@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { db } from './services/firebase';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import ElderDashboard from './components/ElderDashboard';
 import PersonalStatistics from './components/PersonalStatistics';
 import ResourcesView from './components/ResourcesView';
@@ -77,6 +79,38 @@ const ProtectedApp: React.FC = () => {
   const [tenants, setTenants] = useState<ChurchTenant[]>(MOCK_TENANTS);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [currentTenantTier, setCurrentTenantTier] = useState<SubscriptionTier>('PLATINUM');
+  const [elderUnreadCount, setElderUnreadCount] = useState(0);
+
+  // Elder Notification Real-time Listener
+  useEffect(() => {
+    if (role !== 'ELDER' || !user?.tenantId || !user?.uid) return;
+
+    const notifQuery = query(
+      collection(db, 'notificaciones'),
+      where('iglesiaId', '==', user.tenantId),
+      orderBy('fechaCreacion', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(notifQuery, (snapshot) => {
+      const allNotifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+
+      const myNotifs = allNotifs.filter((notif: any) => {
+        if (notif.destinatarioId && notif.destinatarioId === user.uid) return true;
+        if (Array.isArray(notif.destinatarios) && notif.destinatarios.includes(user.uid)) return true;
+        if (!notif.destinatarioId && !notif.destinatarios) return true; // Global
+        return false;
+      });
+
+      const unread = myNotifs.filter((notif: any) => {
+        if (!notif.leidas) return true;
+        return notif.leidas[user.uid] !== true;
+      }).length;
+
+      setElderUnreadCount(unread);
+    });
+
+    return () => unsubscribe();
+  }, [user, role]);
 
   const handleSaveSettings = async (newSettings: ChurchSettings) => {
     if (user?.tenantId) {
@@ -221,10 +255,10 @@ const ProtectedApp: React.FC = () => {
 
 
 
-          {/* Elder Header - Show Always for Elder (except Dashboard) */}
-          {role === 'ELDER' && currentView !== 'dashboard' && (
-            <div className="max-w-md mx-auto w-full">
-              <ElderHeader user={user!} onMenuClick={() => setCurrentView('dashboard')} />
+          {/* Elder Header - Show Always for Elder */}
+          {role === 'ELDER' && (
+            <div className="w-full">
+              <ElderHeader user={user!} onMenuClick={() => setCurrentView('dashboard')} isMenuOpen={currentView === 'dashboard'} />
             </div>
           )}
 
@@ -233,7 +267,7 @@ const ProtectedApp: React.FC = () => {
           )}
 
           {currentView === 'dashboard' && role === 'ELDER' && (
-            <ElderDashboard setCurrentView={setCurrentView} user={user!} settings={settings} />
+            <ElderDashboard setCurrentView={setCurrentView} user={user!} settings={settings} notificationCount={elderUnreadCount} />
           )}
 
           {currentView === 'planner' && (
@@ -309,7 +343,7 @@ const ProtectedApp: React.FC = () => {
         </main>
 
         {role === 'ELDER' && (
-          <ElderBottomNav currentView={currentView} setCurrentView={setCurrentView} />
+          <ElderBottomNav currentView={currentView} setCurrentView={setCurrentView} notificationCount={elderUnreadCount} />
         )}
       </div>
     </NotificationProvider>
