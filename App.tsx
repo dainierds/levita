@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import ElderDashboard from './components/ElderDashboard';
+import PersonalStatistics from './components/PersonalStatistics';
+import ResourcesView from './components/ResourcesView';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -208,8 +211,14 @@ const ProtectedApp: React.FC = () => {
             </div>
           )}
 
-          {currentView === 'dashboard' && (role === 'ADMIN' || role === 'ELDER') && (
+
+
+          {currentView === 'dashboard' && role === 'ADMIN' && (
             <Dashboard setCurrentView={setCurrentView} role={role} settings={settings} />
+          )}
+
+          {currentView === 'dashboard' && role === 'ELDER' && (
+            <ElderDashboard setCurrentView={setCurrentView} user={user!} settings={settings} />
           )}
 
           {currentView === 'planner' && (
@@ -248,6 +257,14 @@ const ProtectedApp: React.FC = () => {
             <div className="p-8 max-w-full mx-auto">
               <StatisticsPanel plans={plans} />
             </div>
+          )}
+
+          {currentView === 'statistics' && (role === 'ELDER') && (
+            <PersonalStatistics plans={plans} user={user!} />
+          )}
+
+          {currentView === 'resources' && (role === 'ELDER') && (
+            <ResourcesView />
           )}
 
           {currentView === 'team' && (

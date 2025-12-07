@@ -1,5 +1,6 @@
+
 import React, { useRef, useState } from 'react';
-import { LayoutDashboard, Calendar, FileText, Users, Settings, Church, UserPlus, Bell, BarChart3, Camera, Loader2, UserCheck, BookOpen, Heart } from 'lucide-react';
+import { LayoutDashboard, Calendar, FileText, Users, Settings, Church, UserPlus, Bell, BarChart3, Camera, Loader2, UserCheck, BookOpen, Heart, Library } from 'lucide-react';
 import { Role, SubscriptionTier, TIER_FEATURES, User } from '../types';
 import { db } from '../services/firebase';
 import { uploadFile } from '../services/storageService';
@@ -32,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
     { id: 'roster', label: t('menu.roster'), icon: Users },
     { id: 'prayers', label: t('menu.prayers'), icon: Heart },
     { id: 'statistics', label: t('menu.statistics'), icon: BarChart3 },
+    { id: 'resources', label: t('menu.resources'), icon: Library },
     { id: 'events', label: t('menu.events'), icon: Calendar },
     { id: 'notifications', label: t('menu.notifications'), icon: Bell },
     { id: 'users', label: t('menu.users'), icon: UserPlus },
@@ -43,10 +45,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
 
   switch (role) {
     case 'ADMIN':
-      allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'events', 'notifications', 'users', 'settings', 'statistics'];
+      allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics', 'events', 'notifications', 'users', 'settings'];
       break;
     case 'ELDER':
-      allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers'];
+      allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics', 'resources'];
       break;
     case 'AUDIO':
     case 'MUSIC':
@@ -110,8 +112,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
               key={item.id}
               onClick={() => setCurrentView(item.id)}
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl transition-all duration-300 group ${isActive
-                ? 'bg-indigo-50 text-indigo-600 shadow-sm font-semibold'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                  ? 'bg-indigo-50 text-indigo-600 shadow-sm font-semibold'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
                 }`}
             >
               <Icon size={20} className={isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'} />
