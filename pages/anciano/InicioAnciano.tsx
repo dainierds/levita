@@ -1,139 +1,170 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { usePlans } from '../../hooks/usePlans';
 import { useEvents } from '../../hooks/useEvents';
-import { Calendar, CheckCircle, TrendingUp, Clock, AlertCircle } from 'lucide-react';
+import { usePlans } from '../../hooks/usePlans';
+import { Calendar, FileText, BookOpen, Mic } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const InicioAnciano: React.FC = () => {
     const { user } = useAuth();
-    const { plans } = usePlans();
     const { events } = useEvents();
+    const { plans } = usePlans();
+    const navigate = useNavigate();
 
-    // Logic to find next data
-    const now = new Date();
+    // --- CAROUSEL LOGIC ---
+    const [currentEventIndex, setCurrentEventIndex] = useState(0);
+
+    // Filter only future events for the carousel
+    const upcomingEvents = events
+        .filter(e => new Date(e.date) >= new Date())
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Auto-advance carousel
+    useEffect(() => {
+        if (upcomingEvents.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentEventIndex(prev => (prev + 1) % upcomingEvents.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [upcomingEvents.length]);
+
+    const activeEvent = upcomingEvents[currentEventIndex];
+
+    // --- DATA FOR BUTTONS ---
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Next Turn
     const nextPlan = plans
-        .filter(p => !p.isActive && new Date(p.date) >= now)
-        .filter(p => p.team.elder === user?.name || p.team.preacher === user?.name) // Simplified check
+        .filter(p => !p.isActive && new Date(p.date) >= today)
+        .filter(p => p.team.elder === user?.name || p.team.preacher === user?.name || p.team.musicDirector === user?.name || p.team.audioOperator === user?.name)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
+    // Next Preaching
     const nextPreaching = plans
-        .filter(p => !p.isActive && new Date(p.date) >= now)
+        .filter(p => !p.isActive && new Date(p.date) >= today)
         .filter(p => p.team.preacher === user?.name)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
-    const nextEvents = events
-        .filter(e => new Date(e.date) >= now)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .slice(0, 3);
-
-    // Obtener fecha formateada
-    const fechaActual = new Date().toLocaleDateString('es-ES', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
 
     return (
-        <div className="p-4 space-y-6">
-            {/* Saludo */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-                <h1 className="text-2xl font-bold text-gray-800 mb-1">
-                    ¡Hola, {user?.name?.split(' ')[0]}! 👋
-                </h1>
-                <p className="text-gray-600 capitalize">{fechaActual}</p>
+        <div className="p-4 space-y-6 max-w-5xl mx-auto">
+            {/* Header Text */}
+            <div className="text-center mb-2">
+                <h1 className="text-xl font-bold text-slate-900">Bienvenido, {user?.name?.split(' ')[0]}</h1>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Iglesia</p>
             </div>
 
-            {/* Cards de resumen */}
-            <div className="grid grid-cols-2 gap-4">
-                {/* Próximo Turno */}
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-4 shadow-lg flex flex-col justify-between">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Calendar className="w-5 h-5" />
-                        <span className="text-sm font-medium">Próximo Turno</span>
-                    </div>
-                    <p className="text-3xl font-bold">
-                        {nextPlan ? new Date(nextPlan.date).getDate() : '--'}
-                    </p>
-                    <p className="text-xs text-blue-100 opacity-90">
-                        {nextPlan ? new Date(nextPlan.date).toLocaleDateString('es-ES', { month: 'long' }) : 'Sin asignar'}
-                    </p>
+            {/* 1. CAROUSEL BANNER (Top) */}
+            <div className="w-full bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 rounded-3xl p-6 text-white shadow-lg shadow-pink-200 relative overflow-hidden transition-all duration-500 h-48 flex flex-col justify-center">
+                {/* Decorative Background Icon */}
+                <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
+                    <Calendar size={120} className="transform rotate-12 -mr-8 -mt-8" />
                 </div>
 
-                {/* Tareas Pendientes */}
-                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-4 shadow-lg flex flex-col justify-between">
-                    <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-5 h-5" />
-                        <span className="text-sm font-medium">Tareas</span>
-                    </div>
-                    <p className="text-3xl font-bold">0</p>
-                    <p className="text-xs text-green-100 opacity-90">Pendientes</p>
-                </div>
+                {upcomingEvents.length > 0 ? (
+                    <div className="relative z-10 animate-in fade-in duration-500 key={activeEvent.id}">
+                        <div className="flex items-center gap-2 mb-2 opacity-90">
+                            <Mic size={16} />
+                            <span className="text-xs font-bold uppercase tracking-wider">Próximo Evento</span>
+                        </div>
 
-                {/* Próxima Predicación */}
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl p-4 shadow-lg flex flex-col justify-between">
-                    <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="w-5 h-5" />
-                        <span className="text-sm font-medium">Predicación</span>
-                    </div>
-                    <p className="text-3xl font-bold">
-                        {nextPreaching ? new Date(nextPreaching.date).getDate() : '--'}
-                    </p>
-                    <p className="text-xs text-purple-100 opacity-90">{nextPreaching ? new Date(nextPreaching.date).toLocaleDateString('es-ES', { month: 'long' }) : 'Próxima'}</p>
-                </div>
+                        <h2 className="text-3xl font-bold mb-2 leading-tight">
+                            {activeEvent.title}
+                        </h2>
+                        <p className="text-sm opacity-90 mb-4 font-medium leading-snug max-w-[80%] line-clamp-2">
+                            {activeEvent.description || 'Consulta los detalles del evento.'}
+                        </p>
 
-                {/* Última Asistencia */}
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl p-4 shadow-lg flex flex-col justify-between">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Clock className="w-5 h-5" />
-                        <span className="text-sm font-medium">Asistencia</span>
-                    </div>
-                    <p className="text-3xl font-bold">100%</p>
-                    <p className="text-xs text-orange-100 opacity-90">Este mes</p>
-                </div>
-            </div>
-
-            {/* Próximos Eventos */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <Calendar className="w-6 h-6 text-blue-600" />
-                    Próximos Eventos
-                </h2>
-
-                {nextEvents.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                        <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300 opacity-50" />
-                        <p>No hay eventos próximos</p>
+                        <div className="flex items-center gap-2 text-xs font-bold bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg w-fit">
+                            <Calendar size={14} />
+                            {new Date(activeEvent.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        </div>
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        {nextEvents.map((evento) => (
-                            <div key={evento.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <div className="text-2xl w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">📅</div>
-                                <div className="flex-1">
-                                    <h3 className="font-bold text-gray-800 text-sm">{evento.title}</h3>
-                                    <p className="text-xs text-gray-500 font-medium">
-                                        {new Date(evento.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                    </p>
-                                </div>
-                            </div>
+                    <div className="relative z-10 flex flex-col items-center justify-center h-full text-center">
+                        <Calendar size={48} className="mb-2 opacity-50" />
+                        <h2 className="text-xl font-bold">No hay eventos próximos</h2>
+                        <p className="opacity-80 text-sm">Consulta el calendario más tarde.</p>
+                    </div>
+                )}
+
+                {/* Carousel Dots */}
+                {upcomingEvents.length > 1 && (
+                    <div className="absolute bottom-4 right-4 flex gap-1.5 z-20">
+                        {upcomingEvents.map((_, idx) => (
+                            <div
+                                key={idx}
+                                className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentEventIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/50'}`}
+                            />
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* Avisos Importantes */}
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-xl p-4 shadow-sm">
-                <div className="flex items-start gap-3">
-                    <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+            {/* 2. NAVIGATION GRID (Bottom) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Blue - Mi Próximo Turno */}
+                <button
+                    onClick={() => navigate('/anciano/mi-turno')}
+                    className="bg-[#3b82f6] rounded-3xl p-6 text-left text-white shadow-lg shadow-blue-200 hover:scale-[1.01] transition-transform relative overflow-hidden h-32 flex flex-col justify-between"
+                >
                     <div>
-                        <h3 className="font-bold text-yellow-800 mb-1 text-sm">Aviso Importante</h3>
-                        <p className="text-sm text-yellow-700 leading-relaxed">
-                            Recuerda confirmar tu asistencia a la próxima reunión de ancianos.
-                        </p>
+                        <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+                            <Calendar size={16} />
+                        </div>
+                        <h3 className="font-bold text-lg leading-none">Mi Próximo Turno</h3>
                     </div>
-                </div>
+                    <p className="text-xs opacity-80 font-medium">
+                        {nextPlan ? new Date(nextPlan.date).toLocaleDateString() : 'Sin turnos próximos'}
+                    </p>
+                </button>
+
+                {/* Purple - Predicación */}
+                <button
+                    onClick={() => navigate('/anciano/itinerario')}
+                    className="bg-[#a855f7] rounded-3xl p-6 text-left text-white shadow-lg shadow-purple-200 hover:scale-[1.01] transition-transform relative overflow-hidden h-32 flex flex-col justify-between"
+                >
+                    <div>
+                        <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+                            <FileText size={16} />
+                        </div>
+                        <h3 className="font-bold text-lg leading-none">Predicación</h3>
+                    </div>
+                    <p className="text-xs opacity-80 font-medium">
+                        {nextPreaching ? new Date(nextPreaching.date).toLocaleDateString() : 'Sin predicaciones'}
+                    </p>
+                </button>
+
+                {/* Green - Orden de Culto */}
+                <button
+                    onClick={() => navigate('/anciano/orden-culto')}
+                    className="bg-[#22c55e] rounded-3xl p-6 text-left text-white shadow-lg shadow-green-200 hover:scale-[1.01] transition-transform relative overflow-hidden h-32 flex flex-col justify-between"
+                >
+                    <div>
+                        <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+                            <FileText size={16} />
+                        </div>
+                        <h3 className="font-bold text-lg leading-none">Orden de Culto</h3>
+                    </div>
+                    <p className="text-xs opacity-80 font-medium">Ver programa</p>
+                </button>
+
+                {/* Orange - Recursos */}
+                <button
+                    onClick={() => navigate('/anciano/recursos')}
+                    className="bg-[#f97316] rounded-3xl p-6 text-left text-white shadow-lg shadow-orange-200 hover:scale-[1.01] transition-transform relative overflow-hidden h-32 flex flex-col justify-between"
+                >
+                    <div>
+                        <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+                            <BookOpen size={16} />
+                        </div>
+                        <h3 className="font-bold text-lg leading-none">Recursos</h3>
+                    </div>
+                    <p className="text-xs opacity-80 font-medium">2 disponibles</p>
+                </button>
             </div>
+
         </div>
     );
 };
