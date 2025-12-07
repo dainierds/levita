@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, ChurchSettings } from '../types';
-import { FileText, Calendar, TrendingUp, Bell, LogOut, X, ChevronRight, Home, BookOpen, Clock } from 'lucide-react';
+import { FileText, Calendar, TrendingUp, Bell, LogOut, X, ChevronRight, Home, BookOpen, Clock, Download } from 'lucide-react';
 
 interface ElderDashboardProps {
     setCurrentView: (view: string) => void;
@@ -18,36 +18,35 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
         { id: 'planner', label: 'Orden de Culto', icon: BookOpen },
         { id: 'roster', label: 'Mi Turno', icon: Clock },
         { id: 'statistics', label: 'Estadísticas', icon: TrendingUp },
+        { id: 'resources', label: 'Recursos', icon: Download },
         { id: 'notifications', label: 'Notificaciones', icon: Bell, count: 0 },
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50/50 pb-32 max-w-md mx-auto md:my-8 md:min-h-[800px] flex flex-col justify-center">
+        <div className="min-h-screen bg-slate-50/50 pb-32 max-w-md mx-auto md:my-8 md:min-h-[800px] flex flex-col pt-4">
 
             {/* Header Card */}
-            <div className="bg-[#4F46E5] mx-4 rounded-[2rem] p-6 shadow-xl shadow-indigo-200/50 relative overflow-hidden mb-6 group">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <div className="w-32 h-32 rounded-full bg-white blur-2xl -mr-10 -mt-10"></div>
-                </div>
-
-                <div className="relative z-10 flex items-center justify-between">
+            <div className="bg-[#6366f1] mx-4 rounded-t-[1.5rem] rounded-b-[1.5rem] p-6 shadow-xl shadow-indigo-200/50 relative overflow-hidden mb-4 pb-8">
+                <div className="relative z-10 flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-white font-bold text-lg backdrop-blur-sm">
                             {user.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-white">{user.name}</h2>
-                            <p className="text-indigo-200 text-xs font-medium uppercase tracking-wider">Anciano</p>
+                            <p className="text-white/70 text-xs font-medium uppercase tracking-wider">Anciano</p>
                         </div>
                     </div>
-                    <button className="p-2 bg-white/10 rounded-xl text-indigo-100 hover:bg-white/20 hover:text-white transition-colors">
+                    {/* The X implies closing the 'Menu' view. In our logic, Dashboard IS the menu, so X might go back to last view or do nothing? 
+                        Screenshot shows it as a modal-like state. We'll make it navigate to 'events' or just be visual for now if no history. */}
+                    <button onClick={() => setCurrentView('events')} className="p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* Active Tab Indicator (Visual) */}
-                <div className="mt-6 bg-[#4338CA] rounded-xl p-3 flex items-center gap-3">
-                    <div className="p-1.5 bg-white/10 rounded-lg text-white">
+                {/* Active Tab Indicator (Visual) matching screenshot */}
+                <div className="bg-[#4f46e5] rounded-xl p-3 flex items-center gap-3">
+                    <div className="p-1 bg-white/10 rounded text-white">
                         <Home size={18} />
                     </div>
                     <span className="text-white font-bold text-sm">Inicio</span>
@@ -55,37 +54,40 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
             </div>
 
             {/* Menu List */}
-            <div className="bg-white mx-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white mx-4 rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden -mt-6 relative z-20">
                 <div className="divide-y divide-slate-50">
                     {menuItems.filter(i => i.id !== 'dashboard').map((item, idx) => (
                         <button
                             key={idx}
                             onClick={() => setCurrentView(item.id)}
-                            className="w-full flex items-center justify-between p-5 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+                            className="w-full flex items-center justify-between p-4 px-6 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
                         >
                             <div className="flex items-center gap-4">
-                                <item.icon size={20} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
-                                <span className="font-bold text-slate-600 group-hover:text-slate-900 text-sm">{item.label}</span>
+                                <item.icon size={20} className="text-slate-700" />
+                                <span className="font-bold text-slate-700 text-sm">{item.label}</span>
                             </div>
                             {item.count !== undefined && item.count > 0 ? (
-                                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{item.count}</span>
+                                <span className="text-slate-400 font-medium text-xs">{item.count}</span>
                             ) : (
-                                <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-400 transition-colors" />
+                                <ChevronRight size={16} className="text-slate-300" />
                             )}
                         </button>
                     ))}
                 </div>
+
+                {/* Logout inside the white card or below? Screenshot 2 shows it separate below with red text */}
             </div>
 
-            {/* Logout */}
-            <div className="mt-8 px-8">
+            <div className="bg-white mx-4 mt-4 rounded-2xl shadow-sm border border-slate-100">
                 <button
                     onClick={logout}
-                    className="flex items-center gap-2 text-red-500 font-bold text-sm hover:text-red-600 transition-colors"
+                    className="w-full flex items-center gap-3 p-4 px-6 text-red-500 font-bold text-sm hover:bg-red-50 transition-colors rounded-2xl"
                 >
-                    <LogOut size={16} /> Cerrar Sesión
+                    <LogOut size={18} /> Cerrar Sesión
                 </button>
             </div>
+
+
         </div>
     );
 };

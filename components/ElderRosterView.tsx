@@ -24,43 +24,36 @@ const ElderRosterView: React.FC = () => {
     if (loading) return <div className="p-8 text-center text-slate-400">Cargando...</div>;
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24 md:pb-8 max-w-md mx-auto md:my-8 md:rounded-[2.5rem] md:overflow-hidden md:min-h-[800px] md:border md:border-slate-200 md:shadow-2xl">
-            <div className="bg-white p-6 pb-8 rounded-b-[2.5rem] shadow-sm border-b border-slate-100 mb-8">
-                {myPlans.length === 0 ? (
-                    <div className="bg-slate-50 rounded-2xl p-8 text-center border border-slate-100">
-                        <p className="text-slate-500 font-medium">No tienes turnos asignados próximamente</p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {myPlans.map(plan => (
-                            <div key={plan.id} className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center justify-between">
-                                <div>
-                                    <h4 className="font-bold text-indigo-900">{plan.title}</h4>
-                                    <p className="text-xs text-indigo-500 font-semibold mt-1 flex items-center gap-1">
-                                        <CalendarClock size={12} /> {plan.date} • {plan.startTime}
-                                    </p>
-                                </div>
-                                <div className="px-3 py-1 bg-white rounded-lg text-xs font-bold text-indigo-600 shadow-sm">
-                                    {plan.team.elder === user?.name ? 'Anciano' : 'Asignado'}
-                                </div>
+        <div className="min-h-screen bg-[#f3f4f6] pb-32 max-w-md mx-auto md:my-8 md:min-h-[800px] pt-6">
+            {myPlans.length === 0 ? (
+                <div className="bg-white mx-4 rounded-3xl p-8 text-center shadow-sm mb-8">
+                    <p className="text-slate-500 font-medium text-sm">No tienes turnos asignados próximamente</p>
+                </div>
+            ) : (
+                <div className="mx-4 space-y-4 mb-8">
+                    {myPlans.map(plan => (
+                        <div key={plan.id} className="bg-white border border-indigo-100 rounded-3xl p-5 flex items-center justify-between shadow-sm">
+                            <div>
+                                <h4 className="font-bold text-indigo-900 text-sm">{plan.title}</h4>
+                                <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
+                                    <CalendarClock size={12} /> {plan.date} • {plan.startTime}
+                                </p>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                            <div className="px-3 py-1 bg-indigo-50 rounded-lg text-[10px] font-bold text-indigo-600">
+                                {plan.team.elder === user?.name ? 'Anciano' : 'Asignado'}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
-            <div className="px-6 pb-4">
-                <h3 className="font-bold text-slate-800 mb-4 ml-1">Recordatorios</h3>
-                <div className="bg-[#FFF9E5] border border-yellow-100 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
-                    <div className="w-1.5 h-full min-h-[40px] bg-yellow-400 rounded-full shrink-0"></div>
-                    <div>
-                        <p className="text-sm text-yellow-900 font-bold mb-1 flex items-center gap-2">
-                            📢 Importante
-                        </p>
-                        <p className="text-xs text-yellow-700 leading-relaxed font-medium">
-                            Recuerda llegar 30 minutos antes del servicio para la reunión de oración.
-                        </p>
-                    </div>
+            <div className="mx-4">
+                <h3 className="font-bold text-slate-900 mb-3 ml-1 text-sm">Recordatorios</h3>
+                <div className="bg-[#fffbeb] border border-[#fef3c7] rounded-2xl p-4 flex items-start gap-3 shadow-sm">
+                    <span className="text-lg mt-0.5">📢</span>
+                    <p className="text-xs text-[#92400e] leading-relaxed">
+                        <span className="font-bold">Importante:</span> Recuerda llegar 30 minutos antes del servicio.
+                    </p>
                 </div>
             </div>
         </div>
