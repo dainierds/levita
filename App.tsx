@@ -312,6 +312,12 @@ const ProtectedApp: React.FC = () => {
             <ElderNotifications />
           )}
 
+          {currentView === 'resources' && role === 'ELDER' && (
+            <div className="md:max-w-md md:mx-auto md:my-8 bg-slate-50 min-h-screen md:min-h-[800px] md:rounded-[2.5rem] md:border md:border-slate-200 md:shadow-2xl overflow-hidden">
+              <ResourcesView />
+            </div>
+          )}
+
 
 
           {currentView === 'statistics' && (role === 'ADMIN') && (
