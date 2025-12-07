@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePlans } from '../hooks/usePlans';
-import { AlertCircle, CalendarClock } from 'lucide-react';
+import { CalendarClock } from 'lucide-react';
 
 const ElderRosterView: React.FC = () => {
     const { user } = useAuth();
@@ -24,7 +24,7 @@ const ElderRosterView: React.FC = () => {
     if (loading) return <div className="p-8 text-center text-slate-400">Cargando...</div>;
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+        <div className="min-h-screen bg-slate-50 pb-24 md:pb-8 max-w-md mx-auto md:my-8 md:rounded-[2.5rem] md:overflow-hidden md:min-h-[800px] md:border md:border-slate-200 md:shadow-2xl">
             <div className="bg-white p-6 pb-8 rounded-b-[2.5rem] shadow-sm border-b border-slate-100 mb-8">
                 {myPlans.length === 0 ? (
                     <div className="bg-slate-50 rounded-2xl p-8 text-center border border-slate-100">
@@ -49,7 +49,7 @@ const ElderRosterView: React.FC = () => {
                 )}
             </div>
 
-            <div className="px-6">
+            <div className="px-6 pb-4">
                 <h3 className="font-bold text-slate-800 mb-4 ml-1">Recordatorios</h3>
                 <div className="bg-[#FFF9E5] border border-yellow-100 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
                     <div className="w-1.5 h-full min-h-[40px] bg-yellow-400 rounded-full shrink-0"></div>

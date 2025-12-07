@@ -17,7 +17,7 @@ const ElderBottomNav: React.FC<ElderBottomNavProps> = ({ currentView, setCurrent
     ];
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] text-[10px] font-bold">
+        <div className="bg-white border-t border-slate-100 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] text-[10px] font-bold md:rounded-b-xl">
             {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.id;

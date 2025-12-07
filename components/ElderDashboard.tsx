@@ -22,9 +22,9 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50 relative pb-24 md:pb-0">
-            {/* Custom Header for Mobile (Overlays App Header) */}
-            <div className="md:hidden bg-indigo-600 px-6 pt-8 pb-10 rounded-b-[2.5rem] shadow-xl relative z-10 transition-all">
+        <div className="min-h-screen bg-slate-50 relative pb-24 max-w-md mx-auto shadow-2xl md:my-8 md:rounded-[2.5rem] md:overflow-hidden md:min-h-[800px] md:border md:border-slate-200">
+            {/* Custom Header */}
+            <div className="bg-indigo-600 px-6 pt-8 pb-10 rounded-b-[2.5rem] shadow-xl relative z-10 transition-all">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-indigo-500 border-2 border-indigo-300 flex items-center justify-center text-white font-bold text-xl shadow-md">
@@ -35,19 +35,15 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
                             <p className="text-indigo-200 text-sm font-medium">Anciano</p>
                         </div>
                     </div>
+                    {/* On Desktop/Mobile, X might close app or logout? Screenshot 0 shows X. */}
                     <button className="p-2 bg-white/10 rounded-xl text-white hover:bg-white/20 transition-colors backdrop-blur-sm">
                         <X size={20} />
                     </button>
                 </div>
             </div>
 
-            {/* Desktop Only Warning */}
-            <div className="hidden md:block p-8 text-center text-slate-400">
-                <p>Esta vista está optimizada para móviles.</p>
-            </div>
-
             {/* Menu List */}
-            <div className="px-5 -mt-6 relative z-20 md:hidden">
+            <div className="px-5 -mt-6 relative z-20">
                 <div className="bg-white rounded-[2rem] shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
                     {/* Active "Inicio" Banner */}
                     <div className="bg-indigo-600 p-4 flex items-center gap-3">

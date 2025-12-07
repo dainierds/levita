@@ -3,7 +3,7 @@ import { Bell } from 'lucide-react';
 
 const ElderNotifications: React.FC = () => {
     return (
-        <div className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+        <div className="min-h-screen bg-slate-50 pb-24 md:pb-8 max-w-md mx-auto md:my-8 md:rounded-[2.5rem] md:overflow-hidden md:min-h-[800px] md:border md:border-slate-200 md:shadow-2xl">
             <div className="p-4 md:p-8 space-y-4">
                 <div className="flex items-center gap-3 mb-6">
                     <Bell className="text-indigo-600" size={24} />

@@ -176,15 +176,17 @@ const ProtectedApp: React.FC = () => {
   return (
     <NotificationProvider allNotifications={notifications} setAllNotifications={setNotifications} currentUserId={user?.id}>
       <div className="min-h-screen bg-[#F7F8FA] flex text-slate-800 font-sans selection:bg-indigo-100">
-        <Sidebar
-          currentView={currentView}
-          setCurrentView={setCurrentView}
-          role={role}
-          tier={currentTenantTier}
-          user={user!}
-        />
+        {role !== 'ELDER' && (
+          <Sidebar
+            currentView={currentView}
+            setCurrentView={setCurrentView}
+            role={role}
+            tier={currentTenantTier}
+            user={user!}
+          />
+        )}
 
-        <main className="flex-1 md:ml-64 relative">
+        <main className={`flex-1 relative ${role !== 'ELDER' ? 'md:ml-64' : 'bg-slate-50 min-h-screen'}`}>
           {/* Mobile Header */}
           <div className="md:hidden p-4 flex justify-between items-center bg-white shadow-sm sticky top-0 z-40">
             <div className="flex items-center gap-4">
@@ -193,19 +195,21 @@ const ProtectedApp: React.FC = () => {
             <NotificationBell />
           </div>
 
-          {/* Desktop Top Bar */}
-          <div className="hidden md:flex absolute top-6 right-8 z-50 items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100">
-              <span className="text-xs font-bold text-slate-400 uppercase">Iglesia:</span>
-              <span className="text-sm font-bold text-indigo-600">{settings?.churchName || 'Mi Iglesia'}</span>
+          {/* Desktop Top Bar - Hide for Elder */}
+          {role !== 'ELDER' && (
+            <div className="hidden md:flex absolute top-6 right-8 z-50 items-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100">
+                <span className="text-xs font-bold text-slate-400 uppercase">Iglesia:</span>
+                <span className="text-sm font-bold text-indigo-600">{settings?.churchName || 'Mi Iglesia'}</span>
+              </div>
+
+              <button onClick={logout} className="text-xs font-bold text-red-400 hover:text-red-600">
+                Salir
+              </button>
+
+              <NotificationBell />
             </div>
-
-            <button onClick={logout} className="text-xs font-bold text-red-400 hover:text-red-600">
-              Salir
-            </button>
-
-            <NotificationBell />
-          </div>
+          )}
 
           {/* LOADING STATE */}
           {(eventsLoading || plansLoading) && (
@@ -217,8 +221,11 @@ const ProtectedApp: React.FC = () => {
 
 
 
+          {/* Elder Header - Show Always for Elder (except Dashboard) */}
           {role === 'ELDER' && currentView !== 'dashboard' && (
-            <ElderHeader user={user!} onMenuClick={() => setCurrentView('dashboard')} />
+            <div className="max-w-md mx-auto w-full">
+              <ElderHeader user={user!} onMenuClick={() => setCurrentView('dashboard')} />
+            </div>
           )}
 
           {currentView === 'dashboard' && role === 'ADMIN' && (
@@ -302,7 +309,11 @@ const ProtectedApp: React.FC = () => {
         </main>
 
         {role === 'ELDER' && (
-          <ElderBottomNav currentView={currentView} setCurrentView={setCurrentView} />
+          <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
+            <div className="w-full max-w-md pointer-events-auto">
+              <ElderBottomNav currentView={currentView} setCurrentView={setCurrentView} />
+            </div>
+          </div>
         )}
       </div>
     </NotificationProvider>
