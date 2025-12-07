@@ -19,6 +19,17 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
     const activeEvents = events.filter(e => e.activeInBanner);
     const sortedPlans = [...plans].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+    // Cycle through active events
+    const [currentEventIndex, setCurrentEventIndex] = useState(0);
+
+    useEffect(() => {
+        if (activeEvents.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentEventIndex((prev) => (prev + 1) % activeEvents.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [activeEvents.length]);
+
     // Find "My Next Shift"
     const myNextPlan = sortedPlans.find(p => {
         const team = p.team;
@@ -47,7 +58,7 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
         return <div className="p-8 text-center text-slate-400">Cargando...</div>;
     }
 
-    const nextEvent = activeEvents[0];
+    const currentEvent = activeEvents[currentEventIndex];
 
     return (
         <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-md mx-auto">
@@ -64,32 +75,56 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
                 </button>
             </div>
 
-            {/* Main Banner - Next Event */}
-            <div className="w-full bg-gradient-to-r from-pink-500 to-orange-400 rounded-[2rem] p-8 text-white shadow-lg shadow-pink-200 relative overflow-hidden group hover:scale-[1.01] transition-transform duration-500">
-                <div className="relative z-10">
-                    <div className="flex items-start gap-4">
-                        <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
-                            <Calendar size={32} className="text-white" />
-                        </div>
-                        <div>
-                            <span className="text-pink-100 text-xs font-bold uppercase tracking-wider mb-1 block">Próximo Evento</span>
-                            <h3 className="text-2xl font-bold mb-2 leading-tight">{nextEvent?.title || 'Servicio Dominical'}</h3>
-                            <p className="text-pink-50 opacity-90 text-sm mb-4 line-clamp-2">{nextEvent?.description || 'Acompáñanos en nuestro servicio de adoración.'}</p>
+            {/* Main Banner - Carousel */}
+            {activeEvents.length > 0 ? (
+                <div className="w-full bg-gradient-to-r from-pink-500 to-orange-400 rounded-[2rem] p-8 text-white shadow-lg shadow-pink-200 relative overflow-hidden group transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
 
-                            <div className="flex items-center gap-4 text-xs font-bold bg-black/20 w-fit px-3 py-2 rounded-xl">
-                                <div className="flex items-center gap-2">
-                                    <Calendar size={12} /> {nextEvent?.date || 'Domingo'}
-                                </div>
-                                <div className="w-1 h-1 bg-white/50 rounded-full"></div>
-                                <div className="flex items-center gap-2">
-                                    <AlertCircle size={12} /> {nextEvent?.time || '10:30 AM'}
+                    <div className="relative z-10 animate-in slide-in-from-right-4 duration-500" key={currentEventIndex}>
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
+                                <Calendar size={32} className="text-white" />
+                            </div>
+                            <div>
+                                <span className="text-pink-100 text-xs font-bold uppercase tracking-wider mb-1 block">
+                                    {currentEvent.type || 'Evento'} {activeEvents.length > 1 && `(${currentEventIndex + 1}/${activeEvents.length})`}
+                                </span>
+                                <h3 className="text-2xl font-bold mb-2 leading-tight">{currentEvent.title}</h3>
+                                <p className="text-pink-50 opacity-90 text-sm mb-4 line-clamp-2">{currentEvent.description || 'Acompáñanos en nuestro servicio.'}</p>
+
+                                <div className="flex items-center gap-4 text-xs font-bold bg-black/20 w-fit px-3 py-2 rounded-xl">
+                                    <div className="flex items-center gap-2">
+                                        <Calendar size={12} /> {currentEvent.date}
+                                    </div>
+                                    <div className="w-1 h-1 bg-white/50 rounded-full"></div>
+                                    <div className="flex items-center gap-2">
+                                        <AlertCircle size={12} /> {currentEvent.time}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    {/* Indicators */}
+                    {activeEvents.length > 1 && (
+                        <div className="absolute bottom-4 right-6 flex gap-1.5 z-20">
+                            {activeEvents.map((_, idx) => (
+                                <div
+                                    key={idx}
+                                    className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentEventIndex ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`}
+                                ></div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-colors"></div>
                 </div>
-                <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-colors"></div>
-            </div>
+            ) : (
+                <div className="w-full bg-slate-100 rounded-[2rem] p-8 text-slate-400 flex flex-col items-center justify-center text-center">
+                    <Calendar size={32} className="mb-2 opacity-50" />
+                    <p className="font-bold text-sm">Sin eventos destacados</p>
+                </div>
+            )}
 
             {/* Action Cards Stack (Mobile View) */}
             <div className="flex flex-col gap-6">
