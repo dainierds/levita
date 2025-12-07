@@ -136,6 +136,7 @@ const ProtectedApp: React.FC = () => {
 
   // Calculate next preacher
   const nextPlan = plans.find(p => !p.isActive && new Date(p.date) >= new Date()) || plans[0];
+  const nextPreacher = nextPlan?.team.preacher || 'Por definir';
 
   // Redirect logic for restricted roles
   // Redirect logic for restricted roles
@@ -408,6 +409,7 @@ const AppRoutes = () => {
 
       {/* Protected App Routes */}
       <Route path="/app" element={<ProtectedApp />} />
+      <Route path="/anciano/*" element={<ProtectedApp />} />
 
       {/* Invitation Join Route */}
       <Route path="/join" element={<JoinPage />} />
