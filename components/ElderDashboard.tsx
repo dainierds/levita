@@ -20,8 +20,6 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
     const sortedPlans = [...plans].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     // Find "My Next Shift"
-    // We match loosely by name since team members are stored as strings currently.
-    // Ideally this would be by ID, but existing data uses names.
     const myNextPlan = sortedPlans.find(p => {
         const team = p.team;
         const isFuture = new Date(p.date) >= new Date(new Date().setHours(0, 0, 0, 0));
@@ -35,7 +33,7 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
         );
     });
 
-    // Calculate some quick stats locally (or we could fetch them)
+    // Calculate some quick stats locally
     const myStats = {
         totalShifts: plans.filter(p => p.team.elder === user.name || p.team.preacher === user.name).length,
         nextMonthShifts: sortedPlans.filter(p => {
@@ -49,10 +47,10 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
         return <div className="p-8 text-center text-slate-400">Cargando...</div>;
     }
 
-    const nextEvent = activeEvents[0]; // Just grab the first active event for the main banner
+    const nextEvent = activeEvents[0];
 
     return (
-        <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
+        <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-md mx-auto">
 
             {/* Header */}
             <div className="flex justify-between items-center">
@@ -75,35 +73,33 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
                         </div>
                         <div>
                             <span className="text-pink-100 text-xs font-bold uppercase tracking-wider mb-1 block">Próximo Evento</span>
-                            <h3 className="text-3xl font-bold mb-2">{nextEvent?.title || 'Servicio Dominical'}</h3>
-                            <p className="text-pink-50 opacity-90 text-sm max-w-lg mb-4">{nextEvent?.description || 'Acompáñanos en nuestro servicio de adoración.'}</p>
+                            <h3 className="text-2xl font-bold mb-2 leading-tight">{nextEvent?.title || 'Servicio Dominical'}</h3>
+                            <p className="text-pink-50 opacity-90 text-sm mb-4 line-clamp-2">{nextEvent?.description || 'Acompáñanos en nuestro servicio de adoración.'}</p>
 
-                            <div className="flex items-center gap-4 text-sm font-bold bg-black/20 w-fit px-4 py-2 rounded-xl">
+                            <div className="flex items-center gap-4 text-xs font-bold bg-black/20 w-fit px-3 py-2 rounded-xl">
                                 <div className="flex items-center gap-2">
-                                    <Calendar size={14} /> {nextEvent?.date || 'Domingo'}
+                                    <Calendar size={12} /> {nextEvent?.date || 'Domingo'}
                                 </div>
                                 <div className="w-1 h-1 bg-white/50 rounded-full"></div>
                                 <div className="flex items-center gap-2">
-                                    <AlertCircle size={14} /> {nextEvent?.time || '10:30 AM'}
+                                    <AlertCircle size={12} /> {nextEvent?.time || '10:30 AM'}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                {/* Decorative Circles */}
                 <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-colors"></div>
             </div>
 
-            {/* Action Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Action Cards Stack (Mobile View) */}
+            <div className="flex flex-col gap-6">
 
                 {/* My Next Shift Card */}
                 <div
                     onClick={() => setCurrentView('roster')}
                     className="cursor-pointer bg-blue-500 rounded-[2rem] p-6 text-white shadow-lg shadow-blue-200 hover:shadow-xl hover:translate-y-[-2px] transition-all relative overflow-hidden"
                 >
-                    <div className="flex justify-between items-start mb-12 relative z-10">
+                    <div className="flex justify-between items-start mb-8 relative z-10">
                         <div className="p-3 bg-white/20 rounded-2xl">
                             <Calendar size={24} />
                         </div>
@@ -116,7 +112,7 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
                     <div className="relative z-10">
                         {myNextPlan ? (
                             <>
-                                <h4 className="text-2xl font-bold mb-1">{myNextPlan.title}</h4>
+                                <h4 className="text-xl font-bold mb-1">{myNextPlan.title}</h4>
                                 <p className="text-blue-100 text-sm flex items-center gap-2">
                                     <Clock size={14} /> {myNextPlan.date} • {myNextPlan.startTime}
                                 </p>
@@ -138,7 +134,7 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
 
                 {/* Stats Card */}
                 <div className="bg-violet-500 rounded-[2rem] p-6 text-white shadow-lg shadow-violet-200 hover:shadow-xl hover:translate-y-[-2px] transition-all relative overflow-hidden group">
-                    <div className="flex justify-between items-start mb-8 relative z-10">
+                    <div className="flex justify-between items-start mb-6 relative z-10">
                         <div className="p-3 bg-white/20 rounded-2xl">
                             <FileText size={24} />
                         </div>
@@ -161,7 +157,7 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
                     onClick={() => setCurrentView('planner')}
                     className="cursor-pointer bg-emerald-500 rounded-[2rem] p-6 text-white shadow-lg shadow-emerald-200 hover:shadow-xl hover:translate-y-[-2px] transition-all relative overflow-hidden"
                 >
-                    <div className="flex justify-between items-start mb-12 relative z-10">
+                    <div className="flex justify-between items-start mb-6 relative z-10">
                         <div className="p-3 bg-white/20 rounded-2xl">
                             <FileText size={24} />
                         </div>
@@ -177,24 +173,6 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
                     <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
                 </div>
 
-                {/* Resources Card */}
-                <div className="md:col-span-3 bg-orange-500 rounded-[2rem] p-6 text-white shadow-lg shadow-orange-200 hover:shadow-xl transition-all relative overflow-hidden flex items-center justify-between">
-                    <div className="relative z-10 flex items-center gap-6">
-                        <div className="p-4 bg-white/20 rounded-2xl">
-                            <BookOpen size={32} />
-                        </div>
-                        <div>
-                            <p className="text-orange-100 text-xs font-bold uppercase mb-1">Recursos</p>
-                            <h4 className="text-2xl font-bold">Material de Apoyo</h4>
-                            <p className="text-orange-50 text-sm opacity-90">2 nuevos recursos disponibles para descargar.</p>
-                        </div>
-                    </div>
-                    <button className="relative z-10 px-6 py-3 bg-white text-orange-600 rounded-xl font-bold text-sm shadow-sm hover:bg-orange-50 transition-colors">
-                        Ver Recursos
-                    </button>
-                    <div className="absolute left-1/2 top-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -ml-32 -mt-10"></div>
-                </div>
-
             </div>
 
             {/* Reminders Section */}
@@ -202,10 +180,10 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user })
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <AlertCircle size={20} className="text-slate-400" /> Recordatorios
                 </h3>
-                <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 flex items-start gap-3">
+                <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 flex items-start gap-3 relative overflow-hidden">
                     <div className="w-1 bg-yellow-400 h-full rounded-full absolute left-0 top-0 bottom-0"></div>
-                    <AlertCircle size={20} className="text-yellow-600 mt-0.5" />
-                    <div>
+                    <AlertCircle size={20} className="text-yellow-600 mt-0.5 z-10" />
+                    <div className="z-10">
                         <p className="text-sm font-bold text-yellow-800">Importante: Reunión de Ancianos</p>
                         <p className="text-xs text-yellow-700 mt-1">Recuerda llegar 30 minutos antes del servicio para la reunión de oración.</p>
                     </div>

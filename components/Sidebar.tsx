@@ -48,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
       allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics', 'events', 'notifications', 'users', 'settings'];
       break;
     case 'ELDER':
-      allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics', 'resources'];
+      allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics'];
       break;
     case 'AUDIO':
     case 'MUSIC':
@@ -95,7 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
   };
 
   return (
-    <div className="hidden md:flex flex-col w-64 h-screen bg-white shadow-xl fixed left-0 top-0 z-50 rounded-r-4xl">
+    <div className="hidden md:flex flex-col w-64 h-screen bg-white border-r border-slate-100 fixed left-0 top-0 z-50">
       <div className="p-8 flex items-center gap-3">
         <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
           <Church size={20} />
@@ -112,8 +112,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
               key={item.id}
               onClick={() => setCurrentView(item.id)}
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl transition-all duration-300 group ${isActive
-                  ? 'bg-indigo-50 text-indigo-600 shadow-sm font-semibold'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                ? 'bg-indigo-50 text-indigo-600 shadow-sm font-semibold'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
                 }`}
             >
               <Icon size={20} className={isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'} />
