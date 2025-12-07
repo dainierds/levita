@@ -149,7 +149,7 @@ const ProtectedApp: React.FC = () => {
   if (role === 'ELDER') {
     return (
       <Routes>
-        <Route path="/anciano" element={<AncianoLayout />}>
+        <Route element={<AncianoLayout />}>
           <Route index element={<Navigate to="inicio" replace />} />
           <Route path="inicio" element={<InicioAnciano />} />
           <Route path="itinerario" element={<ItinerarioAnciano />} />
@@ -408,7 +408,7 @@ const AppRoutes = () => {
       <Route path="/portal" element={user ? <Navigate to="/app" /> : <StaffPortal />} />
 
       {/* Protected App Routes */}
-      <Route path="/app" element={<ProtectedApp />} />
+      <Route path="/app/*" element={<ProtectedApp />} />
       <Route path="/anciano/*" element={<ProtectedApp />} />
 
       {/* Invitation Join Route */}
