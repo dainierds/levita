@@ -41,6 +41,17 @@ import ElderRosterView from './components/ElderRosterView';
 import VisitorLanding from './pages/VisitorLanding';
 import StaffPortal from './pages/StaffPortal';
 
+// ELDER APP IMPORTS
+import AncianoLayout from './components/layouts/AncianoLayout';
+import InicioAnciano from './pages/anciano/InicioAnciano';
+import ItinerarioAnciano from './pages/anciano/ItinerarioAnciano';
+import OrdenCultoAnciano from './pages/anciano/OrdenCultoAnciano';
+import MiTurnoAnciano from './pages/anciano/MiTurnoAnciano';
+import EstadisticasAnciano from './pages/anciano/EstadisticasAnciano';
+import RecursosAnciano from './pages/anciano/RecursosAnciano';
+import NotificacionesAnciano from './pages/anciano/NotificacionesAnciano';
+import ConfiguracionAnciano from './pages/anciano/ConfiguracionAnciano';
+
 // --- MOCK DATA ---
 const DEFAULT_SETTINGS: ChurchSettings = {
   meetingDays: ['Domingo'],
@@ -125,15 +136,35 @@ const ProtectedApp: React.FC = () => {
 
   // Calculate next preacher
   const nextPlan = plans.find(p => !p.isActive && new Date(p.date) >= new Date()) || plans[0];
-  const nextPreacher = nextPlan?.team.preacher || 'Por definir';
 
   // Redirect logic for restricted roles
   // Redirect logic for restricted roles
   // Removed MUSIC and PREACHER redirect as they now have no interface access.
   useEffect(() => {
-    // ELDER is allowed in Dashboard.
-  }, [role, currentView]);
+    // Redirect logic if needed (e.g. if we want to force /anciano for elder on load)
+  }, [role, navigate]);
 
+  // ELDER ROUTER
+  if (role === 'ELDER') {
+    return (
+      <Routes>
+        <Route path="/anciano" element={<AncianoLayout />}>
+          <Route index element={<Navigate to="inicio" replace />} />
+          <Route path="inicio" element={<InicioAnciano />} />
+          <Route path="itinerario" element={<ItinerarioAnciano />} />
+          <Route path="orden-culto" element={<OrdenCultoAnciano />} />
+          <Route path="mi-turno" element={<MiTurnoAnciano />} />
+          <Route path="estadisticas" element={<EstadisticasAnciano />} />
+          <Route path="recursos" element={<RecursosAnciano />} />
+          <Route path="notificaciones" element={<NotificacionesAnciano />} />
+          <Route path="configuracion" element={<ConfiguracionAnciano />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/anciano/inicio" replace />} />
+      </Routes>
+    );
+  }
+
+  // --- ADMIN & OTHER VIEWS (Single Page App) ---
   if (!user) {
     return <Navigate to="/portal" replace />;
   }
