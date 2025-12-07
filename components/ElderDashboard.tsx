@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useEvents } from '../hooks/useEvents';
-import { usePlans } from '../hooks/usePlans';
-import { ServicePlan, User, ChurchSettings } from '../types';
-import { Calendar, Clock, FileText, UserCheck, BookOpen, AlertCircle, Bell, BarChart3, ChevronRight } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
+import React from 'react';
+import { useAuth } from '../context/AuthContext';
+import { User, ChurchSettings } from '../types';
+import { FileText, Calendar, TrendingUp, Bell, LogOut, X, ChevronRight, Home, BookOpen, Clock } from 'lucide-react';
 
 interface ElderDashboardProps {
     setCurrentView: (view: string) => void;
@@ -12,219 +10,83 @@ interface ElderDashboardProps {
 }
 
 const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user }) => {
-    const { t } = useLanguage();
-    const { events, loading: eventsLoading } = useEvents();
-    const { plans, loading: plansLoading } = usePlans();
+    const { logout } = useAuth();
 
-    const activeEvents = events.filter(e => e.activeInBanner);
-    const sortedPlans = [...plans].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    // Cycle through active events
-    const [currentEventIndex, setCurrentEventIndex] = useState(0);
-
-    useEffect(() => {
-        if (activeEvents.length <= 1) return;
-        const interval = setInterval(() => {
-            setCurrentEventIndex((prev) => (prev + 1) % activeEvents.length);
-        }, 5000);
-        return () => clearInterval(interval);
-    }, [activeEvents.length]);
-
-    // Find "My Next Shift"
-    const myNextPlan = sortedPlans.find(p => {
-        const team = p.team;
-        const isFuture = new Date(p.date) >= new Date(new Date().setHours(0, 0, 0, 0));
-        if (!isFuture) return false;
-
-        return (
-            team.elder === user.name ||
-            team.preacher === user.name ||
-            team.musicDirector === user.name ||
-            team.audioOperator === user.name
-        );
-    });
-
-    // Calculate some quick stats locally
-    const myStats = {
-        totalShifts: plans.filter(p => p.team.elder === user.name || p.team.preacher === user.name).length,
-        nextMonthShifts: sortedPlans.filter(p => {
-            const d = new Date(p.date);
-            const now = new Date();
-            return d.getMonth() === (now.getMonth() + 1) % 12 && (p.team.elder === user.name);
-        }).length
-    };
-
-    if (eventsLoading || plansLoading) {
-        return <div className="p-8 text-center text-slate-400">Cargando...</div>;
-    }
-
-    const currentEvent = activeEvents[currentEventIndex];
+    const menuItems = [
+        { id: 'dashboard', label: 'Inicio', icon: Home, active: true },
+        { id: 'events', label: 'Itinerario', icon: Calendar },
+        { id: 'planner', label: 'Orden de Culto', icon: BookOpen },
+        { id: 'roster', label: 'Mi Turno', icon: Clock },
+        { id: 'statistics', label: 'Estadísticas', icon: TrendingUp },
+        { id: 'notifications', label: 'Notificaciones', icon: Bell, count: 0 },
+    ];
 
     return (
-        <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-md mx-auto">
-
-            {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h2 className="text-3xl font-bold text-slate-800">Bienvenido, {user.name}</h2>
-                    <p className="text-slate-500 text-sm font-medium uppercase tracking-wide opacity-80">{user.churchName || 'Iglesia'}</p>
+        <div className="min-h-screen bg-slate-50 relative pb-24 md:pb-0">
+            {/* Custom Header for Mobile (Overlays App Header) */}
+            <div className="md:hidden bg-indigo-600 px-6 pt-8 pb-10 rounded-b-[2.5rem] shadow-xl relative z-10 transition-all">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-indigo-500 border-2 border-indigo-300 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                            {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-white">{user.name}</h2>
+                            <p className="text-indigo-200 text-sm font-medium">Anciano</p>
+                        </div>
+                    </div>
+                    <button className="p-2 bg-white/10 rounded-xl text-white hover:bg-white/20 transition-colors backdrop-blur-sm">
+                        <X size={20} />
+                    </button>
                 </div>
-                <button onClick={() => setCurrentView('notifications')} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors relative">
-                    <Bell size={24} />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+            </div>
+
+            {/* Desktop Only Warning */}
+            <div className="hidden md:block p-8 text-center text-slate-400">
+                <p>Esta vista está optimizada para móviles.</p>
+            </div>
+
+            {/* Menu List */}
+            <div className="px-5 -mt-6 relative z-20 md:hidden">
+                <div className="bg-white rounded-[2rem] shadow-lg shadow-slate-200/50 overflow-hidden border border-slate-100">
+                    {/* Active "Inicio" Banner */}
+                    <div className="bg-indigo-600 p-4 flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-lg text-white">
+                            <Home size={20} />
+                        </div>
+                        <span className="font-bold text-white">Inicio</span>
+                    </div>
+
+                    <div className="divide-y divide-slate-50">
+                        {menuItems.filter(i => i.id !== 'dashboard').map((item, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => setCurrentView(item.id)}
+                                className="w-full flex items-center justify-between p-5 hover:bg-slate-50 active:bg-slate-100 transition-colors group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <item.icon size={22} className="text-slate-700 group-hover:text-indigo-600 transition-colors" />
+                                    <span className="font-bold text-slate-700 group-hover:text-slate-900">{item.label}</span>
+                                </div>
+                                {item.count !== undefined ? (
+                                    <span className="text-slate-400 font-medium text-sm">{item.count}</span>
+                                ) : (
+                                    <ChevronRight size={18} className="text-slate-300" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Logout Button */}
+                <button
+                    onClick={logout}
+                    className="w-full mt-6 flex items-center gap-3 p-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-colors"
+                >
+                    <LogOut size={20} />
+                    <span>Cerrar Sesión</span>
                 </button>
             </div>
-
-            {/* Main Banner - Carousel */}
-            {activeEvents.length > 0 ? (
-                <div className="w-full bg-gradient-to-r from-pink-500 to-orange-400 rounded-[2rem] p-8 text-white shadow-lg shadow-pink-200 relative overflow-hidden group transition-all duration-500">
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
-
-                    <div className="relative z-10 animate-in slide-in-from-right-4 duration-500" key={currentEventIndex}>
-                        <div className="flex items-start gap-4">
-                            <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
-                                <Calendar size={32} className="text-white" />
-                            </div>
-                            <div>
-                                <span className="text-pink-100 text-xs font-bold uppercase tracking-wider mb-1 block">
-                                    {currentEvent.type || 'Evento'} {activeEvents.length > 1 && `(${currentEventIndex + 1}/${activeEvents.length})`}
-                                </span>
-                                <h3 className="text-2xl font-bold mb-2 leading-tight">{currentEvent.title}</h3>
-                                <p className="text-pink-50 opacity-90 text-sm mb-4 line-clamp-2">{currentEvent.description || 'Acompáñanos en nuestro servicio.'}</p>
-
-                                <div className="flex items-center gap-4 text-xs font-bold bg-black/20 w-fit px-3 py-2 rounded-xl">
-                                    <div className="flex items-center gap-2">
-                                        <Calendar size={12} /> {currentEvent.date}
-                                    </div>
-                                    <div className="w-1 h-1 bg-white/50 rounded-full"></div>
-                                    <div className="flex items-center gap-2">
-                                        <AlertCircle size={12} /> {currentEvent.time}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Indicators */}
-                    {activeEvents.length > 1 && (
-                        <div className="absolute bottom-4 right-6 flex gap-1.5 z-20">
-                            {activeEvents.map((_, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentEventIndex ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`}
-                                ></div>
-                            ))}
-                        </div>
-                    )}
-
-                    <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-colors"></div>
-                </div>
-            ) : (
-                <div className="w-full bg-slate-100 rounded-[2rem] p-8 text-slate-400 flex flex-col items-center justify-center text-center">
-                    <Calendar size={32} className="mb-2 opacity-50" />
-                    <p className="font-bold text-sm">Sin eventos destacados</p>
-                </div>
-            )}
-
-            {/* Action Cards Stack (Mobile View) */}
-            <div className="flex flex-col gap-6">
-
-                {/* My Next Shift Card */}
-                <div
-                    onClick={() => setCurrentView('roster')}
-                    className="cursor-pointer bg-blue-500 rounded-[2rem] p-6 text-white shadow-lg shadow-blue-200 hover:shadow-xl hover:translate-y-[-2px] transition-all relative overflow-hidden"
-                >
-                    <div className="flex justify-between items-start mb-8 relative z-10">
-                        <div className="p-3 bg-white/20 rounded-2xl">
-                            <Calendar size={24} />
-                        </div>
-                        <div className="text-right">
-                            <p className="text-blue-100 text-xs font-bold uppercase">Mi Próximo Turno</p>
-                            <p className="font-medium text-sm opacity-80">{myNextPlan ? 'Sin turnos próximos' : 'Ver todo'}</p>
-                        </div>
-                    </div>
-
-                    <div className="relative z-10">
-                        {myNextPlan ? (
-                            <>
-                                <h4 className="text-xl font-bold mb-1">{myNextPlan.title}</h4>
-                                <p className="text-blue-100 text-sm flex items-center gap-2">
-                                    <Clock size={14} /> {myNextPlan.date} • {myNextPlan.startTime}
-                                </p>
-                                <div className="mt-4 inline-block px-3 py-1 bg-white/20 rounded-lg text-xs font-bold">
-                                    {myNextPlan.team.elder === user.name ? 'Anciano de Turno' :
-                                        myNextPlan.team.preacher === user.name ? 'Predicador' :
-                                            'Servicio'}
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <h4 className="text-xl font-bold mb-1">Sin Asignaciones</h4>
-                                <p className="text-blue-100 text-sm">No tienes turnos programados pronto.</p>
-                            </>
-                        )}
-                    </div>
-                    <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                </div>
-
-                {/* Stats Card */}
-                <div className="bg-violet-500 rounded-[2rem] p-6 text-white shadow-lg shadow-violet-200 hover:shadow-xl hover:translate-y-[-2px] transition-all relative overflow-hidden group">
-                    <div className="flex justify-between items-start mb-6 relative z-10">
-                        <div className="p-3 bg-white/20 rounded-2xl">
-                            <FileText size={24} />
-                        </div>
-                        <div className="text-right">
-                            <p className="text-violet-100 text-xs font-bold uppercase">Predicación</p>
-                        </div>
-                    </div>
-
-                    <div className="relative z-10">
-                        <h4 className="text-4xl font-black mb-1">{myStats.totalShifts}</h4>
-                        <p className="text-violet-100 text-sm opacity-90">Predicaciones este año</p>
-                        <div className="w-full bg-black/20 h-1.5 rounded-full mt-4 overflow-hidden">
-                            <div className="bg-white/80 w-[45%] h-full rounded-full"></div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Order of Service Card */}
-                <div
-                    onClick={() => setCurrentView('planner')}
-                    className="cursor-pointer bg-emerald-500 rounded-[2rem] p-6 text-white shadow-lg shadow-emerald-200 hover:shadow-xl hover:translate-y-[-2px] transition-all relative overflow-hidden"
-                >
-                    <div className="flex justify-between items-start mb-6 relative z-10">
-                        <div className="p-3 bg-white/20 rounded-2xl">
-                            <FileText size={24} />
-                        </div>
-                        <div className="text-right">
-                            <p className="text-emerald-100 text-xs font-bold uppercase">Orden de Culto</p>
-                            <p className="font-medium text-sm opacity-80">Ver programa</p>
-                        </div>
-                    </div>
-                    <div className="relative z-10">
-                        <h4 className="text-xl font-bold mb-1">Programa Actual</h4>
-                        <p className="text-emerald-100 text-sm">Ver detalles del servicio.</p>
-                    </div>
-                    <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-                </div>
-
-            </div>
-
-            {/* Reminders Section */}
-            <div>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <AlertCircle size={20} className="text-slate-400" /> Recordatorios
-                </h3>
-                <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 flex items-start gap-3 relative overflow-hidden">
-                    <div className="w-1 bg-yellow-400 h-full rounded-full absolute left-0 top-0 bottom-0"></div>
-                    <AlertCircle size={20} className="text-yellow-600 mt-0.5 z-10" />
-                    <div className="z-10">
-                        <p className="text-sm font-bold text-yellow-800">Importante: Reunión de Ancianos</p>
-                        <p className="text-xs text-yellow-700 mt-1">Recuerda llegar 30 minutos antes del servicio para la reunión de oración.</p>
-                    </div>
-                </div>
-            </div>
-
         </div>
     );
 };

@@ -29,7 +29,11 @@ import DbSeeder from './components/DbSeeder';
 import JoinPage from './pages/JoinPage';
 import TeamRoster from './components/TeamRoster';
 import SermonManager from './components/SermonManager';
-import PrayerRequestsAdmin from './components/PrayerRequestsAdmin';
+import ElderBottomNav from './components/ElderBottomNav';
+import ElderNotifications from './components/ElderNotifications';
+import ElderHeader from './components/ElderHeader';
+import ElderCalendarView from './components/ElderCalendarView';
+import ElderRosterView from './components/ElderRosterView';
 
 // Components acting as Pages
 import VisitorLanding from './pages/VisitorLanding';
@@ -213,6 +217,10 @@ const ProtectedApp: React.FC = () => {
 
 
 
+          {role === 'ELDER' && currentView !== 'dashboard' && (
+            <ElderHeader user={user!} onMenuClick={() => setCurrentView('dashboard')} />
+          )}
+
           {currentView === 'dashboard' && role === 'ADMIN' && (
             <Dashboard setCurrentView={setCurrentView} role={role} settings={settings} />
           )}
@@ -229,6 +237,10 @@ const ProtectedApp: React.FC = () => {
             <EventsAdmin events={events} tier={currentTenantTier} />
           )}
 
+          {currentView === 'events' && role === 'ELDER' && (
+            <ElderCalendarView />
+          )}
+
           {currentView === 'users' && (role === 'ADMIN') && (
             <UserManagement users={users} setUsers={() => { }} tier={currentTenantTier} currentUser={user} />
           )}
@@ -238,17 +250,25 @@ const ProtectedApp: React.FC = () => {
           )}
 
           {currentView === 'roster' && (
-            <RosterView
-              plans={plans}
-              savePlan={savePlan}
-              settings={settings}
-              users={users}
-              onSaveSettings={handleSaveSettings}
-            />
+            role === 'ELDER' ? (
+              <ElderRosterView />
+            ) : (
+              <RosterView
+                plans={plans}
+                savePlan={savePlan}
+                settings={settings}
+                users={users}
+                onSaveSettings={handleSaveSettings}
+              />
+            )
           )}
 
           {currentView === 'notifications' && (role === 'ADMIN') && (
             <NotificationAdmin users={users} />
+          )}
+
+          {currentView === 'notifications' && (role === 'ELDER') && (
+            <ElderNotifications />
           )}
 
 
@@ -280,6 +300,10 @@ const ProtectedApp: React.FC = () => {
           )}
 
         </main>
+
+        {role === 'ELDER' && (
+          <ElderBottomNav currentView={currentView} setCurrentView={setCurrentView} />
+        )}
       </div>
     </NotificationProvider>
   );

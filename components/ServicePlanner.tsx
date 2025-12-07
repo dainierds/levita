@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ServicePlan, SubscriptionTier, User } from '../types';
-import { Plus, Trash2, Music, Mic, Mic2, PlayCircle, Loader2, X, Hand, BookOpen, DollarSign, Megaphone, MessageCircle, Gift, Heart, Star, PenTool, User as UserIcon } from 'lucide-react';
+import { Plus, Trash2, Music, Mic, Mic2, PlayCircle, Loader2, X, Hand, BookOpen, DollarSign, Megaphone, MessageCircle, Gift, Heart, Star, PenTool, User as UserIcon, GripVertical } from 'lucide-react';
 import { usePlans } from '../hooks/usePlans';
 import WorshipLinksEditor from './WorshipLinksEditor';
 
@@ -21,6 +21,33 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
     type: 'WORSHIP' as 'WORSHIP' | 'PREACHING' | 'GENERIC',
     key: ''
   });
+
+  // Drag and Drop State
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault(); // Necessary for drop
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || !selectedPlan) return;
+    if (draggedIndex === dropIndex) return;
+
+    const newItems = [...selectedPlan.items];
+    const [removed] = newItems.splice(draggedIndex, 1);
+    newItems.splice(dropIndex, 0, removed);
+
+    // Optimistic update could be handled better, but we save directly
+    await savePlan({ ...selectedPlan, items: newItems });
+    setDraggedIndex(null);
+  };
 
   const handleAddItem = async () => {
     if (!selectedPlan) return;
@@ -242,8 +269,20 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
         {/* Right Col: Timeline */}
         <div className="lg:col-span-2 space-y-4">
           {timelineItems.map((item, index) => (
-            <div key={item.id} className="group relative card-soft p-6 hover:shadow-md transition-all">
-              <div className="flex items-start gap-4">
+            <div
+              key={item.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDrop={(e) => handleDrop(e, index)}
+              className={`group relative card-soft p-6 hover:shadow-md transition-all ${draggedIndex === index ? 'opacity-50 border-2 border-dashed border-indigo-300' : ''}`}
+            >
+              {/* Drag Handle */}
+              <div className="absolute left-3 top-1/2 -mt-3 text-slate-300 cursor-move hover:text-indigo-400 p-1">
+                <GripVertical size={20} />
+              </div>
+
+              <div className="flex items-start gap-4 pl-6">
                 {/* Time */}
                 <div className="min-w-[4rem] text-center pt-1">
                   <span className="block text-lg font-bold text-slate-700">{item.calculatedTime}</span>

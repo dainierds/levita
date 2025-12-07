@@ -88,6 +88,16 @@ const PersonalStatistics: React.FC<PersonalStatisticsProps> = ({ plans, user }) 
                 </div>
             </div>
 
+            <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <Clock size={16} className="text-indigo-500" /> Última Predicación
+                </h3>
+                <div className="bg-indigo-50/50 rounded-2xl p-4">
+                    <p className="text-lg font-bold text-slate-700">N/A</p>
+                    <p className="text-xs text-slate-400 font-medium">Hace 0 días</p>
+                </div>
+            </div>
+
             <div className="bg-emerald-500 rounded-[2rem] p-6 text-white shadow-lg shadow-emerald-200">
                 <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 bg-white/20 rounded-full">

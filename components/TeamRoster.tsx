@@ -230,8 +230,11 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                                     const roleUsers = users.filter(u => u.role === roleConfig.role);
                                     const currentValue = (selectedTeam.members as any)?.[roleConfig.key] || '';
 
+                                    const isElder = role === 'ELDER';
+                                    const canEdit = isAdmin || (isElder && roleConfig.key === 'elder');
+
                                     return (
-                                        <div key={roleConfig.key} className={`bg-slate-50 p-4 rounded-2xl border border-slate-100 ${!isAdmin ? 'opacity-75' : ''}`}>
+                                        <div key={roleConfig.key} className={`bg-slate-50 p-4 rounded-2xl border border-slate-100 ${!canEdit ? 'opacity-75' : ''}`}>
                                             <div className="flex items-center gap-2 mb-3">
                                                 <div className={`p-2 rounded-lg ${roleConfig.color}`}>
                                                     <roleConfig.icon size={16} />
@@ -242,8 +245,8 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                                             <select
                                                 value={currentValue}
                                                 onChange={(e) => handleUpdateTeamMember(roleConfig.key, e.target.value)}
-                                                disabled={!isAdmin}
-                                                className={`w-full px-4 py-3 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 text-sm font-medium text-slate-700 transition-all ${!isAdmin ? 'bg-slate-100 cursor-not-allowed text-slate-500' : 'bg-white'}`}
+                                                disabled={!canEdit}
+                                                className={`w-full px-4 py-3 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 text-sm font-medium text-slate-700 transition-all ${!canEdit ? 'bg-slate-100 cursor-not-allowed text-slate-500' : 'bg-white'}`}
                                             >
                                                 <option value="">Sin asignar</option>
                                                 {roleUsers.map(u => (
