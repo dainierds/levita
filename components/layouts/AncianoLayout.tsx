@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { db } from '../../firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import {
     Home, Calendar, ClipboardList, User, BarChart3,
     Bell, Menu, X, BookOpen, Settings, LogOut
@@ -11,7 +13,38 @@ const AncianoLayout: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [menuOpen, setMenuOpen] = useState(false);
-    const [notificaciones] = useState(3); // Mock for now, used to be 0
+    const [notificaciones, setNotificaciones] = useState(0);
+
+    // Fetch Real-time Notifications count
+    useEffect(() => {
+        if (!user?.tenantId) return;
+
+        // Query: Tenant's notifications targeted at ELDERs or PUBLIC
+        // Note: In a real app complexity is higher (user-specific + role-based)
+        const q = query(
+            collection(db, 'notifications'),
+            where('tenantId', '==', user.tenantId)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const count = snapshot.docs.filter(doc => {
+                const data = doc.data();
+                // Check Audience
+                const audience = data.targetAudience;
+                const isRelevant = audience === 'ELDER' || audience === 'ALL' || (Array.isArray(audience) && audience.includes('ELDER'));
+
+                // Check Read Status
+                const readBy = data.readBy || [];
+                const isUnread = !readBy.includes(user.uid);
+
+                return isRelevant && isUnread;
+            }).length;
+
+            setNotificaciones(count);
+        });
+
+        return () => unsubscribe();
+    }, [user]);
 
     const navItems = [
         { path: '/anciano/inicio', icon: Home, label: 'Inicio' },
@@ -95,8 +128,8 @@ const AncianoLayout: React.FC = () => {
                                 key={path}
                                 onClick={() => navigate(path)}
                                 className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all ${isActive
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-gray-400 hover:text-blue-600 hover:bg-gray-50'
+                                    ? 'text-blue-600 bg-blue-50'
+                                    : 'text-gray-400 hover:text-blue-600 hover:bg-gray-50'
                                     }`}
                             >
                                 <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
