@@ -10,14 +10,14 @@ export const LiveView: React.FC = () => {
                     <div className="relative aspect-video bg-gray-900 rounded-[2rem] overflow-hidden"><img src="https://picsum.photos/1200/675" className="w-full h-full object-cover" /></div>
                 </div>
                 <div className="p-6 rounded-3xl bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">Fe Inquebrantable</h1>
-                    <div className="flex space-x-4"><button className="w-12 h-12 rounded-full bg-neu-base shadow-neu flex items-center justify-center text-red-500 active:shadow-neu-pressed"><Heart size={20} /></button></div>
+                    <h1 className="text-2xl font-bold dark:text-gray-200">Fe Inquebrantable</h1>
+                    <div className="flex space-x-4"><button className="w-12 h-12 rounded-full bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex items-center justify-center text-red-500 active:shadow-neu-pressed dark:active:shadow-neu-dark-pressed"><Heart size={20} /></button></div>
                 </div>
             </div>
             <div className="lg:col-span-1 bg-neu-base dark:bg-neu-base-dark rounded-[2.5rem] shadow-neu dark:shadow-neu-dark p-6 flex flex-col">
-                <h3 className="font-bold mb-4">Chat en Vivo</h3>
+                <h3 className="font-bold mb-4 dark:text-gray-200">Chat en Vivo</h3>
                 <div className="flex-1 overflow-y-auto space-y-4">
-                    {messages.map((msg) => (<div key={msg.id} className="bg-neu-base p-3 rounded-xl shadow-neu"><p className="text-sm">{msg.text}</p></div>))}
+                    {messages.map((msg) => (<div key={msg.id} className="bg-neu-base dark:bg-neu-base-dark p-3 rounded-xl shadow-neu dark:shadow-neu-dark"><p className="text-sm dark:text-gray-300">{msg.text}</p></div>))}
                 </div>
             </div>
         </div>
