@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Globe, ArrowRight, Heart, User, Lock, Users } from 'lucide-react';
+import { Globe, ArrowRight, Heart, User, Lock, Users, Palette } from 'lucide-react';
 import VisitorApp from '../components/VisitorApp';
 import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
@@ -97,6 +97,15 @@ const VisitorLanding: React.FC = () => {
                                 </div>
                             </button>
                         ))}
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+                        <button
+                            onClick={() => navigate('/design')}
+                            className="text-xs font-bold text-slate-300 hover:text-pink-500 flex items-center justify-center gap-2 mx-auto transition-colors"
+                        >
+                            <Palette size={14} /> Design Lab
+                        </button>
                     </div>
                 </div>
             </div>

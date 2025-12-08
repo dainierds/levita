@@ -61,6 +61,12 @@ import OracionMiembro from './pages/miembro/OracionMiembro';
 import EventosMiembro from './pages/miembro/EventosMiembro';
 import PerfilMiembro from './pages/miembro/PerfilMiembro';
 
+// DESIGN SANDBOX IMPORTS
+import DesignLab from './pages/design-sandbox/DesignLab';
+import VisitorMockApp from './pages/design-sandbox/visitor/VisitorMockApp';
+import ElderMockApp from './pages/design-sandbox/elder/ElderMockApp';
+import MemberMockApp from './pages/design-sandbox/member/MemberMockApp';
+
 // --- MOCK DATA ---
 const DEFAULT_SETTINGS: ChurchSettings = {
   meetingDays: ['Domingo'],
@@ -428,6 +434,12 @@ const AppRoutes = () => {
 
       {/* Database Seeder (Remove in Production) */}
       <Route path="/seed" element={<DbSeeder />} />
+
+      {/* DESIGN SANDBOX ROUTES */}
+      <Route path="/design" element={<DesignLab />} />
+      <Route path="/design/visitor" element={<VisitorMockApp />} />
+      <Route path="/design/elder" element={<ElderMockApp />} />
+      <Route path="/design/member" element={<MemberMockApp />} />
     </Routes>
   );
 };
