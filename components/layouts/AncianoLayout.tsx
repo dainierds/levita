@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../firebase';
+import { db } from '../../services/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import {
     Home, Calendar, ClipboardList, User, BarChart3,
