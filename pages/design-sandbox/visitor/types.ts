@@ -23,3 +23,11 @@ export interface EventItem {
     location: string;
     image: string;
 }
+
+export interface PrayerRequest {
+    id: string;
+    author: string;
+    content: string;
+    likes: number;
+    timeAgo: string;
+}

@@ -39,6 +39,8 @@ export default {
                 'neu-sm': '5px 5px 10px rgb(209, 217, 230, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.5)',
                 'neu-dark': '9px 9px 16px rgb(26, 29, 35, 0.6), -9px -9px 16px rgba(50, 55, 67, 0.5)',
                 'neu-dark-pressed': 'inset 6px 6px 10px 0 rgba(26, 29, 35, 0.8), inset -6px -6px 10px 0 rgba(50, 55, 67, 0.5)',
+                'neu-up': '0 -5px 15px rgb(209, 217, 230, 0.6), 0 -5px 15px rgba(255, 255, 255, 0.5)',
+                'neu-up-dark': '0 -5px 15px rgb(26, 29, 35, 0.6), 0 -5px 15px rgba(50, 55, 67, 0.5)',
             }
         },
     },
