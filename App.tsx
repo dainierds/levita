@@ -52,6 +52,15 @@ import RecursosAnciano from './pages/anciano/RecursosAnciano';
 import NotificacionesAnciano from './pages/anciano/NotificacionesAnciano';
 import ConfiguracionAnciano from './pages/anciano/ConfiguracionAnciano';
 
+// MEMBER APP IMPORTS
+import MiembroLayout from './components/layouts/MiembroLayout';
+import InicioMiembro from './pages/miembro/InicioMiembro';
+import EnVivoMiembro from './pages/miembro/EnVivoMiembro';
+import LiturgiaMiembro from './pages/miembro/LiturgiaMiembro';
+import OracionMiembro from './pages/miembro/OracionMiembro';
+import EventosMiembro from './pages/miembro/EventosMiembro';
+import PerfilMiembro from './pages/miembro/PerfilMiembro';
+
 // --- MOCK DATA ---
 const DEFAULT_SETTINGS: ChurchSettings = {
   meetingDays: ['Domingo'],
@@ -206,20 +215,22 @@ const ProtectedApp: React.FC = () => {
     );
   }
 
-  // 2. MEMBER View (PWA)
+  // 2. MEMBER View (Router)
   if (role === 'MEMBER') {
     return (
       <NotificationProvider allNotifications={notifications} setAllNotifications={setNotifications} currentUserId={user?.id}>
-        <MemberApp
-          activePlan={plans.find(p => p.isActive)}
-          events={events}
-          onLoginRequest={async () => {
-            navigate('/');
-            await logout();
-          }}
-          nextPreacher={nextPreacher}
-          settings={settings}
-        />
+        <Routes>
+          <Route element={<MiembroLayout />}>
+            <Route index element={<Navigate to="inicio" replace />} />
+            <Route path="inicio" element={<InicioMiembro />} />
+            <Route path="en-vivo" element={<EnVivoMiembro />} />
+            <Route path="liturgia" element={<LiturgiaMiembro />} />
+            <Route path="oracion" element={<OracionMiembro />} />
+            <Route path="eventos" element={<EventosMiembro />} />
+            <Route path="perfil" element={<PerfilMiembro />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/miembro/inicio" replace />} />
+        </Routes>
       </NotificationProvider>
     );
   }
@@ -410,6 +421,7 @@ const AppRoutes = () => {
       {/* Protected App Routes */}
       <Route path="/app/*" element={<ProtectedApp />} />
       <Route path="/anciano/*" element={<ProtectedApp />} />
+      <Route path="/miembro/*" element={<ProtectedApp />} />
 
       {/* Invitation Join Route */}
       <Route path="/join" element={<JoinPage />} />
