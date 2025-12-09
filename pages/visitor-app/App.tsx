@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { ChurchEvent, ServicePlan } from '../../types';
+import { ChurchEvent, ServicePlan, ChurchSettings } from '../../types';
 import { ViewState } from './types';
 import { Navbar } from './components/Sidebar'; // Importing the refactored Navbar
 import { HomeView } from './views/HomeView';
@@ -32,12 +32,22 @@ const App: React.FC<AppProps> = ({ initialTenantId, onExit }) => {
 
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [nextPlan, setNextPlan] = useState<ServicePlan | null>(null);
+  const [settings, setSettings] = useState<ChurchSettings | null>(null);
 
   useEffect(() => {
     if (!initialTenantId) return;
 
     const fetchData = async () => {
       try {
+        // Fetch Settings
+        try {
+          const settingsRef = doc(db, 'churchSettings', initialTenantId);
+          const settingsSnap = await getDoc(settingsRef);
+          if (settingsSnap.exists()) {
+            setSettings(settingsSnap.data() as ChurchSettings);
+          }
+        } catch (e) { console.error("Error fetching settings", e); }
+
         // Fetch Events
         const eventsQ = query(collection(db, 'events'), where('tenantId', '==', initialTenantId));
         const eventsSnap = await getDocs(eventsQ);
@@ -81,7 +91,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, onExit }) => {
   const renderContent = () => {
     switch (activeView) {
       case ViewState.HOME:
-        return <HomeView onNavigate={setActiveView} events={events} />;
+        return <HomeView onNavigate={setActiveView} events={events} nextPlan={nextPlan} settings={settings} />;
       case ViewState.LIVE:
         return <LiveView />;
       case ViewState.EVENTS:
