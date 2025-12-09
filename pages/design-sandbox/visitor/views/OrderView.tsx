@@ -15,7 +15,7 @@ export const OrderView: React.FC = () => {
         <div className="max-w-3xl mx-auto py-4">
 
             <div className="text-center mb-10">
-                <h2 className="text-3xl font-black text-gray-700 dark:text-gray-200">Orden del Culto</h2>
+                <h2 className="text-3xl font-black text-gray-800 dark:text-gray-200">Orden del Culto</h2>
                 <div className="inline-block mt-2 px-6 py-2 rounded-full shadow-neu-pressed dark:shadow-neu-dark-pressed text-brand-500 font-bold text-sm">
                     Domingo, 12 de Octubre
                 </div>
@@ -55,7 +55,7 @@ export const OrderView: React.FC = () => {
                                             <h3 className={`font-bold text-lg ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-200'}`}>
                                                 {item.title}
                                             </h3>
-                                            <span className={`text-xs font-bold px-2 py-1 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'}`}>
+                                            <span className={`text-xs font-bold px-2 py-1 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
                                                 {item.time}
                                             </span>
                                         </div>
