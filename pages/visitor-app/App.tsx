@@ -9,7 +9,7 @@ import { LiveView } from './views/LiveView';
 import { EventsView } from './views/EventsView';
 import { OrderView } from './views/OrderView';
 
-import { Bell, Moon, Sun, Search, User } from 'lucide-react';
+import { Bell, Moon, Sun, Search, User, ArrowLeft, LogOut } from 'lucide-react';
 
 const SimpleView: React.FC<{ title: string }> = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400 animate-in fade-in">
@@ -23,9 +23,10 @@ const SimpleView: React.FC<{ title: string }> = ({ title }) => (
 
 interface AppProps {
   initialTenantId?: string;
+  onExit?: () => void;
 }
 
-const App: React.FC<AppProps> = ({ initialTenantId }) => {
+const App: React.FC<AppProps> = ({ initialTenantId, onExit }) => {
   const [activeView, setActiveView] = useState<ViewState>(ViewState.HOME);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -102,10 +103,17 @@ const App: React.FC<AppProps> = ({ initialTenantId }) => {
       {/* Header */}
       <header className="flex-none h-24 flex items-center justify-between px-6 lg:px-10 z-10 relative">
         <div className="flex items-center">
+          {/* Back / Exit Button */}
+          {onExit && (
+            <button onClick={onExit} className="mr-4 p-2 rounded-full bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark text-gray-500 hover:text-red-500 transition-colors">
+              <LogOut size={20} />
+            </button>
+          )}
+
           {/* User Avatar - Moved here from sidebar */}
           <div className="mr-4 lg:hidden">
             <div className="w-10 h-10 rounded-full bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex items-center justify-center border-2 border-neu-base dark:border-neu-base-dark active:shadow-neu-pressed">
-              <span className="font-bold text-gray-400 dark:text-gray-500 text-sm">M</span>
+              <User size={20} className="text-gray-400" />
             </div>
           </div>
 
@@ -118,7 +126,7 @@ const App: React.FC<AppProps> = ({ initialTenantId }) => {
               {activeView === ViewState.PRAYER && 'Oración'}
               {activeView === ViewState.PROFILE && 'Perfil'}
             </h1>
-            <p className="text-xs md:text-sm text-gray-400 font-medium hidden sm:block">Bienvenido, Miembro 1</p>
+            <p className="text-xs md:text-sm text-gray-400 font-medium hidden sm:block">Modo Visitante</p>
           </div>
         </div>
 
