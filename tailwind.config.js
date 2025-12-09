@@ -9,6 +9,7 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Inter', 'sans-serif'],
+                nunito: ['Nunito', 'sans-serif'],
             },
             colors: {
                 background: '#F2F4F8', // Cool grey-white for better contrast with pure white cards

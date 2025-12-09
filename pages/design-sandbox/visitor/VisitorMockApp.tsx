@@ -51,7 +51,7 @@ const VisitorMockApp: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-neu-base dark:bg-neu-base-dark transition-colors duration-300 font-sans selection:bg-brand-500 selection:text-white">
+        <div className="flex flex-col h-screen overflow-hidden bg-neu-base dark:bg-neu-base-dark transition-colors duration-300 font-nunito selection:bg-brand-500 selection:text-white">
 
             {/* Header */}
             <header className="flex-none h-24 flex items-center justify-between px-6 lg:px-10 z-10 relative">
