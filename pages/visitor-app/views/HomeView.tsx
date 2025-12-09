@@ -1,5 +1,5 @@
 import React from 'react';
-import { PlayCircle, Calendar, ArrowRight, HeartHandshake } from 'lucide-react';
+import { PlayCircle, Calendar, ArrowRight, List, Heart } from 'lucide-react';
 import { ViewState } from '../types';
 
 interface HomeViewProps {
@@ -49,50 +49,63 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-        {/* Card 1 */}
-        <div className="bg-neu-base dark:bg-neu-base-dark p-8 rounded-[2rem] shadow-neu dark:shadow-neu-dark hover:-translate-y-2 transition-transform duration-300">
-          <div className="w-14 h-14 rounded-2xl bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex items-center justify-center text-orange-500 mb-6">
-            <HeartHandshake size={28} />
+        {/* Card 1: Orden de Culto (Was Devocional) */}
+        <div
+          onClick={() => onNavigate(ViewState.ORDER)}
+          className="bg-neu-base dark:bg-neu-base-dark p-8 rounded-[2rem] shadow-neu dark:shadow-neu-dark hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex items-center justify-center text-orange-500 mb-6 group-hover:text-orange-600">
+            <List size={28} />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-200 mb-2">Devocional</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-200 mb-2">Orden de Culto</h3>
           <p className="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-            "La fe es la certeza de lo que se espera..."
+            Sigue la liturgia y el programa del servicio de hoy.
           </p>
           <button className="flex items-center text-orange-500 font-bold text-sm hover:opacity-80 transition-opacity">
-            LEER MÁS <ArrowRight size={16} className="ml-2" />
+            VER ORDEN <ArrowRight size={16} className="ml-2" />
           </button>
         </div>
 
-        {/* Card 2 */}
-        <div className="bg-neu-base dark:bg-neu-base-dark p-8 rounded-[2rem] shadow-neu dark:shadow-neu-dark hover:-translate-y-2 transition-transform duration-300">
+        {/* Card 2: Próximos Eventos (Was Esta Semana) */}
+        <div
+          onClick={() => onNavigate(ViewState.EVENTS)}
+          className="bg-neu-base dark:bg-neu-base-dark p-8 rounded-[2rem] shadow-neu dark:shadow-neu-dark hover:-translate-y-2 transition-transform duration-300 cursor-pointer"
+        >
           <div className="w-14 h-14 rounded-2xl bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex items-center justify-center text-brand-500 mb-6">
             <Calendar size={28} />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-200 mb-4">Esta Semana</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-200 mb-4">Próximos Eventos</h3>
           <ul className="space-y-4 text-gray-500 dark:text-gray-400 mb-6">
             <li className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700/50">
-              <span>Estudio Bíblico</span>
-              <span className="font-bold text-xs bg-brand-500 text-white px-2 py-1 rounded-md shadow-sm">Mar 7PM</span>
+              <span>Retiro de Jóvenes</span>
+              <span className="font-bold text-xs bg-brand-500 text-white px-2 py-1 rounded-md shadow-sm">15 Oct</span>
             </li>
             <li className="flex items-center justify-between">
-              <span>Reunión Jóvenes</span>
-              <span className="font-bold text-xs bg-gray-400 text-white px-2 py-1 rounded-md shadow-sm">Vie 8PM</span>
+              <span>Noche de Adoración</span>
+              <span className="font-bold text-xs bg-gray-400 text-white px-2 py-1 rounded-md shadow-sm">22 Oct</span>
             </li>
           </ul>
         </div>
 
-        {/* Card 3 (Featured) */}
-        <div className="relative bg-brand-500 p-8 rounded-[2rem] shadow-neu dark:shadow-neu-dark hover:-translate-y-2 transition-transform duration-300 overflow-hidden">
+        {/* Card 3: Petición de Oración (Was Ofrendar) */}
+        <div
+          onClick={() => onNavigate(ViewState.PRAYER)}
+          className="relative bg-brand-500 p-8 rounded-[2rem] shadow-neu dark:shadow-neu-dark hover:-translate-y-2 transition-transform duration-300 overflow-hidden cursor-pointer"
+        >
           {/* Decorative circles */}
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl"></div>
           <div className="absolute bottom-10 -left-10 w-40 h-40 bg-indigo-900 opacity-20 rounded-full blur-2xl"></div>
 
-          <h3 className="relative text-2xl font-bold text-white mb-2">Ofrendar</h3>
+          <div className="relative w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-white mb-6">
+            <Heart size={28} fill="currentColor" />
+          </div>
+
+          <h3 className="relative text-2xl font-bold text-white mb-2">Petición de Oración</h3>
           <p className="relative text-indigo-100 mb-8 leading-relaxed opacity-90">
-            Tu generosidad ayuda a nuestra comunidad a crecer.
+            Estamos aquí para orar por ti. Comparte tu petición con nosotros.
           </p>
           <button className="relative w-full py-4 bg-brand-600 rounded-xl font-bold text-white shadow-[5px_5px_10px_rgba(0,0,0,0.2),-5px_-5px_10px_rgba(255,255,255,0.1)] active:shadow-[inset_5px_5px_10px_rgba(0,0,0,0.2)] transition-all">
-            Dar Ahora
+            Enviar Petición
           </button>
         </div>
 
