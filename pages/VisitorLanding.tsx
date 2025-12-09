@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Globe, ArrowRight, Heart, User, Lock, Users, Palette } from 'lucide-react';
-import VisitorApp from '../components/VisitorApp';
+import VisitorApp from './visitor-app/App';
 import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
 import { usePlans } from '../hooks/usePlans';
@@ -99,14 +99,7 @@ const VisitorLanding: React.FC = () => {
                         ))}
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-                        <button
-                            onClick={() => navigate('/design')}
-                            className="text-xs font-bold text-slate-300 hover:text-pink-500 flex items-center justify-center gap-2 mx-auto transition-colors"
-                        >
-                            <Palette size={14} /> Design Lab
-                        </button>
-                    </div>
+
                 </div>
             </div>
         );
@@ -176,14 +169,7 @@ const VisitorLanding: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[#F2F4F8] flex items-center justify-center p-4">
-            <VisitorApp
-                events={events}
-                onLoginRequest={() => setShowMemberLogin(true)}
-                onExit={() => setStep('language')}
-                nextPreacher={nextPreacher}
-                initialLanguage={selectedLang as any}
-                youtubeLiveUrl={settings?.youtubeLiveUrl}
-            />
+            <VisitorApp />
             {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} initialTenantId={tenantId} initialChurchName={settings?.churchName} />}
         </div>
     );
