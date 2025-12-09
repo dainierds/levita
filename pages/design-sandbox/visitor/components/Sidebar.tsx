@@ -44,7 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300
                   ${isActive
                                         ? 'text-brand-500 shadow-neu-pressed dark:shadow-neu-dark-pressed transform translate-y-1'
-                                        : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+                                        : 'text-gray-900 dark:text-gray-400 hover:text-black dark:hover:text-gray-300'
                                     }
                   w-14 h-14 md:w-auto md:h-auto md:px-6 md:py-3 md:flex-row md:space-x-3
                 `}
@@ -56,7 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                                 {/* Text Label - Hidden on mobile for space, visible on tablet+ */}
                                 <span className={`
                   hidden md:block text-sm font-bold transition-colors
-                  ${isActive ? 'text-brand-500' : 'text-gray-500'}
+                  ${isActive ? 'text-brand-500' : 'text-gray-900'}
                 `}>
                                     {item.label}
                                 </span>
