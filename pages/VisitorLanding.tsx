@@ -169,7 +169,7 @@ const VisitorLanding: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[#F2F4F8] flex items-center justify-center p-4">
-            <VisitorApp />
+            <VisitorApp initialTenantId={tenantId} />
             {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} initialTenantId={tenantId} initialChurchName={settings?.churchName} />}
         </div>
     );

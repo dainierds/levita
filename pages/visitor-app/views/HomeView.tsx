@@ -1,12 +1,19 @@
 import React from 'react';
 import { PlayCircle, Calendar, ArrowRight, List, Heart } from 'lucide-react';
 import { ViewState } from '../types';
+import { ChurchEvent } from '../../../types';
 
 interface HomeViewProps {
   onNavigate: (view: ViewState) => void;
+  events?: ChurchEvent[];
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
+export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, events = [] }) => {
+  // Get upcoming events (limit 2)
+  const upcomingEvents = events
+    .filter(e => new Date(e.date) >= new Date())
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 2);
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -76,14 +83,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           </div>
           <h3 className="text-xl font-bold text-gray-900 dark:text-gray-200 mb-4">Próximos Eventos</h3>
           <ul className="space-y-4 text-gray-500 dark:text-gray-400 mb-6">
-            <li className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700/50">
-              <span>Retiro de Jóvenes</span>
-              <span className="font-bold text-xs bg-brand-500 text-white px-2 py-1 rounded-md shadow-sm">15 Oct</span>
-            </li>
-            <li className="flex items-center justify-between">
-              <span>Noche de Adoración</span>
-              <span className="font-bold text-xs bg-gray-400 text-white px-2 py-1 rounded-md shadow-sm">22 Oct</span>
-            </li>
+            {upcomingEvents.length > 0 ? (
+              upcomingEvents.map(evt => (
+                <li key={evt.id} className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700/50 last:border-0">
+                  <span className="truncate max-w-[120px]">{evt.title}</span>
+                  <span className="font-bold text-xs bg-brand-500 text-white px-2 py-1 rounded-md shadow-sm">
+                    {new Date(evt.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                  </span>
+                </li>
+              ))
+            ) : (
+              <li className="text-sm italic opacity-70">No hay eventos próximos</li>
+            )}
           </ul>
         </div>
 

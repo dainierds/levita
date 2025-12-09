@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { db } from '../../services/firebase';
+import { ChurchEvent, ServicePlan } from '../../types';
+import { ViewState } from './types';
 import { Navbar } from './components/Sidebar'; // Importing the refactored Navbar
 import { HomeView } from './views/HomeView';
 import { LiveView } from './views/LiveView';
 import { EventsView } from './views/EventsView';
 import { OrderView } from './views/OrderView';
-import { ViewState } from './types';
+
 import { Bell, Moon, Sun, Search, User } from 'lucide-react';
 
 const SimpleView: React.FC<{ title: string }> = ({ title }) => (
@@ -17,9 +21,53 @@ const SimpleView: React.FC<{ title: string }> = ({ title }) => (
   </div>
 );
 
-const App: React.FC = () => {
+interface AppProps {
+  initialTenantId?: string;
+}
+
+const App: React.FC<AppProps> = ({ initialTenantId }) => {
   const [activeView, setActiveView] = useState<ViewState>(ViewState.HOME);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const [events, setEvents] = useState<ChurchEvent[]>([]);
+  const [nextPlan, setNextPlan] = useState<ServicePlan | null>(null);
+
+  useEffect(() => {
+    if (!initialTenantId) return;
+
+    const fetchData = async () => {
+      try {
+        // Fetch Events
+        const eventsQ = query(collection(db, 'events'), where('tenantId', '==', initialTenantId));
+        const eventsSnap = await getDocs(eventsQ);
+        const loadedEvents = eventsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChurchEvent));
+        setEvents(loadedEvents);
+
+        // Fetch Plans
+        const plansQ = query(
+          collection(db, 'plans'),
+          where('tenantId', '==', initialTenantId),
+          where('isActive', '==', false) // Find upcoming, assuming active is "Live"
+          // orderBy('date') // Composite index might be missing, filter locally
+        );
+        const plansSnap = await getDocs(plansQ);
+        const loadedPlans = plansSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
+
+        // Find next plan
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const upcoming = loadedPlans
+          .filter(p => new Date(p.date) >= today)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+
+        setNextPlan(upcoming || null);
+
+      } catch (error) {
+        console.error("Error fetching visitor data:", error);
+      }
+    };
+    fetchData();
+  }, [initialTenantId]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -32,13 +80,13 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeView) {
       case ViewState.HOME:
-        return <HomeView onNavigate={setActiveView} />;
+        return <HomeView onNavigate={setActiveView} events={events} />;
       case ViewState.LIVE:
         return <LiveView />;
       case ViewState.EVENTS:
-        return <EventsView />;
+        return <EventsView events={events} />;
       case ViewState.ORDER:
-        return <OrderView />;
+        return <OrderView servicePlan={nextPlan} />;
       case ViewState.PRAYER:
         return <SimpleView title="Peticiones" />;
       case ViewState.PROFILE:
