@@ -43,7 +43,7 @@ const StaffPortal: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
             <div className="bg-slate-800 p-10 rounded-[2.5rem] shadow-2xl border border-slate-700 max-w-md w-full relative">
-                <button onClick={() => setStep('role')} className="absolute top-8 left-8 text-slate-500 hover:text-white">
+                <button onClick={() => navigate('/')} className="absolute top-8 left-8 text-slate-500 hover:text-white">
                     ←
                 </button>
 

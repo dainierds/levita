@@ -14,6 +14,17 @@ export interface ChurchEvent {
   targetAudience: 'PUBLIC' | 'MEMBERS_ONLY' | 'STAFF_ONLY' | 'ELDERS_ONLY'; // Updated field
   bannerGradient?: string; // e.g. "from-indigo-500 to-purple-500"
   description: string;
+  address?: string;
+  placeName?: string;
+}
+
+export interface PrayerRequest {
+  id: string;
+  author: string;
+  content: string;
+  date: string;
+  status: 'PENDING' | 'READ' | 'ARCHIVED';
+  tenantId: string;
 }
 
 export type LiturgyItemType = 'WORSHIP' | 'PREACHING' | 'GENERAL';
@@ -75,6 +86,7 @@ export interface User {
   pin?: string; // New field for Member authentication
   tenantId?: string; // For multi-tenancy
   photoUrl?: string;
+  department?: 'MUSIC' | 'KIDS' | 'USHERS' | 'MEDIA' | 'OTHER'; // Categorization
   status: 'ACTIVE' | 'PENDING_PASSWORD_CHANGE';
 }
 
@@ -97,12 +109,21 @@ export interface ChurchSettings {
   memberPin?: string; // PIN for member access
   teams?: ShiftTeam[];
   activeTeamId?: string;
+  musicMinistryPin?: string; // New field for Music Ministry access
 }
 
 export interface ShiftTeam {
   id: string;
   name: string;
   members: Partial<ServiceTeam>;
+}
+
+export interface MusicTeam {
+  id: string;
+  date: string;
+  memberIds: string[]; // User IDs of the 6 singers/musicians
+  note?: string;
+  tenantId: string;
 }
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
@@ -135,8 +156,8 @@ export interface ChurchTenant {
 // Feature Flags based on Tier
 export const TIER_FEATURES: Record<SubscriptionTier, string[]> = {
   BASIC: ['dashboard', 'planner', 'users', 'team'],
-  GOLD: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'team', 'sermons'],
-  PLATINUM: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'ai_assistant', 'live_translation', 'team', 'sermons', 'statistics']
+  GOLD: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'team', 'sermons', 'music_dept'],
+  PLATINUM: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'ai_assistant', 'live_translation', 'team', 'sermons', 'statistics', 'music_dept']
 };
 
 export const TIER_LIMITS: Record<SubscriptionTier, number> = {

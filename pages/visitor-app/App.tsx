@@ -8,6 +8,8 @@ import { HomeView } from './views/HomeView';
 import { LiveView } from './views/LiveView';
 import { EventsView } from './views/EventsView';
 import { OrderView } from './views/OrderView';
+import { TranslationView } from './views/TranslationView';
+import { PrayerView } from './views/PrayerView';
 
 import { Bell, Moon, Sun, Search, User, ArrowLeft, LogOut } from 'lucide-react';
 
@@ -23,62 +25,89 @@ const SimpleView: React.FC<{ title: string }> = ({ title }) => (
 
 interface AppProps {
   initialTenantId?: string;
+  initialSettings?: ChurchSettings | null;
   onExit?: () => void;
 }
 
-const App: React.FC<AppProps> = ({ initialTenantId, onExit }) => {
+const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) => {
   const [activeView, setActiveView] = useState<ViewState>(ViewState.HOME);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [nextPlan, setNextPlan] = useState<ServicePlan | null>(null);
-  const [settings, setSettings] = useState<ChurchSettings | null>(null);
+  const [settings, setSettings] = useState<ChurchSettings | null>(initialSettings || null);
 
   useEffect(() => {
+    // If we already have settings, don't re-fetch unless tenant changes
+    if (initialSettings) {
+      setSettings(initialSettings);
+    }
+
     if (!initialTenantId) return;
 
     const fetchData = async () => {
+      if (!initialTenantId) {
+        console.error("VisitorApp: No initialTenantId provided");
+        return;
+      }
+
       try {
-        // Fetch Settings
-        try {
-          const settingsRef = doc(db, 'churchSettings', initialTenantId);
-          const settingsSnap = await getDoc(settingsRef);
-          if (settingsSnap.exists()) {
-            setSettings(settingsSnap.data() as ChurchSettings);
+        // Fetch Settings from Tenant Doc
+        const settingsRef = doc(db, 'tenants', initialTenantId);
+        const settingsSnap = await getDoc(settingsRef);
+
+        if (settingsSnap.exists()) {
+          const tenantData = settingsSnap.data();
+          const settingsData = tenantData.settings as ChurchSettings;
+          if (settingsData) {
+            setSettings(settingsData);
           }
-        } catch (e) { console.error("Error fetching settings", e); }
+        }
 
         // Fetch Events
         const eventsQ = query(collection(db, 'events'), where('tenantId', '==', initialTenantId));
         const eventsSnap = await getDocs(eventsQ);
         const loadedEvents = eventsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChurchEvent));
+
         setEvents(loadedEvents);
 
-        // Fetch Plans
+        // Fetch Plans (Active AND Upcoming)
+        // We fetch all plans for the tenant and filter client-side to be safe with composite indexes
+        // CRITICAL: Must use 'servicePlans' collection to match Admin App (hooks/usePlans.ts)
         const plansQ = query(
-          collection(db, 'plans'),
-          where('tenantId', '==', initialTenantId),
-          where('isActive', '==', false) // Find upcoming, assuming active is "Live"
-          // orderBy('date') // Composite index might be missing, filter locally
+          collection(db, 'servicePlans'),
+          where('tenantId', '==', initialTenantId)
         );
         const plansSnap = await getDocs(plansQ);
         const loadedPlans = plansSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
 
-        // Find next plan
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const upcoming = loadedPlans
-          .filter(p => new Date(p.date) >= today)
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+        // Logic to determine active vs next plan
+        const active = loadedPlans.find(p => p.isActive);
 
-        setNextPlan(upcoming || null);
+        if (active) {
+          setNextPlan(active); // Treat active plan as the "Next/Current" one to display
+          if (activeView === ViewState.HOME) {
+            // Optional: auto-switch to LIVE view if configured, or just show "LIVE" badge in HomeView
+          }
+        } else {
+          // 2. Find NEXT upcoming plan
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          const upcoming = loadedPlans
+            .filter(p => !p.isActive && new Date(p.date) >= today)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+
+          setNextPlan(upcoming || null);
+        }
+
 
       } catch (error) {
         console.error("Error fetching visitor data:", error);
       }
     };
     fetchData();
-  }, [initialTenantId]);
+  }, [initialTenantId, initialSettings]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -93,15 +122,17 @@ const App: React.FC<AppProps> = ({ initialTenantId, onExit }) => {
       case ViewState.HOME:
         return <HomeView onNavigate={setActiveView} events={events} nextPlan={nextPlan} settings={settings} />;
       case ViewState.LIVE:
-        return <LiveView />;
+        return <LiveView tenantId={initialTenantId} />;
       case ViewState.EVENTS:
         return <EventsView events={events} />;
       case ViewState.ORDER:
-        return <OrderView servicePlan={nextPlan} />;
+        return <OrderView servicePlan={nextPlan} settings={settings} />;
       case ViewState.PRAYER:
-        return <SimpleView title="Peticiones" />;
+        return <PrayerView tenantId={initialTenantId} />;
       case ViewState.PROFILE:
         return <SimpleView title="Mi Perfil" />;
+      case ViewState.TRANSLATION:
+        return <TranslationView tenantId={initialTenantId} />;
       default:
         return <HomeView onNavigate={setActiveView} />;
     }
@@ -135,6 +166,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, onExit }) => {
               {activeView === ViewState.ORDER && 'Orden del Culto'}
               {activeView === ViewState.PRAYER && 'Oración'}
               {activeView === ViewState.PROFILE && 'Perfil'}
+              {activeView === ViewState.TRANSLATION && 'Traducción'}
             </h1>
             <p className="text-xs md:text-sm text-gray-400 font-medium hidden sm:block">Modo Visitante</p>
           </div>
@@ -165,7 +197,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, onExit }) => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-10 pb-28 scroll-smooth no-scrollbar">
-        <div className="max-w-7xl mx-auto h-full">
+        <div className="w-full h-full">
           {renderContent()}
         </div>
       </main>

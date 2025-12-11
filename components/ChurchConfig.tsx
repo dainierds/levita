@@ -288,6 +288,19 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
           />
           <p className="text-xs text-slate-400 mt-2">Comparte este PIN con tu congregación.</p>
         </div>
+
+        <div className="max-w-xs mt-6">
+          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">PIN Ministerio de Música</label>
+          <input
+            type="text"
+            value={config.musicMinistryPin || ''}
+            onChange={(e) => setConfig({ ...config, musicMinistryPin: e.target.value })}
+            className="w-full px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all font-mono text-lg tracking-widest text-center text-indigo-700"
+            placeholder="0000"
+            maxLength={6}
+          />
+          <p className="text-xs text-slate-400 mt-2">Acceso exclusivo para el equipo de alabanza.</p>
+        </div>
       </section>
 
       {/* Summary Footer (Static) */}

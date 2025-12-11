@@ -172,7 +172,7 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
           <p className="text-slate-500">Diseña el flujo del servicio.</p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white p-1 rounded-full border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2 bg-white p-1 rounded-full border border-slate-200 shadow-sm overflow-x-auto no-scrollbar max-w-[200px] md:max-w-none">
           {visiblePlans.map(plan => (
             <button
               key={plan.id}

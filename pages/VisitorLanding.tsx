@@ -6,9 +6,10 @@ import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
 import { usePlans } from '../hooks/usePlans';
 import { Link, useNavigate } from 'react-router-dom';
-import { collection, query, limit, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, limit, getDocs, doc, getDoc, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { ChurchSettings } from '../types';
+import { ChurchEvent, ChurchSettings, ChurchTenant } from '../types';
+import { DEFAULT_SETTINGS } from '../constants';
 
 const SUPPORTED_LANGUAGES = [
     { code: 'es', label: 'Español', flagUrl: 'https://flagcdn.com/w80/es.png' },
@@ -38,17 +39,51 @@ const VisitorLanding: React.FC = () => {
 
     useEffect(() => {
         const fetchPublicSettings = async () => {
+            console.log("VisitorLanding: Starting fetch...");
             try {
-                const q = query(collection(db, 'tenants'), limit(1));
-                const snapshot = await getDocs(q);
-                if (!snapshot.empty) {
-                    const tid = snapshot.docs[0].id;
-                    setTenantId(tid);
-                    const settingsDoc = await getDoc(doc(db, 'churchSettings', tid));
-                    if (settingsDoc.exists()) {
-                        setSettings(settingsDoc.data() as ChurchSettings);
+                let tid = '';
+
+                // 1. Improved Strategy: Fetch all tenants to find the "active" one
+                // Queries tenants and prefers the one with valid settings or name
+                const qTenants = query(collection(db, 'tenants'));
+                const tenantsSnap = await getDocs(qTenants);
+
+                let selectedTid = '';
+                let selectedSettings = DEFAULT_SETTINGS;
+
+                if (!tenantsSnap.empty) {
+                    // Prefer one with settings
+                    const bestMatch = tenantsSnap.docs.find(d => d.data().settings) || tenantsSnap.docs[0];
+
+                    selectedTid = bestMatch.id;
+                    const tData = bestMatch.data() as ChurchTenant;
+                    selectedSettings = tData.settings || DEFAULT_SETTINGS;
+                }
+
+                if (selectedTid) {
+                    setTenantId(selectedTid);
+                    setSettings(selectedSettings);
+                    return;
+                }
+
+                // Fallback (keep existing logic just in case)
+                if (!tid) {
+                    console.warn("VisitorLanding: No tenants found. Checking legacy t1...");
+                    // Note: 'churchSettings' collection is likely unused, but we check 'tenants/t1' just in case
+                    const tenantRef = await getDoc(doc(db, 'tenants', 't1'));
+                    if (tenantRef.exists()) {
+                        tid = 't1';
+                        const tData = tenantRef.data() as ChurchTenant;
+                        const sData = tData.settings || DEFAULT_SETTINGS;
+                        console.log("VisitorLanding: Found t1 tenant directly (with defaults):", sData);
+                        setTenantId(tid);
+                        setSettings(sData);
+                        return;
                     }
                 }
+
+                console.warn("VisitorLanding: No tenant found via discovery or t1 fallback.");
+
             } catch (error) {
                 console.error("Error fetching public settings:", error);
             }
@@ -168,9 +203,10 @@ const VisitorLanding: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#F2F4F8] flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[#F2F4F8]">
             <VisitorApp
                 initialTenantId={tenantId}
+                initialSettings={settings}
                 onExit={() => setStep('language')}
             />
             {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} initialTenantId={tenantId} initialChurchName={settings?.churchName} />}

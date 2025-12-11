@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { LayoutDashboard, Calendar, FileText, Users, Settings, Church, UserPlus, Bell, BarChart3, Camera, Loader2, UserCheck, BookOpen, Heart, Library } from 'lucide-react';
+import { LayoutDashboard, Calendar, FileText, Users, Settings, Church, UserPlus, Bell, BarChart3, Camera, Loader2, UserCheck, BookOpen, Heart, Library, Music } from 'lucide-react';
 import { Role, SubscriptionTier, TIER_FEATURES, User } from '../types';
 import { db } from '../services/firebase';
 import { uploadFile } from '../services/storageService';
@@ -29,6 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
     { id: 'dashboard', label: t('menu.dashboard'), icon: LayoutDashboard },
     { id: 'planner', label: t('menu.planner'), icon: FileText },
     { id: 'team', label: t('menu.team'), icon: UserCheck },
+    { id: 'music_dept', label: 'Dep. Música', icon: Music }, // New Item
     { id: 'sermons', label: t('menu.sermons'), icon: BookOpen },
     { id: 'roster', label: t('menu.roster'), icon: Users },
     { id: 'prayers', label: t('menu.prayers'), icon: Heart },
@@ -45,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
 
   switch (role) {
     case 'ADMIN':
-      allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics', 'events', 'notifications', 'users', 'settings'];
+      allowedIds = ['dashboard', 'planner', 'team', 'music_dept', 'sermons', 'roster', 'prayers', 'statistics', 'events', 'notifications', 'users', 'settings'];
       break;
     case 'ELDER':
       allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics'];

@@ -15,9 +15,9 @@ const MiembroLayout: React.FC = () => {
     const navItems = [
         { path: '/miembro/inicio', icon: Home, label: 'Inicio' },
         { path: '/miembro/en-vivo', icon: Video, label: 'En Vivo' },
-        { path: '/miembro/liturgia', icon: List, label: 'Liturgia' },
+        { path: '/miembro/eventos', icon: Calendar, label: 'Eventos' },
+        { path: '/miembro/liturgia', icon: List, label: 'Orden del Culto' },
         { path: '/miembro/oracion', icon: Heart, label: 'Oración' },
-        { path: '/miembro/perfil', icon: User, label: 'Perfil' }
     ];
 
     const menuItems = [
@@ -33,7 +33,7 @@ const MiembroLayout: React.FC = () => {
         const ruta = location.pathname;
         if (ruta.includes('inicio')) return 'Inicio';
         if (ruta.includes('en-vivo')) return 'En Vivo';
-        if (ruta.includes('liturgia')) return 'Liturgia';
+        if (ruta.includes('liturgia')) return 'Orden del Culto';
         if (ruta.includes('eventos')) return 'Eventos';
         if (ruta.includes('oracion')) return 'Oración';
         if (ruta.includes('perfil')) return 'Perfil';
@@ -84,8 +84,8 @@ const MiembroLayout: React.FC = () => {
                                 key={path}
                                 onClick={() => navigate(path)}
                                 className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all ${isActive
-                                        ? 'text-indigo-600 bg-indigo-50'
-                                        : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-50'
+                                    ? 'text-indigo-600 bg-indigo-50'
+                                    : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-50'
                                     }`}
                             >
                                 <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />

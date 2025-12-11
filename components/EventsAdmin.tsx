@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChurchEvent, EventType } from '../types';
-import { Calendar, Clock, MapPin, Plus, Trash2, X, Check, Image as ImageIcon, LayoutTemplate } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Trash2, X, Check, Image as ImageIcon, LayoutTemplate, Pencil } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
@@ -25,6 +25,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
     const { user } = useAuth();
     const [showModal, setShowModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
     // New Event State
     const [newEvent, setNewEvent] = useState<Partial<ChurchEvent>>({
@@ -36,7 +37,9 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
         location: '',
         activeInBanner: true,
         bannerGradient: 'from-purple-500 to-pink-500',
-        targetAudience: 'PUBLIC'
+        targetAudience: 'PUBLIC',
+        placeName: '',
+        address: ''
     });
 
     // Emoji for the banner (we'll store it as part of description or title internally if needed, 
@@ -50,18 +53,33 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
 
         setIsSubmitting(true);
         try {
-            // Prepend emoji to title for display purposes if desired, or keep separate.
-            // Let's keep it clean and just save the data.
+            // If editing, use the raw title (user might have removed emoji or added new one)
+            // If creating, we prepend the selected emoji (legacy logic, but user can edit title manually too)
+            let titleToSave = newEvent.title;
+
+            // Only prepend emoji if it's a NEW event and title doesn't start with it (optional heuristic)
+            // But to keep it consistent with "selectedEmoji" state:
+            if (!editingEventId) {
+                titleToSave = `${selectedEmoji} ${newEvent.title}`;
+            }
 
             const eventData = {
                 ...newEvent,
-                title: `${selectedEmoji} ${newEvent.title}`, // Hack to include emoji
+                title: titleToSave,
                 tenantId: user.tenantId,
                 activeInBanner: newEvent.activeInBanner ?? true,
             };
 
-            await addDoc(collection(db, 'events'), eventData);
+            if (editingEventId) {
+                // UPDATE
+                await updateDoc(doc(db, 'events', editingEventId), eventData);
+            } else {
+                // CREATE
+                await addDoc(collection(db, 'events'), eventData);
+            }
+
             setShowModal(false);
+            setEditingEventId(null); // Reset edit mode
             setNewEvent({
                 title: '',
                 description: '',
@@ -71,12 +89,14 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                 location: '',
                 activeInBanner: true,
                 bannerGradient: 'from-purple-500 to-pink-500',
-                targetAudience: 'PUBLIC'
+                targetAudience: 'PUBLIC',
+                placeName: '',
+                address: ''
             });
             setSelectedEmoji('📅');
         } catch (error) {
-            console.error("Error creating event:", error);
-            alert("Error al crear el evento");
+            console.error("Error saving event:", error);
+            alert("Error al guardar el evento");
         } finally {
             setIsSubmitting(false);
         }
@@ -112,6 +132,27 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
         } catch (error) {
             console.error("Error updating event:", error);
         }
+    };
+
+    const handleEditEvent = (ev: ChurchEvent) => {
+        setEditingEventId(ev.id);
+        setNewEvent({
+            title: ev.title, // Keep title as is (including emoji if present)
+            description: ev.description,
+            date: ev.date,
+            time: ev.time,
+            type: ev.type,
+            location: ev.location,
+            activeInBanner: ev.activeInBanner,
+            bannerGradient: ev.bannerGradient || 'from-purple-500 to-pink-500',
+            targetAudience: ev.targetAudience || 'PUBLIC',
+            placeName: ev.placeName || '',
+            address: ev.address || ''
+        });
+        // We don't extract the emoji back to selectedEmoji because it's hard to parse reliably.
+        // We just let the user edit the full title string or pick a new emoji to prepend if they strictly want to changing it (but that would double emojis)
+        // For simplicity, we won't auto-set selectedEmoji from title.
+        setShowModal(true);
     };
 
     if (tier === 'BASIC') {
@@ -155,11 +196,20 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                        handleEditEvent(ev);
+                                    }}
+                                    className="p-2 bg-white/20 text-white hover:bg-white/40 backdrop-blur-md rounded-lg transition-all"
+                                >
+                                    <Pencil size={16} />
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
                                         handleDeleteEvent(ev.id);
                                     }}
                                     className={`p-2 backdrop-blur-md rounded-lg transition-all z-50 flex items-center gap-1 ${deleteConfirmation === ev.id
-                                            ? 'bg-red-600 text-white w-auto px-3'
-                                            : 'bg-white/20 text-white hover:bg-red-500'
+                                        ? 'bg-red-600 text-white w-auto px-3'
+                                        : 'bg-white/20 text-white hover:bg-red-500'
                                         }`}
                                 >
                                     {deleteConfirmation === ev.id ? (
@@ -211,7 +261,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
 
                         {/* Modal Header */}
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
-                            <h3 className="text-xl font-bold text-slate-800">Nuevo Evento</h3>
+                            <h3 className="text-xl font-bold text-slate-800">{editingEventId ? 'Editar Evento' : 'Nuevo Evento'}</h3>
                             <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
                                 <X size={24} />
                             </button>
@@ -258,6 +308,28 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                                         onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
                                         placeholder="Detalles del evento..."
                                         className="input-soft min-h-[80px]"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-1">
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Lugar (Nombre del sitio)</label>
+                                    <input
+                                        type="text"
+                                        value={newEvent.placeName}
+                                        onChange={e => setNewEvent({ ...newEvent, placeName: e.target.value })}
+                                        placeholder="Ej. Auditorio Principal"
+                                        className="input-soft"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-1">
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Dirección del Evento</label>
+                                    <input
+                                        type="text"
+                                        value={newEvent.address}
+                                        onChange={e => setNewEvent({ ...newEvent, address: e.target.value })}
+                                        placeholder="Ej. Av. Siempre Viva 123"
+                                        className="input-soft"
                                     />
                                 </div>
 
@@ -366,7 +438,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                                 disabled={isSubmitting || !newEvent.title || !newEvent.date}
                                 className="px-8 py-3 rounded-xl font-bold bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 disabled:opacity-50 transition-all"
                             >
-                                {isSubmitting ? 'Creando...' : 'Crear Evento'}
+                                {isSubmitting ? 'Guardando...' : (editingEventId ? 'Guardar Cambios' : 'Crear Evento')}
                             </button>
                         </div>
 

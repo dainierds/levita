@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Mic, Mic2, Activity, Globe, Power, Settings, Volume2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../services/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const TranslationMaster: React.FC = () => {
+    const { user } = useAuth();
     const [isActive, setIsActive] = useState(false);
     const [inputDevice, setInputDevice] = useState('default');
     const [volume, setVolume] = useState(75);
@@ -10,6 +14,7 @@ const TranslationMaster: React.FC = () => {
     // Simulate audio levels
     const [level, setLevel] = useState(0);
     const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+    const recognitionRef = useRef<any>(null);
 
     useEffect(() => {
         navigator.mediaDevices.enumerateDevices()
@@ -17,16 +22,77 @@ const TranslationMaster: React.FC = () => {
             .catch(console.error);
     }, []);
 
+    // Speech Recognition & Firestore Sync
     useEffect(() => {
-        if (!isActive) {
-            setLevel(0);
+        if (!window.webkitSpeechRecognition && !window.SpeechRecognition) {
+            console.warn("Speech Recognition not supported");
             return;
         }
-        const interval = setInterval(() => {
-            setLevel(Math.random() * 100);
-        }, 100);
-        return () => clearInterval(interval);
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'es-ES'; // Assuming Service is in Spanish
+
+        recognition.onresult = (event: any) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+
+            const textToPublish = finalTranscript || interimTranscript;
+
+            // Visualize level based on text length change (simulated)
+            if (textToPublish) setLevel(Math.min(100, textToPublish.length * 2));
+
+            // Write to Firestore
+            if (user?.tenantId && textToPublish.trim()) {
+                const docRef = doc(db, 'tenants', user.tenantId, 'live', 'transcription');
+                setDoc(docRef, {
+                    text: textToPublish,
+                    timestamp: serverTimestamp(),
+                    isFinal: !!finalTranscript
+                }).catch(err => console.error("Error writing transcript:", err));
+            }
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error("Speech Recognition Error:", event.error);
+            if (event.error === 'not-allowed') setIsActive(false);
+            // Auto-restart on some errors if active
+        };
+
+        recognition.onend = () => {
+            if (isActive) {
+                try { recognition.start(); } catch { }
+            }
+        };
+
+        recognitionRef.current = recognition;
+
+        return () => {
+            if (recognitionRef.current) recognitionRef.current.stop();
+        };
+    }, [user?.tenantId, isActive]);
+
+    // Handle Start/Stop
+    useEffect(() => {
+        if (!recognitionRef.current) return;
+        if (isActive) {
+            try { recognitionRef.current.start(); } catch { }
+        } else {
+            recognitionRef.current.stop();
+            setLevel(0);
+        }
     }, [isActive]);
+
 
     return (
         <div className="bg-slate-900 rounded-[2rem] p-6 text-white shadow-xl border border-slate-800">
@@ -61,7 +127,8 @@ const TranslationMaster: React.FC = () => {
                                 onChange={(e) => setInputDevice(e.target.value)}
                                 className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-sm font-medium outline-none focus:border-indigo-500 appearance-none"
                             >
-                                <option value="default">Por defecto</option>
+                                <option value="default">Por defecto del Sistema</option>
+                                {/* Browser Speech API uses default, so we clarify here */}
                                 {devices.map(device => (
                                     <option key={device.deviceId} value={device.deviceId}>
                                         {device.label || `Micrófono ${device.deviceId.slice(0, 5)}...`}
@@ -69,10 +136,13 @@ const TranslationMaster: React.FC = () => {
                                 ))}
                             </select>
                         </div>
+                        <p className="text-[10px] text-slate-500 mt-1 italic">
+                            Nota: La API de Voz usa el micrófono predeterminado del navegador.
+                        </p>
                     </div>
 
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Nivel de Entrada</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Nivel de Entrada (Simulado)</label>
                         <div className="h-12 bg-slate-800 rounded-xl p-2 flex items-center gap-1">
                             {[...Array(20)].map((_, i) => (
                                 <div
@@ -130,7 +200,7 @@ const TranslationMaster: React.FC = () => {
                 <div className="mt-6 p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-3">
                     <Activity className="text-green-500 animate-pulse" size={18} />
                     <p className="text-xs text-green-400 font-medium">
-                        Traduciendo activamente a {Object.values(languages).filter(Boolean).length} idiomas. Latencia: 120ms.
+                        Escuchando y Transmitiendo Transcripción...
                     </p>
                 </div>
             )}

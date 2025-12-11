@@ -1,120 +1,117 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, updateDoc, doc, where } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
-import { Check, Archive, Clock, User, MessageSquare } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { CheckCircle2, Clock, Trash2, MailOpen, Archive } from 'lucide-react';
+import { PrayerRequest } from '../types';
 
-interface PrayerRequest {
-    id: string;
-    name: string;
-    request: string;
-    status: 'PENDING' | 'PRAYED' | 'ARCHIVED';
-    createdAt: any;
+interface PrayerRequestsAdminProps {
+
 }
 
-const PrayerRequestsAdmin: React.FC = () => {
+const PrayerRequestsAdmin: React.FC<PrayerRequestsAdminProps> = () => {
+    const { user } = useAuth();
     const [requests, setRequests] = useState<PrayerRequest[]>([]);
-    const [filter, setFilter] = useState<'PENDING' | 'PRAYED' | 'ARCHIVED'>('PENDING');
+    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const q = query(
-            collection(db, 'prayerRequests'),
-            orderBy('createdAt', 'desc')
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as PrayerRequest[];
-            setRequests(data);
-        });
-
-        return () => unsubscribe();
-    }, []);
-
-    const handleStatusChange = async (id: string, newStatus: 'PRAYED' | 'ARCHIVED') => {
+    const fetchRequests = async () => {
+        if (!user?.tenantId) return;
+        setLoading(true);
         try {
-            await updateDoc(doc(db, 'prayerRequests', id), { status: newStatus });
+            const q = query(
+                collection(db, 'prayerRequests'),
+                where('tenantId', '==', user.tenantId),
+                // orderBy('date', 'desc') // Requires composite index if chaining multiple wheres or sorts
+            );
+            const snapshot = await getDocs(q);
+            // Sort client-side to avoid index issues for now
+            const data = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data() } as PrayerRequest))
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+            setRequests(data);
         } catch (error) {
-            console.error("Error updating status:", error);
+            console.error("Error fetching prayer requests:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const filteredRequests = requests.filter(r => r.status === filter);
+    useEffect(() => {
+        fetchRequests();
+    }, [user?.tenantId]);
+
+    const handleMarkAsRead = async (id: string, currentStatus: string) => {
+        if (currentStatus === 'READ') return;
+        try {
+            await updateDoc(doc(db, 'prayerRequests', id), { status: 'READ' });
+            setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'READ' } : r));
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('¿Estás seguro de eliminar esta petición?')) return;
+        try {
+            await deleteDoc(doc(db, 'prayerRequests', id));
+            setRequests(prev => prev.filter(r => r.id !== id));
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     return (
-        <div className="p-8 max-w-5xl mx-auto">
-            <header className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-800">Peticiones de Oración</h1>
-                    <p className="text-slate-500">Gestiona y ora por las necesidades de la comunidad.</p>
-                </div>
-                <div className="flex bg-slate-100 p-1 rounded-xl">
-                    {(['PENDING', 'PRAYED', 'ARCHIVED'] as const).map(status => (
-                        <button
-                            key={status}
-                            onClick={() => setFilter(status)}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === status
-                                    ? 'bg-white text-indigo-600 shadow-sm'
-                                    : 'text-slate-400 hover:text-slate-600'
-                                }`}
-                        >
-                            {status === 'PENDING' ? 'Pendientes' : status === 'PRAYED' ? 'Oradas' : 'Archivadas'}
-                        </button>
-                    ))}
-                </div>
+        <div className="p-8 max-w-full mx-auto pb-20">
+            <header className="mb-8">
+                <h2 className="text-3xl font-bold text-slate-800">Buzón de Oración</h2>
+                <p className="text-slate-500">Gestiona las peticiones de oración recibidas desde la app.</p>
             </header>
 
-            <div className="grid gap-4">
-                {filteredRequests.map(req => (
-                    <div key={req.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${req.status === 'PENDING' ? 'bg-orange-50 text-orange-500' :
-                                req.status === 'PRAYED' ? 'bg-green-50 text-green-500' : 'bg-slate-50 text-slate-400'
-                            }`}>
-                            <MessageSquare size={24} />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                        {req.name}
-                                        <span className="text-xs font-normal text-slate-400 flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-full">
-                                            <Clock size={12} />
-                                            {req.createdAt?.toDate().toLocaleDateString()}
-                                        </span>
-                                    </h3>
-                                </div>
-                                <div className="flex gap-2">
-                                    {req.status !== 'PRAYED' && (
-                                        <button
-                                            onClick={() => handleStatusChange(req.id, 'PRAYED')}
-                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                            title="Marcar como Orada"
-                                        >
-                                            <Check size={20} />
-                                        </button>
-                                    )}
-                                    {req.status !== 'ARCHIVED' && (
-                                        <button
-                                            onClick={() => handleStatusChange(req.id, 'ARCHIVED')}
-                                            className="p-2 text-slate-400 hover:bg-slate-50 rounded-lg transition-colors"
-                                            title="Archivar"
-                                        >
-                                            <Archive size={20} />
-                                        </button>
-                                    )}
-                                </div>
+            {loading ? (
+                <div className="flex justify-center p-12"><span className="animate-spin text-indigo-500">Cargando...</span></div>
+            ) : requests.length === 0 ? (
+                <div className="text-center py-20 bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
+                    <MailOpen className="mx-auto text-slate-300 mb-4" size={48} />
+                    <p className="text-slate-400 font-bold">No hay peticiones de oración aún.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {requests.map(req => (
+                        <div key={req.id} className={`p-6 rounded-[2rem] border transition-all ${req.status === 'PENDING' ? 'bg-white border-indigo-100 shadow-lg shadow-indigo-50' : 'bg-slate-50 border-slate-100 opacity-70'}`}>
+                            <div className="flex justify-between items-start mb-4">
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${req.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600'}`}>
+                                    {req.status === 'PENDING' ? 'Nueva' : 'Leída'}
+                                </span>
+                                <span className="text-xs text-slate-400 font-bold">
+                                    {new Date(req.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                                </span>
                             </div>
-                            <p className="text-slate-600 leading-relaxed">{req.request}</p>
+
+                            <h3 className="text-lg font-bold text-slate-800 mb-2">{req.author}</h3>
+                            <p className="text-slate-600 text-sm leading-relaxed mb-6 bg-slate-50/50 p-4 rounded-xl italic border border-slate-50">
+                                "{req.content}"
+                            </p>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleMarkAsRead(req.id, req.status)}
+                                    disabled={req.status === 'READ'}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs transition-colors ${req.status === 'READ' ? 'bg-slate-100 text-slate-400 cursor-default' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shadow-sm'}`}
+                                >
+                                    <CheckCircle2 size={16} /> Marcar Leída
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(req.id)}
+                                    className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                ))}
-                {filteredRequests.length === 0 && (
-                    <div className="text-center py-12 text-slate-400 italic">
-                        No hay peticiones en esta categoría.
-                    </div>
-                )}
-            </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

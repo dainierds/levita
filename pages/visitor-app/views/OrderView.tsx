@@ -1,13 +1,13 @@
 import React from 'react';
-import { Music, BookOpen, Mic } from 'lucide-react';
-
-import { ServicePlan, LiturgyItem } from '../../../types';
+import { Music, BookOpen, Mic, User, Headphones } from 'lucide-react';
+import { ServicePlan, ChurchSettings } from '../../../types';
 
 interface OrderViewProps {
   servicePlan?: ServicePlan | null;
+  settings?: ChurchSettings | null;
 }
 
-export const OrderView: React.FC<OrderViewProps> = ({ servicePlan }) => {
+export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) => {
   const getIcon = (type: string) => {
     switch (type.toUpperCase()) {
       case 'WORSHIP': return <Music size={20} />;
@@ -50,6 +50,23 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan }) => {
   const items = calculateItems();
   const dateStr = servicePlan ? new Date(servicePlan.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Próximo Servicio';
 
+  // LOGIC: Determine Active Team (Prioritize Global Settings > Plan Settings)
+  // LOGIC: Determine Active Team (Prioritize Global Settings > Plan Settings)
+  let activePreacher = servicePlan?.team?.preacher || '---';
+  let activeMusic = servicePlan?.team?.musicDirector || '---';
+  let activeElder = servicePlan?.team?.elder || '---';
+  let activeAudio = servicePlan?.team?.audioOperator || '---';
+
+  if (settings?.activeTeamId && settings.teams) {
+    const globalActive = settings.teams.find(t => t.id === settings.activeTeamId);
+    if (globalActive) {
+      if (globalActive.members.preacher) activePreacher = globalActive.members.preacher;
+      if (globalActive.members.musicDirector) activeMusic = globalActive.members.musicDirector;
+      if (globalActive.members.elder) activeElder = globalActive.members.elder;
+      if (globalActive.members.audioOperator) activeAudio = globalActive.members.audioOperator;
+    }
+  }
+
   return (
     <div className="max-w-3xl mx-auto py-4">
 
@@ -59,6 +76,61 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan }) => {
           {dateStr}
         </div>
       </div>
+
+      {/* Team Section (Synced with Member App) */}
+      {(servicePlan?.team || settings?.activeTeamId) && (
+        <div className="mb-12 bg-neu-base dark:bg-neu-base-dark rounded-[2rem] p-6 shadow-neu dark:shadow-neu-dark border border-transparent mx-auto max-w-2xl">
+          <h3 className="font-bold text-gray-500 dark:text-gray-400 mb-6 text-xs uppercase tracking-widest text-center">Equipo Ministerial</h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-12 px-4">
+
+            {/* 1. Elder */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500 shadow-sm">
+                <User size={20} />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Anciano de Turno</p>
+                <p className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[140px]">{activeElder}</p>
+              </div>
+            </div>
+
+            {/* 2. Preacher */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-brand-500 shadow-sm">
+                <Mic size={20} />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Predicador</p>
+                <p className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[140px]">{activePreacher}</p>
+              </div>
+            </div>
+
+            {/* 3. Music */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/20 flex items-center justify-center text-pink-500 shadow-sm">
+                <Music size={20} />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Director de Música</p>
+                <p className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[140px]">{activeMusic}</p>
+              </div>
+            </div>
+
+            {/* 4. Audio */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center text-orange-500 shadow-sm">
+                <Headphones size={20} />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Operador de Audio</p>
+                <p className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[140px]">{activeAudio}</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       <div className="relative">
         {/* The Track (Pressed Line) */}

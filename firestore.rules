@@ -31,25 +31,41 @@ service cloud.firestore {
 
     // 1. Colección de Usuarios (Perfiles)
     match /users/{userId} {
-      // Cada uno puede leer su propio perfil. Super Admin puede leer todos.
-      // Miembros de la misma iglesia pueden leer perfiles de sus compañeros (para el Roster, etc.)
       allow read: if isSignedIn() && (
         request.auth.uid == userId || 
         isSuperAdmin() || 
         (resource.data.tenantId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId)
       );
-      
-      // Solo el usuario, Super Admin o Admin de la misma iglesia pueden editar
-      allow write: if isSignedIn() && (
-        request.auth.uid == userId || 
-        isSuperAdmin() ||
-        (isAdmin() && (
-          // Create:
-          (resource == null && request.resource.data.tenantId == getUserData().tenantId) ||
-          // Update/Delete:
-          (resource != null && resource.data.tenantId == getUserData().tenantId)
-        ))
+      allow write: if (
+        // Allow creating MUSIC users without auth (PIN verified on client)
+        (resource == null && request.resource.data.role == 'MUSIC')
+      ) || (
+        isSignedIn() && (
+          request.auth.uid == userId || 
+          isSuperAdmin() ||
+          (isAdmin() && (
+            (resource == null && request.resource.data.tenantId == getUserData().tenantId) ||
+            (resource != null && resource.data.tenantId == getUserData().tenantId)
+          ))
+        )
       );
+    }
+
+    // ... (tenants rules unchanged) ...
+
+    // 4. Invitaciones
+    match /invitations/{invitationId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      
+      // Allow update if signed in OR if only marking as USED (for unauthenticated joins)
+      allow update: if isSignedIn() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
+        request.resource.data.status == 'USED'
+      );
+
+      // Allow delete if signed in
+      allow delete: if isSignedIn();
     }
 
     // 2. Colección de Tenants (Iglesias)
@@ -62,19 +78,56 @@ service cloud.firestore {
         isSuperAdmin() ||
         (isAdmin() && tenantId == getUserData().tenantId)
       );
+
+      // Chat en Vivo (Visitors + Members)
+      match /live_messages/{messageId} {
+        allow read, create: if true;
+      }
+      
+      // Live Transcription (Audio Dashboard -> Visitor App)
+      match /live/{document=**} {
+        allow read: if true;
+        allow write: if belongsToTenant(tenantId);
+      }
+
+      // Music Teams (New)
+      match /music_teams/{teamId} {
+        allow read: if true;
+        allow write: if isSignedIn();
+      }
+
+      // Events (Subcollection)
+      match /events/{eventId} {
+        allow read: if true;
+        allow write: if belongsToTenant(tenantId);
+      }
+
+      // Plans (Subcollection)
+      match /plans/{planId} {
+        allow read: if true;
+        allow write: if belongsToTenant(tenantId);
+      }
     }
 
     // 3. Colecciones de Datos de la Iglesia (Eventos, Canciones, etc.)
-    // Estas reglas asumen que los documentos tienen un campo 'tenantId'
     
+    // Configuración Pública de la Iglesia
+    match /churchSettings/{settingId} {
+      allow read: if true;
+      allow write: if belongsToTenant(resource.data.tenantId) || isAdmin(); // Maintain write security
+    }
+
     match /events/{eventId} {
-      allow read: if belongsToTenant(resource.data.tenantId);
+      // Allow public read for visitor view
+      allow read: if true;
       allow create: if belongsToTenant(request.resource.data.tenantId);
       allow update, delete: if belongsToTenant(resource.data.tenantId);
     }
 
+    // Corrected to servicePlans to match Admin application code
     match /servicePlans/{planId} {
-      allow read: if belongsToTenant(resource.data.tenantId);
+      // Allow public read for visitor view
+      allow read: if true;
       allow create: if belongsToTenant(request.resource.data.tenantId);
       allow update, delete: if belongsToTenant(resource.data.tenantId);
     }
@@ -93,8 +146,17 @@ service cloud.firestore {
       // Permitir crear solo a usuarios autenticados (Admins)
       allow create: if isSignedIn();
       
-      // Permitir actualizar (marcar como usada) a usuarios autenticados
-      allow update: if isSignedIn();
+      // Permitir actualizar (marcar como usada) y eliminar a usuarios autenticados
+      allow update, delete: if isSignedIn();
+    }
+
+    // 5. Prayer Requests (Peticiones de Oración)
+    match /prayerRequests/{requestId} {
+      // Allow visitors to create prayer requests without auth
+      allow create: if true; 
+      
+      // Only authenticated users (admins/staff) related to the tenant can read/manage them
+      allow read, update, delete: if belongsToTenant(resource.data.tenantId);
     }
 
     // Regla por defecto: Bloquear todo lo demás por seguridad

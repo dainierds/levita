@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { User, Role, SubscriptionTier, TIER_LIMITS } from '../types';
-import { UserPlus, Link, Shield, CheckCircle, Copy, Check, Trash2, AlertTriangle } from 'lucide-react';
-import { createInvitation } from '../services/invitationService';
+import { UserPlus, Link, Shield, CheckCircle, Copy, Check, Trash2, AlertTriangle, Clock, X } from 'lucide-react'; // Added Clock, X
+import { createInvitation, getPendingInvitations, deleteInvitation } from '../services/invitationService'; // Added imports
 import { useNotification } from './NotificationSystem';
 import { db } from '../services/firebase';
 import { doc, deleteDoc, setDoc } from 'firebase/firestore';
+import { Invitation } from '../types'; // Check if imported
 
 interface UserManagementProps {
   users: User[];
@@ -27,8 +28,35 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
   const [invitationLink, setInvitationLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [pendingInvitations, setPendingInvitations] = useState<Invitation[]>([]); // New state
 
   const { addNotification } = useNotification();
+
+  // Load Invitations effect
+  React.useEffect(() => {
+    const fetchInvitations = async () => {
+      if (currentUser.tenantId) {
+        try {
+          const invites = await getPendingInvitations(currentUser.tenantId);
+          setPendingInvitations(invites);
+        } catch (err) {
+          console.error("Error fetching invites", err);
+        }
+      }
+    };
+    fetchInvitations();
+  }, [currentUser.tenantId]);
+
+  const handleCancelInvitation = async (code: string) => {
+    try {
+      await deleteInvitation(code);
+      setPendingInvitations(prev => prev.filter(i => i.id !== code));
+      addNotification('success', 'Invitación Cancelada', 'La invitación se ha borrado.');
+    } catch (err) {
+      console.error(err);
+      addNotification('error', 'Error', 'No se pudo cancelar.');
+    }
+  };
 
   const handleGenerateInvitation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,9 +75,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
       // Use current user's tenantId. If not set (e.g. Super Admin or mock), fallback to 'default'
       const tenantId = currentUser.tenantId || 'default';
 
-      // Special handling for roles without interface (MUSIC, PREACHER)
+      // Special handling for roles without interface (PREACHER)
       // These roles don't need an invitation link, they are just created directly for rostering.
-      if (['MUSIC', 'PREACHER'].includes(formData.role)) {
+      if (['PREACHER'].includes(formData.role)) {
         const newUserId = `local-${Math.random().toString(36).substr(2, 9)}`;
         const newUser: User = {
           id: newUserId,
@@ -62,7 +90,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
 
         await setDoc(doc(db, 'users', newUserId), newUser);
         addNotification('success', 'Usuario Agregado', `${formData.name} ha sido añadido al equipo.`);
-        setFormData({ name: '', role: 'MEMBER' });
+        setFormData(prev => ({ ...prev, name: '' })); // Keep role, reset name
         setIsLoading(false);
         return;
       }
@@ -76,6 +104,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
 
       setInvitationLink(link);
       addNotification('success', 'Invitación Generada', 'Copia el enlace y envíalo al nuevo usuario.');
+
+      // Refresh list
+      const invites = await getPendingInvitations(tenantId);
+      setPendingInvitations(invites);
 
     } catch (error) {
       console.error(error);
@@ -172,7 +204,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                 className="w-full py-3 mt-4 bg-slate-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isLoading ? 'Procesando...' :
-                  ['MUSIC', 'PREACHER'].includes(formData.role) ? 'Agregar al Equipo' : 'Generar Link'}
+                  ['PREACHER'].includes(formData.role) ? 'Agregar al Equipo' : 'Generar Link'}
               </button>
             </form>
           ) : (
@@ -197,13 +229,55 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
               </button>
 
               <button
-                onClick={() => { setInvitationLink(''); setFormData({ name: '', role: 'MEMBER' }); }}
+                onClick={() => { setInvitationLink(''); setFormData(prev => ({ ...prev, name: '' })); }}
                 className="w-full py-3 mt-2 text-slate-400 font-bold hover:text-slate-600 text-xs"
               >
                 Generar Otra
               </button>
             </div>
           )}
+        </div>
+
+        {/* Pending Invitations Card */}
+        <div className="lg:col-span-1 xl:col-span-1 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 h-fit">
+          <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <Clock size={20} className="text-orange-500" /> Invitaciones ({pendingInvitations.length})
+          </h3>
+
+          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+            {pendingInvitations.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-4">No hay invitaciones pendientes.</p>
+            ) : (
+              pendingInvitations.map((inv) => (
+                <div key={inv.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100 group hover:border-indigo-100 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="text-xs font-bold text-slate-700">{inv.suggestedName || 'Sin nombre'}</p>
+                      <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">{inv.role}</span>
+                    </div>
+                    <button
+                      onClick={() => handleCancelInvitation(inv.id)}
+                      className="text-slate-300 hover:text-red-500 transition-colors"
+                      title="Cancelar Invitación"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const link = `${window.location.origin}/join?code=${inv.id}`;
+                      navigator.clipboard.writeText(link);
+                      addNotification('success', 'Enlace Copiado', 'Link listo para compartir.');
+                    }}
+                    className="w-full py-1.5 bg-white border border-indigo-100 text-indigo-600 text-xs font-bold rounded-lg hover:bg-indigo-50 flex items-center justify-center gap-1 shadow-sm"
+                  >
+                    <Copy size={12} /> Copiar Link
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* User List */}

@@ -30,6 +30,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ tenants, setT
     });
     const [generatedLink, setGeneratedLink] = useState<string | null>(null);
     const [copySuccess, setCopySuccess] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null); // State for inline delete confirm
 
     // Fetch Tenants from Firestore on Mount
     useEffect(() => {
@@ -127,15 +128,15 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ tenants, setT
     };
 
     const deleteTenant = async (id: string) => {
-        if (window.confirm('¿Está seguro de eliminar esta iglesia? Esta acción es irreversible.')) {
-            try {
-                await deleteDoc(doc(db, 'tenants', id));
-                setTenants(prev => prev.filter(t => t.id !== id));
-                addNotification('info', 'Eliminado', 'La iglesia ha sido eliminada del sistema.');
-            } catch (error) {
-                console.error(error);
-                addNotification('error', 'Error', 'No se pudo eliminar la iglesia.');
-            }
+        // Direct delete logic, confirmation is handled by UI state
+        try {
+            await deleteDoc(doc(db, 'tenants', id));
+            setTenants(prev => prev.filter(t => t.id !== id));
+            setDeleteConfirm(null); // Reset confirm state
+            addNotification('info', 'Eliminado', 'La iglesia ha sido eliminada del sistema.');
+        } catch (error) {
+            console.error(error);
+            addNotification('error', 'Error', 'No se pudo eliminar la iglesia.');
         }
     };
 
@@ -241,13 +242,34 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ tenants, setT
                                                 >
                                                     {tenant.status === 'ACTIVE' ? <Lock size={16} /> : <CheckCircle2 size={16} />}
                                                 </button>
-                                                <button
-                                                    onClick={() => deleteTenant(tenant.id)}
-                                                    className="p-2 bg-slate-700 hover:bg-red-500/20 hover:text-red-400 rounded-lg text-slate-300 transition-colors"
-                                                    title="Eliminar Iglesia"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+
+                                                {deleteConfirm === tenant.id ? (
+                                                    <div className="inline-flex items-center gap-2 bg-red-500/10 p-1 pr-2 rounded-lg border border-red-500/50 animate-in fade-in slide-in-from-right-2 duration-200">
+                                                        <span className="text-[10px] font-bold text-red-400 pl-1">¿Borrar?</span>
+                                                        <button
+                                                            onClick={() => deleteTenant(tenant.id)}
+                                                            className="p-1 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors shadow-sm"
+                                                            title="Confirmar Eliminación"
+                                                        >
+                                                            <Check size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteConfirm(null)}
+                                                            className="p-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-md transition-colors"
+                                                            title="Cancelar"
+                                                        >
+                                                            <Trash2 size={14} className="rotate-45" />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setDeleteConfirm(tenant.id)}
+                                                        className="p-2 bg-slate-700 hover:bg-red-500/20 hover:text-red-400 rounded-lg text-slate-300 transition-colors"
+                                                        title="Eliminar Iglesia"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     );

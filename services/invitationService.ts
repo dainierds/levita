@@ -42,3 +42,20 @@ export const redeemInvitation = async (code: string): Promise<void> => {
         status: 'USED'
     });
 };
+// ... (existing imports)
+import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore'; // Check imports
+
+export const getPendingInvitations = async (tenantId: string): Promise<Invitation[]> => {
+    const q = query(
+        collection(db, 'invitations'),
+        where('tenantId', '==', tenantId),
+        where('status', '==', 'PENDING')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => d.data() as Invitation);
+};
+
+
+export const deleteInvitation = async (code: string): Promise<void> => {
+    await deleteDoc(doc(db, 'invitations', code));
+};

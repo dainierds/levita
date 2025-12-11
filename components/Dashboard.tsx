@@ -1,21 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Added React imports
 import { Radio, Clock, CheckCircle2, Music, Mic2, Calendar, Loader2, User, FileText, UserCheck, Mic, BookOpen } from 'lucide-react';
 import { useEvents } from '../hooks/useEvents';
 import { usePlans } from '../hooks/usePlans';
-import { Role } from '../types';
+import { useAuth } from '../context/AuthContext'; // Added
+import { Role, User as UserType } from '../types';
 
 import StatisticsPanel from './StatisticsPanel';
 import { BarChart3 } from 'lucide-react';
 
 import { ChurchSettings } from '../types';
+import { db } from '../services/firebase'; // Added
+import { collection, query, where, getDocs } from 'firebase/firestore'; // Added
 
 interface DashboardProps {
   setCurrentView: (view: string) => void;
   role?: Role;
   settings?: ChurchSettings;
+  users?: UserType[]; // Added optional prop
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', settings }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', settings, users = [] }) => {
   const { events, loading: eventsLoading } = useEvents();
   const { plans, loading: plansLoading } = usePlans();
 
@@ -41,7 +45,64 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
   const nextPreacher = nextPlan?.team.preacher || 'Por definir';
 
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
-  const [showStats, setShowStats] = useState(false);
+  const [musicTeamMembers, setMusicTeamMembers] = useState<UserType[]>([]);
+
+  // Fetch Music Team for the relevant date (Active Plan Date or Next Plan Date)
+  useEffect(() => {
+    const fetchMusicTeam = async () => {
+      if (!settings?.tenantId) return; // Need tenantId, assuming it's in settings or user context (but simplified here)
+      // Wait, settings usually has tenantId? No, settings is inside tenant.
+      // Let's assume we can query subcollection if we know the path. Active user has tenantId.
+      // Since we passed 'users', we might not have tenantId handy in props easily without passing 'user' object or using context.
+      // Let's use the hook for auth context if needed, or rely on the plan's data if we had it.
+      // But plans don't have music team members, only IDs maybe? No, plans have 'team' (strings).
+      // The Music Team is in 'music_teams' collection collection.
+
+      // Fallback: If we don't have tenantId easily, skip.
+      // Actually AdminApp has 'user' which has tenantId. But Dashboard props don't have 'user' object just 'role'.
+      // Let's add 'user' to Dashboard props in next step if needed, OR just use 'users' associated to the plan? 
+      // Wait, 'users' prop contains all users. We just need the MusicTeam doc to get memberIds.
+
+      // Let's fallback to using no fetch if we can't.
+      // Update: The previous step didn't pass 'user' object to Dashboard. 
+      // I should grab it from useAuth() inside Dashboard.
+    };
+    // actually, let's implement the effect below with useAuth
+  }, [nextPlan]);
+
+  // REAL IMPLEMENTATION with useAuth
+  const { user } = useAuth(); // Need to import useAuth
+
+  useEffect(() => {
+    const getMusicTeam = async () => {
+      if (!user?.tenantId) return;
+      const targetDate = activePlan?.date || nextPlan?.date;
+      if (!targetDate) return;
+
+      try {
+        const q = query(
+          collection(db, 'tenants', user.tenantId, 'music_teams'),
+          where('date', '==', targetDate)
+        );
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data();
+          const memberIds = data.memberIds as string[];
+          const members = users.filter(u => memberIds.includes(u.id));
+          setMusicTeamMembers(members);
+        } else {
+          setMusicTeamMembers([]);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    if (users.length > 0) {
+      getMusicTeam();
+    }
+  }, [activePlan, nextPlan, user?.tenantId, users]);
+
 
   useEffect(() => {
     if (activeEvents.length <= 1) return;
@@ -239,6 +300,25 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                 <p className="text-sm">No hay equipo asignado.</p>
               </div>
             )}
+
+            {/* MUSIC TEAM DISPLAY (New) */}
+            {musicTeamMembers.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-slate-100">
+                <h4 className="text-sm font-bold text-slate-500 uppercase mb-3 flex items-center gap-2">
+                  <Music size={14} /> Equipo de Alabanza
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {musicTeamMembers.map(m => (
+                    <div key={m.id} className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center text-[10px] font-bold">
+                        {m.name.charAt(0)}
+                      </div>
+                      <span className="text-xs font-bold text-slate-700 truncate">{m.name.split(' ')[0]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
@@ -274,8 +354,44 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
           </div>
 
           <div className="bg-gradient-to-br from-cyan-400 to-blue-500 rounded-soft p-6 text-white shadow-lg shadow-cyan-200">
-            <h3 className="text-lg font-bold opacity-90 mb-1">Próximo Domingo</h3>
-            <p className="text-3xl font-bold">10:30 AM</p>
+            {(() => {
+              let displayDay = 'Domingo';
+              let displayTime = '10:30 AM';
+
+              if (settings?.meetingTimes) {
+                const days = Object.keys(settings.meetingTimes);
+                if (days.length > 0) {
+                  const dayOrder = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                  const today = new Date();
+                  const currentDayIndex = today.getDay();
+
+                  let foundDay = null;
+
+                  // Check today and future days
+                  for (let i = 0; i < dayOrder.length; i++) {
+                    const checkIndex = (currentDayIndex + i) % 7;
+                    const dayName = dayOrder[checkIndex];
+                    if (days.includes(dayName)) {
+                      foundDay = dayName;
+                      // If it's today, maybe check time? For simplicity, if today is a meeting day, show it.
+                      break;
+                    }
+                  }
+
+                  if (foundDay) {
+                    displayDay = foundDay;
+                    displayTime = settings.meetingTimes[foundDay];
+                  }
+                }
+              }
+
+              return (
+                <>
+                  <h3 className="text-lg font-bold opacity-90 mb-1">Próximo {displayDay}</h3>
+                  <p className="text-3xl font-bold">{displayTime}</p>
+                </>
+              );
+            })()}
 
             <div className="mt-4 pt-4 border-t border-white/20">
               <p className="text-xs font-bold uppercase opacity-80 mb-1 flex items-center gap-1"><User size={12} /> Próximo Predicador</p>

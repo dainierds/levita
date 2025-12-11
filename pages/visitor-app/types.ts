@@ -6,7 +6,8 @@ export enum ViewState {
   ORDER = 'ORDER',
   EVENTS = 'EVENTS',
   PRAYER = 'PRAYER',
-  PROFILE = 'PROFILE'
+  PROFILE = 'PROFILE',
+  TRANSLATION = 'TRANSLATION'
 }
 
 export interface NavItem {
