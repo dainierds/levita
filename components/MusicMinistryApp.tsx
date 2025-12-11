@@ -426,7 +426,7 @@ const EventCarousel: React.FC<{ events: ChurchEvent[] }> = ({ events }) => {
 
     return (
         <div className="rounded-[2.5rem] shadow-xl shadow-pink-200/50 bg-white p-1">
-            <div className="relative w-full bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600 rounded-[2.3rem] p-8 md:p-12 text-white overflow-hidden min-h-[320px] flex flex-col justify-center">
+            <div className="relative w-full bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600 rounded-[2.3rem] p-6 md:p-8 text-white overflow-hidden min-h-[220px] flex flex-col justify-center">
 
                 {/* Abstract Decorative Shapes */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
