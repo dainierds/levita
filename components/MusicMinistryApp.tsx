@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ChurchTenant, ChurchSettings, ChurchEvent, ServicePlan, MusicTeam } from '../types';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { Lock, Music, Calendar, Radio, Mic2, User, Play, Clock, MapPin } from 'lucide-react';
+import { Lock, Music, Calendar, Radio, Mic2, User, Play, Clock, MapPin, Bell, LogOut } from 'lucide-react';
 import { MOCK_TENANTS } from '../constants'; // Fallback
 
 // Helper to get tenant (Simplified version of VisitorLanding logic)
@@ -268,20 +268,23 @@ const MusicMinistryApp: React.FC = () => {
                         <h2 className="text-xl font-black text-slate-800">Hola, {userName || 'Equipo'} 👋</h2>
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{tenant.name}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
+                        {/* Notification Bell (Left) */}
+                        <button className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
+                            <Bell size={20} />
+                        </button>
+
+                        {/* Logout Button (Right) */}
                         <button
                             onClick={() => {
                                 setIsAuthenticated(false);
                                 localStorage.removeItem('music_user_name');
                                 navigate('/'); // Redirect to Home / Language Selection
                             }}
-                            className="bg-red-50 text-red-500 p-2 rounded-full hover:bg-red-100 transition-colors"
+                            className="w-10 h-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
                         >
-                            <Lock size={16} />
+                            <LogOut size={18} />
                         </button>
-                        <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600">
-                            <Music size={20} />
-                        </div>
                     </div>
                 </div>
             </header>
@@ -291,9 +294,49 @@ const MusicMinistryApp: React.FC = () => {
                 {/* 1. UPCOMING EVENTS CAROUSEL (Auto-Playing) */}
                 <EventCarousel events={events} />
 
-                {/* 2. NEXT SERVICE INFO */}
+                {/* 2. MUSIC MINISTRY TEAM */}
+                <section className="animate-in slide-in-from-bottom-4 duration-500 delay-100">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Mic2 className="text-pink-500" size={20} />
+                        <h3 className="font-bold text-lg">Equipo de Alabanza</h3>
+                    </div>
+
+                    {musicTeam ? (
+                        <div className="bg-white rounded-[2rem] p-6 shadow-lg shadow-pink-100 border border-pink-50">
+                            {musicTeam.note && (
+                                <div className="mb-6 bg-yellow-50 text-yellow-800 text-xs font-medium p-3 rounded-xl border border-yellow-100 flex items-start gap-2">
+                                    <span className="text-lg">💡</span>
+                                    <span className="mt-0.5">{musicTeam.note}</span>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4">
+                                {musicMembers.map((member, idx) => (
+                                    <div key={member.id || idx} className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0">
+                                            {member.name ? member.name.charAt(0) : '?'}
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <p className="font-bold text-sm text-slate-700 truncate">{member.name}</p>
+                                            <p className="text-xs font-bold text-pink-400 uppercase tracking-wider">Vocal / Músico</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-[2rem] p-8 text-center border border-dashed border-slate-200">
+                            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
+                                <Music size={24} />
+                            </div>
+                            <p className="text-sm text-slate-400 font-medium">No hay equipo asignado para esta fecha aún.</p>
+                        </div>
+                    )}
+                </section>
+
+                {/* 3. NEXT SERVICE INFO */}
                 {nextPlan ? (
-                    <section className="animate-in slide-in-from-bottom-4 duration-500 delay-100">
+                    <section className="animate-in slide-in-from-bottom-4 duration-500 delay-200">
                         <div className="flex items-center gap-2 mb-4">
                             <Calendar className="text-indigo-500" size={20} />
                             <h3 className="font-bold text-lg">Próximo Culto</h3>
@@ -359,46 +402,6 @@ const MusicMinistryApp: React.FC = () => {
                         No hay cultos programados.
                     </div>
                 )}
-
-                {/* 3. MUSIC MINISTRY TEAM */}
-                <section className="animate-in slide-in-from-bottom-4 duration-500 delay-200">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Mic2 className="text-pink-500" size={20} />
-                        <h3 className="font-bold text-lg">Equipo de Alabanza</h3>
-                    </div>
-
-                    {musicTeam ? (
-                        <div className="bg-white rounded-[2rem] p-6 shadow-lg shadow-pink-100 border border-pink-50">
-                            {musicTeam.note && (
-                                <div className="mb-6 bg-yellow-50 text-yellow-800 text-xs font-medium p-3 rounded-xl border border-yellow-100 flex items-start gap-2">
-                                    <span className="text-lg">💡</span>
-                                    <span className="mt-0.5">{musicTeam.note}</span>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-2 gap-4">
-                                {musicMembers.map((member, idx) => (
-                                    <div key={member.id || idx} className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0">
-                                            {member.name ? member.name.charAt(0) : '?'}
-                                        </div>
-                                        <div className="overflow-hidden">
-                                            <p className="font-bold text-sm text-slate-700 truncate">{member.name}</p>
-                                            <p className="text-xs font-bold text-pink-400 uppercase tracking-wider">Vocal / Músico</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="bg-white rounded-[2rem] p-8 text-center border border-dashed border-slate-200">
-                            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
-                                <Music size={24} />
-                            </div>
-                            <p className="text-sm text-slate-400 font-medium">No hay equipo asignado para esta fecha aún.</p>
-                        </div>
-                    )}
-                </section>
 
             </main>
         </div>
