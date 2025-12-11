@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ChurchTenant, ChurchSettings, ChurchEvent, ServicePlan, MusicTeam } from '../types';
 import { db } from '../services/firebase';
@@ -42,6 +43,7 @@ const useTenant = () => {
 const MusicMinistryApp: React.FC = () => {
     const { user } = useAuth(); // Get authenticated user
     const { tenant: defaultTenant, loading: tenantLoading } = useTenant();
+    const navigate = useNavigate(); // Hook for navigation
 
     // If user is logged in, use their tenant. Otherwise use the default/kiosk tenant
     const tenant = user?.tenantId ? { id: user.tenantId, name: user.tenantName || 'Mi Iglesia', settings: user.settings || {} } as any : defaultTenant;
@@ -269,6 +271,7 @@ const MusicMinistryApp: React.FC = () => {
                             onClick={() => {
                                 setIsAuthenticated(false);
                                 localStorage.removeItem('music_user_name');
+                                navigate('/'); // Redirect to Home / Language Selection
                             }}
                             className="bg-red-50 text-red-500 p-2 rounded-full hover:bg-red-100 transition-colors"
                         >
@@ -283,33 +286,8 @@ const MusicMinistryApp: React.FC = () => {
 
             <main className="p-4 max-w-2xl mx-auto space-y-8">
 
-                {/* 1. UPCOMING EVENTS BANNER (Carousel) */}
-                {events.length > 0 ? (
-                    <div className="overflow-x-auto pb-4 snap-x snap-mandatory flex gap-4 no-scrollbar">
-                        {events.map((evt) => (
-                            <div key={evt.id} className="snap-center shrink-0 w-[85%] relative rounded-[2rem] overflow-hidden shadow-lg h-48 group">
-                                <div className={`absolute inset-0 bg-gradient-to-br ${evt.bannerGradient || 'from-pink-600 to-indigo-600'} opacity-90`} />
-                                {/* Optional Image Background could go here */}
-                                <div className="absolute inset-0 p-6 flex flex-col justify-end text-white">
-                                    <div className="bg-white/20 backdrop-blur-sm self-start px-3 py-1 rounded-lg text-[10px] font-bold uppercase mb-2">
-                                        {evt.type}
-                                    </div>
-                                    <h3 className="text-xl font-bold leading-tight mb-1">{evt.title}</h3>
-                                    <p className="text-xs opacity-80 flex items-center gap-2">
-                                        <Calendar size={12} />
-                                        {new Date(evt.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="w-full h-48 rounded-[2rem] bg-gradient-to-r from-slate-100 to-slate-200 flex flex-col items-center justify-center text-slate-400 border border-white shadow-inner">
-                        <Calendar size={32} className="mb-2 opacity-50" />
-                        <p className="font-bold text-sm">Sin eventos destacados</p>
-                        <p className="text-xs opacity-75">Configura eventos en el panel de admin</p>
-                    </div>
-                )}
+                {/* 1. UPCOMING EVENTS CAROUSEL (Auto-Playing) */}
+                <EventCarousel events={events} />
 
                 {/* 2. NEXT SERVICE INFO */}
                 {nextPlan ? (
@@ -338,6 +316,7 @@ const MusicMinistryApp: React.FC = () => {
                             <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2">
                                 {nextPlan.team && Object.entries(nextPlan.team).map(([role, name]) => {
                                     if (!name) return null; // Skip empty roles
+                                    if (['teamName', 'id', 'tenantId'].includes(role)) return null; // Skip metadata fields
 
                                     // Helper for labels and icons
                                     const getRoleInfo = (r: string) => {
@@ -346,6 +325,8 @@ const MusicMinistryApp: React.FC = () => {
                                             case 'musicDirector': return { label: 'Dir. Música', icon: Music, color: 'text-pink-500' };
                                             case 'elder': return { label: 'Anciano', icon: User, color: 'text-purple-500' };
                                             case 'audioOperator': return { label: 'Audio', icon: Mic2, color: 'text-orange-500' };
+                                            case 'videoOperator': return { label: 'Video', icon: Play, color: 'text-blue-500' };
+                                            case 'usher': return { label: 'Ujier', icon: User, color: 'text-teal-500' };
                                             default: return { label: r, icon: User, color: 'text-slate-400' };
                                         }
                                     };
@@ -399,7 +380,7 @@ const MusicMinistryApp: React.FC = () => {
                                         </div>
                                         <div className="overflow-hidden">
                                             <p className="font-bold text-sm text-slate-700 truncate">{member.name}</p>
-                                            <p className="text-[10px] font-bold text-pink-400 uppercase tracking-wider">Vocal / Músico</p>
+                                            <p className="text-xs font-bold text-pink-400 uppercase tracking-wider">Vocal / Músico</p>
                                         </div>
                                     </div>
                                 ))}
@@ -416,6 +397,74 @@ const MusicMinistryApp: React.FC = () => {
                 </section>
 
             </main>
+        </div>
+    );
+};
+
+const EventCarousel: React.FC<{ events: ChurchEvent[] }> = ({ events }) => {
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    useEffect(() => {
+        if (events.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentSlide(prev => (prev + 1) % events.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [events.length]);
+
+    if (events.length === 0) {
+        return (
+            <div className="w-full h-48 rounded-[2rem] bg-gradient-to-r from-slate-100 to-slate-200 flex flex-col items-center justify-center text-slate-400 border border-white shadow-inner">
+                <Calendar size={32} className="mb-2 opacity-50" />
+                <p className="font-bold text-sm">Sin eventos destacados</p>
+                <p className="text-xs opacity-75">Configura eventos en el panel de admin</p>
+            </div>
+        );
+    }
+
+    const evt = events[currentSlide];
+
+    return (
+        <div className="relative w-full h-48 rounded-[2rem] overflow-hidden shadow-lg group">
+            {/* Background with Transition */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${evt.bannerGradient || 'from-pink-600 to-indigo-600'} transition-all duration-1000`} />
+
+            <div className="absolute inset-0 p-8 flex flex-col justify-center text-white" key={evt.id}>
+                <div className="flex items-center gap-2 mb-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg text-[10px] font-bold uppercase">
+                        {evt.type}
+                    </span>
+                </div>
+
+                <h3 className="text-3xl font-black leading-tight mb-2 tracking-tight animate-in fade-in slide-in-from-bottom-3 duration-500 key-{evt.id}">
+                    {evt.title}
+                </h3>
+
+                <p className="text-sm opacity-90 flex items-center gap-3 font-medium animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <span className="flex items-center gap-1.5">
+                        <Calendar size={14} />
+                        {new Date(evt.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </span>
+                    {evt.time && (
+                        <span className="flex items-center gap-1.5">
+                            <Clock size={14} />
+                            {evt.time}
+                        </span>
+                    )}
+                </p>
+            </div>
+
+            {/* Dots */}
+            {events.length > 1 && (
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
+                    {events.map((_, idx) => (
+                        <div
+                            key={idx}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${currentSlide === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
