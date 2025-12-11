@@ -28,7 +28,7 @@ const ROLE_MESSAGES = {
 
 const VisitorLanding: React.FC = () => {
     const { setLanguage } = useLanguage();
-    const { login } = useAuth(); // Add useAuth
+    const { login, user, role } = useAuth(); // Add useAuth
     const { events } = useEvents();
     const { plans } = usePlans();
     const navigate = useNavigate();
@@ -38,6 +38,16 @@ const VisitorLanding: React.FC = () => {
     const [showMemberLogin, setShowMemberLogin] = useState(false);
     const [settings, setSettings] = useState<ChurchSettings | null>(null);
     const [tenantId, setTenantId] = useState<string | undefined>(undefined);
+
+    // Redirect authenticated users
+    useEffect(() => {
+        if (user) {
+            if (role === 'ELDER') navigate('/anciano');
+            else if (role === 'MEMBER') navigate('/miembro');
+            else if (role === 'MUSIC') navigate('/musica');
+            else navigate('/app');
+        }
+    }, [user, role, navigate]);
 
     // New State for Ministry Flow
     const [ministryContext, setMinistryContext] = useState<string>('');

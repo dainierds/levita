@@ -109,7 +109,84 @@ const MusicMinistryApp: React.FC = () => {
         if (storedName) setUserName(storedName);
     }, []);
 
-    // ...
+    const fetchDashboardData = async () => {
+        if (!tenant) return;
+        setIsLoadingData(true);
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // 1. Fetch Upcoming Events (Active in Banner)
+            const eventsQ = query(
+                collection(db, 'tenants', tenant.id, 'events'),
+                where('activeInBanner', '==', true),
+                orderBy('date', 'asc')
+            );
+            const eventsSnap = await getDocs(eventsQ);
+            const fetchedEvents = eventsSnap.docs
+                .map(d => ({ id: d.id, ...d.data() } as ChurchEvent))
+                .filter(e => {
+                    const eventDate = new Date(e.date + 'T00:00:00');
+                    return eventDate >= today;
+                });
+            setEvents(fetchedEvents.slice(0, 5));
+
+            // 2. Fetch Next Service Plan
+            const plansQ = query(
+                collection(db, 'tenants', tenant.id, 'plans'),
+                orderBy('date', 'asc')
+            );
+            const plansSnap = await getDocs(plansQ);
+            const allPlans = plansSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
+            const upcomingPlan = allPlans
+                .filter(p => {
+                    const planDate = new Date(p.date + 'T00:00:00');
+                    return planDate >= today;
+                })
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+
+            setNextPlan(upcomingPlan || null);
+
+            // 3. Fetch Nearest Music Team (Independent of Plan)
+            const musicQ = query(
+                collection(db, 'tenants', tenant.id, 'music_teams'),
+                orderBy('date', 'asc')
+            );
+            const musicSnap = await getDocs(musicQ);
+            const allTeams = musicSnap.docs.map(d => ({ id: d.id, ...d.data() } as MusicTeam));
+
+            // Find the nearest team >= today
+            const nearestTeam = allTeams
+                .filter(t => {
+                    const teamDate = new Date(t.date + 'T00:00:00');
+                    return teamDate >= today;
+                })
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+
+            if (nearestTeam) {
+                setMusicTeam(nearestTeam);
+
+                // Fetch Member Details
+                if (nearestTeam.memberIds?.length > 0) {
+                    const usersQ = query(
+                        collection(db, 'users'),
+                        where('tenantId', '==', tenant.id)
+                    );
+                    const usersSnap = await getDocs(usersQ);
+                    const allUsers = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    const teamMembers = allUsers.filter(u => nearestTeam.memberIds.includes(u.id));
+                    setMusicMembers(teamMembers);
+                }
+            } else {
+                setMusicTeam(null);
+            }
+
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoadingData(false);
+        }
+    };
 
     // --- LOGIN SCREEN ---
     if (!isAuthenticated) {
