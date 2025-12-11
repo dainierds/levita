@@ -14,16 +14,16 @@ const useTenant = () => {
     useEffect(() => {
         const fetchTenant = async () => {
             try {
-                // Fetch the first available tenant from Firestore (for Dev/Demo purposes)
-                // In production, this would resolve based on subdomain/domain
-                const q = query(collection(db, 'tenants'), limit(1));
+                // Improved Discovery: Fetch all tenants to find the "active" one
+                const q = query(collection(db, 'tenants'));
                 const querySnapshot = await getDocs(q);
 
                 if (!querySnapshot.empty) {
-                    const docData = querySnapshot.docs[0].data();
-                    setTenant({ id: querySnapshot.docs[0].id, ...docData } as ChurchTenant);
+                    // Prefer one with settings or "active" flag if available
+                    // For now, finding the first one that looks "configured" (has settings)
+                    const bestMatch = querySnapshot.docs.find(d => d.data().settings?.churchName) || querySnapshot.docs[0];
+                    setTenant({ id: bestMatch.id, ...bestMatch.data() } as ChurchTenant);
                 } else {
-                    // Fallback only if DB is empty
                     setTenant(MOCK_TENANTS[0]);
                 }
             } catch (error) {
