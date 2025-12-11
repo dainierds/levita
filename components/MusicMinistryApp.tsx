@@ -252,8 +252,19 @@ const MusicMinistryApp: React.FC = () => {
                         <h2 className="text-xl font-black text-slate-800">Hola, {userName || 'Equipo'} 👋</h2>
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{tenant.name}</p>
                     </div>
-                    <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600">
-                        <Music size={20} />
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => {
+                                setIsAuthenticated(false);
+                                localStorage.removeItem('music_user_name');
+                            }}
+                            className="bg-red-50 text-red-500 p-2 rounded-full hover:bg-red-100 transition-colors"
+                        >
+                            <Lock size={16} />
+                        </button>
+                        <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600">
+                            <Music size={20} />
+                        </div>
                     </div>
                 </div>
             </header>

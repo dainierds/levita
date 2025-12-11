@@ -31,11 +31,7 @@ service cloud.firestore {
 
     // 1. Colección de Usuarios (Perfiles)
     match /users/{userId} {
-      allow read: if isSignedIn() && (
-        request.auth.uid == userId || 
-        isSuperAdmin() || 
-        (resource.data.tenantId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId)
-      );
+      allow read: if true;
       allow write: if (
         // Allow creating MUSIC users without auth (PIN verified on client)
         (resource == null && request.resource.data.role == 'MUSIC')
