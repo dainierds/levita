@@ -67,7 +67,8 @@ const LandingPage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Visitor */}
                         <button
-                            onClick={() => handleRoleSelect('visitor')}
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleRoleSelect('visitor'); }}
                             className="group bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200 border border-white hover:-translate-y-2 transition-all duration-300 text-left relative overflow-hidden"
                         >
                             <div className="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-500 mb-6 group-hover:scale-110 transition-transform">
@@ -79,7 +80,8 @@ const LandingPage: React.FC = () => {
 
                         {/* Member (Standard) */}
                         <button
-                            onClick={() => handleRoleSelect('member')}
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleRoleSelect('member'); }}
                             className="group bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200 border border-white hover:-translate-y-2 transition-all duration-300 text-left relative overflow-hidden"
                         >
                             <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 mb-6 group-hover:scale-110 transition-transform">
@@ -91,7 +93,8 @@ const LandingPage: React.FC = () => {
 
                         {/* Admin / Ministries (New Grouping) */}
                         <button
-                            onClick={() => handleRoleSelect('admin')}
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleRoleSelect('admin'); }}
                             className="group bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200 border border-white hover:-translate-y-2 transition-all duration-300 text-left relative overflow-hidden"
                         >
                             <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 mb-6 group-hover:scale-110 transition-transform">
@@ -111,7 +114,7 @@ const LandingPage: React.FC = () => {
         return (
             <div className="min-h-screen bg-[#F2F4F8] flex items-center justify-center p-4">
                 <div className="max-w-4xl w-full">
-                    <button onClick={() => setStep('role')} className="mb-8 text-slate-400 hover:text-slate-600 font-bold flex items-center gap-2">
+                    <button type="button" onClick={(e) => { e.preventDefault(); setStep('role'); }} className="mb-8 text-slate-400 hover:text-slate-600 font-bold flex items-center gap-2">
                         ← Volver
                     </button>
 
@@ -123,7 +126,8 @@ const LandingPage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Music */}
                         <button
-                            onClick={() => handleMinistrySelect('Música', 'musica@levita.com')}
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Música', 'musica@levita.com'); }}
                             className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-pink-200 transition-all flex items-center gap-6"
                         >
                             <div className="w-16 h-16 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-600 group-hover:scale-110 transition-transform">
@@ -137,7 +141,8 @@ const LandingPage: React.FC = () => {
 
                         {/* Elder */}
                         <button
-                            onClick={() => handleMinistrySelect('Anciano', 'anciano@levita.com')} // hypothetical email
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Anciano', 'anciano@levita.com'); }} // hypothetical email
                             className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-blue-200 transition-all flex items-center gap-6"
                         >
                             <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
@@ -151,7 +156,8 @@ const LandingPage: React.FC = () => {
 
                         {/* Audio */}
                         <button
-                            onClick={() => handleMinistrySelect('Audio', 'luis@levita.com')}
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Audio', 'luis@levita.com'); }}
                             className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-amber-200 transition-all flex items-center gap-6"
                         >
                             <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
@@ -165,7 +171,8 @@ const LandingPage: React.FC = () => {
 
                         {/* Admin */}
                         <button
-                            onClick={() => handleMinistrySelect('Administración', 'pastor@levita.com')}
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Administración', 'pastor@levita.com'); }}
                             className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-slate-200 transition-all flex items-center gap-6"
                         >
                             <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 group-hover:scale-110 transition-transform">
