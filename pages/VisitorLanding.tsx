@@ -251,7 +251,7 @@ const VisitorLanding: React.FC = () => {
                         {/* Music */}
                         <button
                             type="button"
-                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Alabanza', 'musica@levita.com'); }}
+                            onClick={(e) => { e.preventDefault(); navigate('/musica'); }}
                             className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-pink-200 transition-all flex items-center gap-6"
                         >
                             <div className="w-16 h-16 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-600 group-hover:scale-110 transition-transform">
