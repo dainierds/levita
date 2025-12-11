@@ -336,20 +336,35 @@ const MusicMinistryApp: React.FC = () => {
 
                             {/* Service Team */}
                             <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-indigo-500"><User size={14} /></div>
-                                    <div>
-                                        <p className="text-[10px] uppercase font-bold text-slate-400">Predicador</p>
-                                        <p className="text-xs font-bold text-slate-700 truncate">{nextPlan.team?.preacher || '---'}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-pink-500"><Music size={14} /></div>
-                                    <div>
-                                        <p className="text-[10px] uppercase font-bold text-slate-400">Dir. Música</p>
-                                        <p className="text-xs font-bold text-slate-700 truncate">{nextPlan.team?.musicDirector || '---'}</p>
-                                    </div>
-                                </div>
+                                {nextPlan.team && Object.entries(nextPlan.team).map(([role, name]) => {
+                                    if (!name) return null; // Skip empty roles
+
+                                    // Helper for labels and icons
+                                    const getRoleInfo = (r: string) => {
+                                        switch (r) {
+                                            case 'preacher': return { label: 'Predicador', icon: User, color: 'text-indigo-500' };
+                                            case 'musicDirector': return { label: 'Dir. Música', icon: Music, color: 'text-pink-500' };
+                                            case 'elder': return { label: 'Anciano', icon: User, color: 'text-purple-500' };
+                                            case 'audioOperator': return { label: 'Audio', icon: Mic2, color: 'text-orange-500' };
+                                            default: return { label: r, icon: User, color: 'text-slate-400' };
+                                        }
+                                    };
+
+                                    const info = getRoleInfo(role);
+                                    const Icon = info.icon;
+
+                                    return (
+                                        <div key={role} className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${info.color}`}>
+                                                <Icon size={14} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] uppercase font-bold text-slate-400">{info.label}</p>
+                                                <p className="text-xs font-bold text-slate-700 truncate">{name}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </section>
