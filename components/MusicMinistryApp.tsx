@@ -110,33 +110,44 @@ const MusicMinistryApp: React.FC = () => {
     }, []);
 
     const fetchDashboardData = async () => {
-        if (!tenant) return;
+        if (!tenant) {
+            console.error("❌ MusicApp: No tenant selected.");
+            return;
+        }
+        console.log("🚀 MusicApp: Starting fetchDashboardData for tenant:", tenant.id, tenant.name);
         setIsLoadingData(true);
         try {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
             // 1. Fetch Upcoming Events (Active in Banner)
+            console.log("📅 MusicApp: Fetching Events...");
             const eventsQ = query(
                 collection(db, 'tenants', tenant.id, 'events'),
                 where('activeInBanner', '==', true),
                 orderBy('date', 'asc')
             );
             const eventsSnap = await getDocs(eventsQ);
+            console.log(`📅 MusicApp: Events Found (Raw): ${eventsSnap.size}`);
+
             const fetchedEvents = eventsSnap.docs
                 .map(d => ({ id: d.id, ...d.data() } as ChurchEvent))
                 .filter(e => {
                     const eventDate = new Date(e.date + 'T00:00:00');
                     return eventDate >= today;
                 });
+            console.log(`📅 MusicApp: Events Filtered (Future): ${fetchedEvents.length}`);
             setEvents(fetchedEvents.slice(0, 5));
 
             // 2. Fetch Next Service Plan
+            console.log("📋 MusicApp: Fetching Service Plans...");
             const plansQ = query(
                 collection(db, 'tenants', tenant.id, 'plans'),
                 orderBy('date', 'asc')
             );
             const plansSnap = await getDocs(plansQ);
+            console.log(`📋 MusicApp: Plans Found (Raw): ${plansSnap.size}`);
+
             const allPlans = plansSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
             const upcomingPlan = allPlans
                 .filter(p => {
@@ -145,14 +156,18 @@ const MusicMinistryApp: React.FC = () => {
                 })
                 .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
+            console.log(upcomingPlan ? `📋 MusicApp: Next Plan found: ${upcomingPlan.date}` : "📋 MusicApp: No upcoming plan found.");
             setNextPlan(upcomingPlan || null);
 
             // 3. Fetch Nearest Music Team (Independent of Plan)
+            console.log("🎵 MusicApp: Fetching Music Teams...");
             const musicQ = query(
                 collection(db, 'tenants', tenant.id, 'music_teams'),
                 orderBy('date', 'asc')
             );
             const musicSnap = await getDocs(musicQ);
+            console.log(`🎵 MusicApp: Music Teams Found (Raw): ${musicSnap.size}`);
+
             const allTeams = musicSnap.docs.map(d => ({ id: d.id, ...d.data() } as MusicTeam));
 
             // Find the nearest team >= today
@@ -164,25 +179,44 @@ const MusicMinistryApp: React.FC = () => {
                 .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
             if (nearestTeam) {
+                console.log(`🎵 MusicApp: Nearest Team found: [${nearestTeam.id}] (${nearestTeam.date})`);
+                console.log(`🎵 MusicApp: Team IDs:`, nearestTeam.memberIds);
                 setMusicTeam(nearestTeam);
 
                 // Fetch Member Details
                 if (nearestTeam.memberIds?.length > 0) {
-                    const usersQ = query(
-                        collection(db, 'users'),
-                        where('tenantId', '==', tenant.id)
-                    );
-                    const usersSnap = await getDocs(usersQ);
-                    const allUsers = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    const teamMembers = allUsers.filter(u => nearestTeam.memberIds.includes(u.id));
-                    setMusicMembers(teamMembers);
+                    console.log("👥 MusicApp: Fetching Member Details for IDs:", nearestTeam.memberIds);
+                    try {
+                        const usersQ = query(
+                            collection(db, 'users'),
+                            where('tenantId', '==', tenant.id)
+                        );
+                        const usersSnap = await getDocs(usersQ);
+                        console.log(`👥 MusicApp: Users in Tenant (Raw): ${usersSnap.size}`);
+
+                        const allUsers = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        const teamMembers = allUsers.filter(u => nearestTeam.memberIds.includes(u.id));
+                        console.log(`👥 MusicApp: Matched Team Members: ${teamMembers.length}`);
+                        setMusicMembers(teamMembers);
+                    } catch (userErr) {
+                        console.error("❌ MusicApp: Error fetching users (Permission issue?):", userErr);
+                    }
+                } else {
+                    console.log("👥 MusicApp: Team has no member IDs.");
+                    setMusicMembers([]);
                 }
             } else {
+                console.log("🎵 MusicApp: No upcoming music team found.");
                 setMusicTeam(null);
+                setMusicMembers([]);
             }
 
         } catch (err) {
-            console.error(err);
+            console.error("❌ MusicApp: CRITICAL ERROR in fetchDashboardData:", err);
+            // @ts-ignore
+            if (err.code === 'permission-denied') {
+                console.error("⚠️ PERMISSION DENIED: Check firestore.rules for 'events' or 'music_teams' or 'users'.");
+            }
         } finally {
             setIsLoadingData(false);
         }
