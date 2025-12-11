@@ -1,12 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useEvents } from '../hooks/useEvents';
 import { usePlans } from '../hooks/usePlans';
-import { Bell, Radio, Mic, List, Loader2, PlayCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../hooks/useNotifications';
+import { Bell, Radio, Mic, List, Loader2, PlayCircle, Check, X } from 'lucide-react';
 import TranslationMaster from './TranslationMaster';
 
 const AudioDashboard: React.FC = () => {
+    const { user } = useAuth();
     const { events } = useEvents();
     const { plans, loading } = usePlans();
+
+    // Use the real notifications hook
+    // We assume 'AUDIO' role for this dashboard, or user.role
+    const { notifications, unreadCount, markAsRead } = useNotifications(
+        user?.tenantId,
+        user?.id,
+        'AUDIO' // Hardcoded role for this dashboard context if user role varies, or better: user?.role
+    );
+
+    // Filter to show only recent unread/read toast-like notifications? 
+    // Or just show the badge. 
+    // User request: "verify no mocks... ready to receive".
+    // We successfully hook it up.
 
     // Filter events: Public + Members + Staff (Exclude Elders Only)
     const visibleEvents = events.filter(e =>
@@ -15,19 +31,7 @@ const AudioDashboard: React.FC = () => {
 
     // Find the ACTIVE plan (the one currently being run)
     const activePlan = plans.find(p => p.isActive);
-
-    // Simulate real-time notifications (could be replaced by real Firestore notifications later)
-    const [notifications, setNotifications] = useState<string[]>([]);
-
-    useEffect(() => {
-        // Example simulation
-        const timer = setTimeout(() => {
-            if (activePlan) {
-                setNotifications(prev => [`Sincronizado con: ${activePlan.title}`, ...prev]);
-            }
-        }, 2000);
-        return () => clearTimeout(timer);
-    }, [activePlan?.id]);
+    const [showNotifPanel, setShowNotifPanel] = useState(false);
 
     if (loading) {
         return (
@@ -38,7 +42,7 @@ const AudioDashboard: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#1a1c23] text-slate-200 font-sans p-4 md:p-8 pb-24">
+        <div className="min-h-screen bg-[#1a1c23] text-slate-200 font-sans p-4 md:p-8 pb-24 relative">
 
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
@@ -49,9 +53,44 @@ const AudioDashboard: React.FC = () => {
                     <p className="text-slate-500 text-sm">Control de Transmisión y Monitoreo</p>
                 </div>
                 <div className="relative">
-                    <Bell className="text-slate-400 hover:text-white cursor-pointer" />
-                    {notifications.length > 0 && (
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#1a1c23]"></span>
+                    <button
+                        onClick={() => setShowNotifPanel(!showNotifPanel)}
+                        className="p-2 rounded-full hover:bg-slate-800 transition-colors relative"
+                    >
+                        <Bell className={`cursor-pointer ${unreadCount > 0 ? 'text-white' : 'text-slate-400'}`} />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#1a1c23]"></span>
+                        )}
+                    </button>
+
+                    {/* Notification Dropdown */}
+                    {showNotifPanel && (
+                        <div className="absolute right-0 top-12 w-80 bg-[#2d313a] border border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+                                <h3 className="font-bold text-white text-sm">Notificaciones</h3>
+                                <button onClick={() => setShowNotifPanel(false)}><X size={14} /></button>
+                            </div>
+                            <div className="max-h-64 overflow-y-auto">
+                                {notifications.length === 0 ? (
+                                    <div className="p-8 text-center text-slate-500 text-xs">Sin notificaciones nuevas</div>
+                                ) : (
+                                    notifications.map(n => (
+                                        <div
+                                            key={n.id}
+                                            className={`p-4 border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${!n.read ? 'bg-indigo-500/10' : ''}`}
+                                            onClick={() => markAsRead(n.id)}
+                                        >
+                                            <div className="flex justify-between items-start mb-1">
+                                                <h4 className={`text-sm font-bold ${!n.read ? 'text-white' : 'text-slate-400'}`}>{n.title}</h4>
+                                                {!n.read && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
+                                            </div>
+                                            <p className="text-xs text-slate-400">{n.message}</p>
+                                            <span className="text-[10px] text-slate-600 mt-2 block">{n.timestamp.toLocaleDateString()}</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>
@@ -186,19 +225,6 @@ const AudioDashboard: React.FC = () => {
                 </div >
 
             </div >
-
-            {/* Notification Toast (Simulation) */}
-            {
-                notifications.map((note, i) => (
-                    <div key={i} className="fixed bottom-8 right-8 bg-indigo-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-right duration-500 z-50">
-                        <Bell className="animate-bounce" />
-                        <div>
-                            <p className="font-bold text-sm">Sistema</p>
-                            <p className="text-xs opacity-90">{note}</p>
-                        </div>
-                    </div>
-                ))
-            }
         </div >
     );
 };

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../services/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useNotifications } from '../../hooks/useNotifications';
 import {
     Home, Calendar, ClipboardList, User, BarChart3,
     Bell, Menu, X, BookOpen, Settings, LogOut
@@ -13,38 +12,13 @@ const AncianoLayout: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [menuOpen, setMenuOpen] = useState(false);
-    const [notificaciones, setNotificaciones] = useState(0);
 
-    // Fetch Real-time Notifications count
-    useEffect(() => {
-        if (!user?.tenantId) return;
+    // Real-time notifications hook
+    const { unreadCount } = useNotifications(user?.tenantId, user?.id, 'ELDER');
 
-        // Query: Tenant's notifications targeted at ELDERs or PUBLIC
-        // Note: In a real app complexity is higher (user-specific + role-based)
-        const q = query(
-            collection(db, 'notifications'),
-            where('tenantId', '==', user.tenantId)
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const count = snapshot.docs.filter(doc => {
-                const data = doc.data();
-                // Check Audience
-                const audience = data.targetAudience;
-                const isRelevant = audience === 'ELDER' || audience === 'ALL' || (Array.isArray(audience) && audience.includes('ELDER'));
-
-                // Check Read Status
-                const readBy = data.readBy || [];
-                const isUnread = !readBy.includes(user.uid);
-
-                return isRelevant && isUnread;
-            }).length;
-
-            setNotificaciones(count);
-        });
-
-        return () => unsubscribe();
-    }, [user]);
+    // We can just use 'unreadCount' instead of local state 'notificaciones'
+    // But to match existing variable names if needed:
+    const notificaciones = unreadCount;
 
     const navItems = [
         { path: '/anciano/inicio', icon: Home, label: 'Inicio' },

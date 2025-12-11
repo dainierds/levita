@@ -12,6 +12,7 @@ import { TranslationView } from './views/TranslationView';
 import { PrayerView } from './views/PrayerView';
 
 import { Bell, Moon, Sun, Search, User, ArrowLeft, LogOut } from 'lucide-react';
+import { useNotifications } from '../../hooks/useNotifications';
 
 const SimpleView: React.FC<{ title: string }> = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400 animate-in fade-in">
@@ -36,6 +37,21 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [nextPlan, setNextPlan] = useState<ServicePlan | null>(null);
   const [settings, setSettings] = useState<ChurchSettings | null>(initialSettings || null);
+
+  // Visitor Identification for Notifications
+  const [visitorId] = useState(() => {
+    const stored = localStorage.getItem('levita_visitor_id');
+    if (stored) return stored;
+    const newId = 'visitor_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('levita_visitor_id', newId);
+    return newId;
+  });
+
+  // Notifications Hook
+  // We need to import useNotifications. Ensure the path is correct relative to this file.
+  // ../../hooks/useNotifications
+  const { unreadCount } = useNotifications(initialTenantId, visitorId, 'VISITOR');
+
 
   useEffect(() => {
     // If we already have settings, don't re-fetch unless tenant changes
@@ -188,12 +204,19 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
             </div>
           </button>
 
-          <button className="p-3 md:p-4 rounded-full text-gray-500 shadow-neu dark:shadow-neu-dark active:shadow-neu-pressed dark:active:shadow-neu-dark-pressed transition-all relative">
+
+          <button
+            onClick={() => {/* Toggle Notification View - To be implemented or just clear count */ }}
+            className="p-3 md:p-4 rounded-full text-gray-500 shadow-neu dark:shadow-neu-dark active:shadow-neu-pressed dark:active:shadow-neu-dark-pressed transition-all relative"
+          >
             <Bell size={20} />
-            <span className="absolute top-3 right-3 md:top-3 md:right-4 w-2 h-2 bg-red-500 rounded-full border-2 border-neu-base dark:border-neu-base-dark"></span>
+            {unreadCount > 0 && (
+              <span className="absolute top-3 right-3 md:top-3 md:right-4 w-2 h-2 bg-red-500 rounded-full border-2 border-neu-base dark:border-neu-base-dark"></span>
+            )}
           </button>
         </div>
       </header>
+
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-10 pb-28 scroll-smooth no-scrollbar">
