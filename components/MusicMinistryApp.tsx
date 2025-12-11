@@ -51,9 +51,26 @@ const MusicMinistryApp: React.FC = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [error, setError] = useState('');
 
-    // ... (useEffect for auto-login stays same)
+    // Auto-login if authenticated user
+    useEffect(() => {
+        if (user) {
+            setIsAuthenticated(true);
+        }
+    }, [user]);
 
-    // ... (Data & Fetch logic stays same)
+    // ... Data State ...
+    const [events, setEvents] = useState<ChurchEvent[]>([]);
+    const [nextPlan, setNextPlan] = useState<ServicePlan | null>(null);
+    const [musicTeam, setMusicTeam] = useState<MusicTeam | null>(null);
+    const [musicMembers, setMusicMembers] = useState<any[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(false);
+
+    // Trigger data fetch when authenticated
+    useEffect(() => {
+        if (isAuthenticated && tenant) {
+            fetchDashboardData();
+        }
+    }, [isAuthenticated, tenant?.id]);
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
