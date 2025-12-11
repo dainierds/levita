@@ -131,6 +131,8 @@ const MusicMinistryApp: React.FC = () => {
                 .map(d => ({ id: d.id, ...d.data() } as ChurchEvent))
                 .filter(e => {
                     const eventDate = new Date(e.date + 'T00:00:00');
+                    // Filter out past events AND Elders-only events
+                    if (e.targetAudience === 'ELDERS_ONLY') return false;
                     return eventDate >= today;
                 });
             setEvents(fetchedEvents.slice(0, 5));
@@ -316,7 +318,9 @@ const MusicMinistryApp: React.FC = () => {
                             <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2">
                                 {nextPlan.team && Object.entries(nextPlan.team).map(([role, name]) => {
                                     if (!name) return null; // Skip empty roles
-                                    if (['teamName', 'id', 'tenantId'].includes(role)) return null; // Skip metadata fields
+                                    // Filter out technical fields and TeamNames (case insensitive)
+                                    const ignoredFields = ['id', 'tenantid', 'teamname', 'createdat', 'updatedat'];
+                                    if (ignoredFields.includes(role.toLowerCase())) return null;
 
                                     // Helper for labels and icons
                                     const getRoleInfo = (r: string) => {
@@ -401,70 +405,91 @@ const MusicMinistryApp: React.FC = () => {
     );
 };
 
+// --- REUSED MORPHO CAROUSEL COMPONENT (MATCHING MEMBER APP) ---
 const EventCarousel: React.FC<{ events: ChurchEvent[] }> = ({ events }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
+    // Combined slides: [0: Generic Title, 1..N: Events]
+    // If no events, just 0.
+    const hasEvents = events.length > 0;
+    const totalSlides = hasEvents ? events.length : 1;
+
     useEffect(() => {
-        if (events.length <= 1) return;
+        if (totalSlides <= 1) return;
         const interval = setInterval(() => {
-            setCurrentSlide(prev => (prev + 1) % events.length);
+            setCurrentSlide(prev => (prev + 1) % totalSlides);
         }, 5000);
         return () => clearInterval(interval);
-    }, [events.length]);
+    }, [totalSlides]);
 
-    if (events.length === 0) {
-        return (
-            <div className="w-full h-48 rounded-[2rem] bg-gradient-to-r from-slate-100 to-slate-200 flex flex-col items-center justify-center text-slate-400 border border-white shadow-inner">
-                <Calendar size={32} className="mb-2 opacity-50" />
-                <p className="font-bold text-sm">Sin eventos destacados</p>
-                <p className="text-xs opacity-75">Configura eventos en el panel de admin</p>
-            </div>
-        );
-    }
-
-    const evt = events[currentSlide];
+    const activeEvent = hasEvents ? events[currentSlide] : null;
 
     return (
-        <div className="relative w-full h-48 rounded-[2rem] overflow-hidden shadow-lg group">
-            {/* Background with Transition */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${evt.bannerGradient || 'from-pink-600 to-indigo-600'} transition-all duration-1000`} />
+        <div className="rounded-[2.5rem] shadow-xl shadow-pink-200/50 bg-white p-1">
+            <div className="relative w-full bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600 rounded-[2.3rem] p-8 md:p-12 text-white overflow-hidden min-h-[320px] flex flex-col justify-center">
 
-            <div className="absolute inset-0 p-8 flex flex-col justify-center text-white" key={evt.id}>
-                <div className="flex items-center gap-2 mb-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg text-[10px] font-bold uppercase">
-                        {evt.type}
-                    </span>
-                </div>
+                {/* Abstract Decorative Shapes */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-900 opacity-20 rounded-full blur-2xl -ml-12 -mb-12 pointer-events-none"></div>
 
-                <h3 className="text-3xl font-black leading-tight mb-2 tracking-tight animate-in fade-in slide-in-from-bottom-3 duration-500 key-{evt.id}">
-                    {evt.title}
-                </h3>
+                {!activeEvent ? (
+                    // Default / No Events View
+                    <div className="relative z-10 animate-in fade-in duration-500 space-y-4 text-center">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-2 text-white/90">
+                            <Music size={32} />
+                        </div>
+                        <h2 className="text-3xl font-black leading-tight tracking-tight">Ministerio de Alabanza</h2>
+                        <p className="text-pink-100 font-medium opacity-90">
+                            "Cantad alegres a Dios, habitantes de toda la tierra."
+                        </p>
+                    </div>
+                ) : (
+                    // Active Event View
+                    <div className="relative z-10 animate-in fade-in slide-in-from-right-8 duration-500 space-y-6" key={activeEvent.id}>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/10 w-fit">
+                            <Calendar size={12} />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Próximo Evento</span>
+                        </div>
 
-                <p className="text-sm opacity-90 flex items-center gap-3 font-medium animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <span className="flex items-center gap-1.5">
-                        <Calendar size={14} />
-                        {new Date(evt.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-                    </span>
-                    {evt.time && (
-                        <span className="flex items-center gap-1.5">
-                            <Clock size={14} />
-                            {evt.time}
-                        </span>
-                    )}
-                </p>
+                        <div className="space-y-2">
+                            <h2 className="text-3xl font-black leading-none tracking-tight">
+                                {activeEvent.title}
+                            </h2>
+                            <p className="text-pink-100 text-lg font-medium opacity-90 max-w-lg line-clamp-2">
+                                {activeEvent.description || 'Detalles próximamente...'}
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-sm font-bold bg-black/10 w-fit px-4 py-2 rounded-xl backdrop-blur-sm">
+                            <span className="flex items-center gap-2 opacity-90">
+                                <Calendar size={16} />
+                                {new Date(activeEvent.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                            </span>
+                            {activeEvent.time && (
+                                <>
+                                    <span className="w-px h-4 bg-white/30"></span>
+                                    <span className="flex items-center gap-2 opacity-90">
+                                        <Clock size={16} />
+                                        {activeEvent.time}
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Dots */}
+                {totalSlides > 1 && (
+                    <div className="absolute bottom-6 right-8 flex gap-2 z-20">
+                        {Array.from({ length: totalSlides }).map((_, idx) => (
+                            <div
+                                key={idx}
+                                className={`h-2 rounded-full transition-all duration-300 ${currentSlide === idx ? 'w-8 bg-white' : 'w-2 bg-white/40'}`}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
-
-            {/* Dots */}
-            {events.length > 1 && (
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
-                    {events.map((_, idx) => (
-                        <div
-                            key={idx}
-                            className={`h-1.5 rounded-full transition-all duration-300 ${currentSlide === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`}
-                        />
-                    ))}
-                </div>
-            )}
         </div>
     );
 };
