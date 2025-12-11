@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Globe, ArrowRight, Heart, User, Lock, Users, Palette } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Globe, ArrowRight, Heart, User, Lock, Users, Palette, Shield, LogIn } from 'lucide-react';
 import VisitorApp from './visitor-app/App';
 import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
@@ -27,15 +28,45 @@ const ROLE_MESSAGES = {
 
 const VisitorLanding: React.FC = () => {
     const { setLanguage } = useLanguage();
+    const { login } = useAuth(); // Add useAuth
     const { events } = useEvents();
     const { plans } = usePlans();
     const navigate = useNavigate();
 
-    const [step, setStep] = useState<'language' | 'role_selection' | 'app'>('language');
+    const [step, setStep] = useState<'language' | 'role_selection' | 'app' | 'ministry_selection' | 'ministry_login'>('language');
     const [selectedLang, setSelectedLang] = useState<string>('es');
     const [showMemberLogin, setShowMemberLogin] = useState(false);
     const [settings, setSettings] = useState<ChurchSettings | null>(null);
     const [tenantId, setTenantId] = useState<string | undefined>(undefined);
+
+    // New State for Ministry Flow
+    const [ministryContext, setMinistryContext] = useState<string>('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [loginError, setLoginError] = useState('');
+
+    const handleMinistrySelect = (context: string, demoEmail?: string) => {
+        setMinistryContext(context);
+        if (demoEmail) setEmail(demoEmail);
+        setStep('ministry_login');
+        setLoginError('');
+    };
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoginLoading(true);
+        setLoginError('');
+        try {
+            await login(email, password);
+            // AuthContext will handle redirect based on role
+        } catch (error: any) {
+            console.error(error);
+            setLoginError('Error de autenticación');
+        } finally {
+            setLoginLoading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchPublicSettings = async () => {
@@ -177,13 +208,14 @@ const VisitorLanding: React.FC = () => {
                         </button>
 
                         <button
-                            onClick={() => navigate('/portal')}
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); setStep('ministry_selection'); }}
                             className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-slate-500 hover:bg-slate-50 transition-all duration-200 text-left"
                         >
                             <div className="w-12 h-12 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center">
-                                <Lock size={24} />
+                                <Shield size={24} />
                             </div>
-                            <span className="text-lg font-bold text-slate-700 group-hover:text-slate-900">{t.admin}</span>
+                            <span className="text-lg font-bold text-slate-700 group-hover:text-slate-900">Líderes y Ministerios</span>
                             <div className="absolute right-4 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <ArrowRight size={20} />
                             </div>
@@ -198,6 +230,153 @@ const VisitorLanding: React.FC = () => {
                     </button>
                 </div>
                 {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} initialTenantId={tenantId} initialChurchName={settings?.churchName} />}
+            </div>
+        );
+    }
+
+    if (step === 'ministry_selection') {
+        return (
+            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
+                <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
+                    <button onClick={() => setStep('role_selection')} className="mb-8 text-slate-400 hover:text-slate-600 font-bold flex items-center gap-2">
+                        ← Volver
+                    </button>
+
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-black text-slate-800 mb-4">Selecciona tu Departamento</h2>
+                        <p className="text-lg text-slate-500">¿A qué área deseas ingresar?</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Music */}
+                        <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Alabanza', 'musica@levita.com'); }}
+                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-pink-200 transition-all flex items-center gap-6"
+                        >
+                            <div className="w-16 h-16 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-600 group-hover:scale-110 transition-transform">
+                                <span className="text-2xl">🎵</span>
+                            </div>
+                            <div className="text-left">
+                                <h3 className="text-xl font-bold text-slate-800">Alabanza</h3>
+                                <p className="text-sm text-slate-400">Acceso a la App de Música</p>
+                            </div>
+                        </button>
+
+                        {/* Elder */}
+                        <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Anciano', 'anciano@levita.com'); }}
+                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-blue-200 transition-all flex items-center gap-6"
+                        >
+                            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                                <span className="text-2xl">👴</span>
+                            </div>
+                            <div className="text-left">
+                                <h3 className="text-xl font-bold text-slate-800">Ancianos</h3>
+                                <p className="text-sm text-slate-400">Cuidado Pastoral y Miembros</p>
+                            </div>
+                        </button>
+
+                        {/* Audio */}
+                        <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Audio', 'luis@levita.com'); }}
+                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-amber-200 transition-all flex items-center gap-6"
+                        >
+                            <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+                                <span className="text-2xl">🎧</span>
+                            </div>
+                            <div className="text-left">
+                                <h3 className="text-xl font-bold text-slate-800">Audio / Multimedia</h3>
+                                <p className="text-sm text-slate-400">Control de Pantalla y Sonido</p>
+                            </div>
+                        </button>
+
+                        {/* Admin */}
+                        <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Administración', 'pastor@levita.com'); }}
+                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-slate-200 transition-all flex items-center gap-6"
+                        >
+                            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 group-hover:scale-110 transition-transform">
+                                <Shield size={32} />
+                            </div>
+                            <div className="text-left">
+                                <h3 className="text-xl font-bold text-slate-800">Administración</h3>
+                                <p className="text-sm text-slate-400">Panel General y Configuración</p>
+                            </div>
+                        </button>
+                    </div>
+                </div >
+            </div >
+        );
+    }
+
+    if (step === 'ministry_login') {
+        return (
+            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
+                <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300 relative">
+                    <button onClick={() => setStep('ministry_selection')} className="absolute top-8 left-8 text-slate-300 hover:text-slate-500">
+                        ←
+                    </button>
+
+                    <div className="text-center mb-8 mt-4">
+                        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 mx-auto mb-6">
+                            <LogIn size={32} />
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-800">Login</h2>
+                        <p className="text-slate-400 text-sm mt-2">
+                            Acceso a {ministryContext || 'Líderes'}
+                        </p>
+                    </div>
+
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        {loginError && (
+                            <div className="p-3 bg-red-50/50 border border-red-100 rounded-xl text-red-500 text-xs text-center font-bold">
+                                {loginError}
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                                placeholder="usuario@levita.com"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Contraseña</label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={(e) => handleLogin(e)}
+                            disabled={loginLoading}
+                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-900/20 transition-all mt-4 disabled:opacity-50 flex justify-center"
+                        >
+                            {loginLoading ? <span className="animate-spin">⏳</span> : 'Entrar'}
+                        </button>
+                    </form>
+
+                    <div className="mt-8 pt-6 border-t border-slate-50">
+                        <p className="text-xs text-center text-slate-400">
+                            Levita Church OS
+                        </p>
+                    </div>
+                </div>
             </div>
         );
     }
