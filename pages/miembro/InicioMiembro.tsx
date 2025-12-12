@@ -41,74 +41,61 @@ const InicioMiembro: React.FC = () => {
                 </div>
             </div>
 
-            {/* 1. MORPHO HERO BANNER */}
-            <div className="p-1 rounded-[2.5rem] shadow-xl shadow-indigo-200/50 bg-white">
-                <div className="relative w-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 rounded-[2.3rem] p-8 md:p-12 text-white overflow-hidden min-h-[320px] flex flex-col justify-center">
+            {/* 1. MORPHO HERO BANNER (Matches Card Size h-48) */}
+            <div className="p-1 rounded-[2.2rem] shadow-xl shadow-indigo-200/50 bg-white">
+                <div className="relative w-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 rounded-[2rem] p-6 text-white overflow-hidden h-48 flex flex-col justify-between">
 
-                    {/* Abstract Decorative Shapes (No Images) */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-900 opacity-20 rounded-full blur-2xl -ml-12 -mb-12 pointer-events-none"></div>
+                    {/* Abstract Decorative Shapes */}
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-white opacity-10 rounded-full blur-3xl -mr-12 -mt-12 pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-900 opacity-20 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none"></div>
 
                     {currentEventIndex === 0 ? (
                         // SLIDE 0: Welcome / General
-                        <div className="relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/10 w-fit">
-                                <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Panel de Miembro</span>
+                        <div className="relative z-10 h-full flex flex-col justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            {/* Top: Icon/Badge */}
+                            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner border border-white/10">
+                                <Calendar size={24} />
                             </div>
 
-                            <div className="space-y-2">
-                                <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tight">
-                                    Tu Vida en <br /> Comunidad
-                                </h2>
-                                <p className="text-indigo-100 text-lg font-medium opacity-90 max-w-md">
-                                    Accede a los recursos, eventos y peticiones de nuestra familia de fe.
-                                </p>
+                            {/* Bottom: Text */}
+                            <div>
+                                <h2 className="font-bold text-2xl leading-none mb-1">Tu Comunidad</h2>
+                                <p className="text-indigo-100 text-xs font-medium">Ver calendario completo</p>
                             </div>
-
-                            <button className="group flex items-center gap-3 bg-white text-indigo-600 px-6 py-3 rounded-2xl font-bold shadow-lg shadow-indigo-900/10 hover:shadow-indigo-900/20 hover:scale-105 transition-all">
-                                <Calendar size={20} className="group-hover:rotate-12 transition-transform" />
-                                <span>Ver Calendario</span>
-                            </button>
                         </div>
                     ) : (
                         // SLIDE N: Event
-                        <div className="relative z-10 animate-in fade-in slide-in-from-right-8 duration-500 space-y-6">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/10 w-fit">
-                                <Calendar size={12} />
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Próximo Evento</span>
+                        <div className="relative z-10 h-full flex flex-col justify-between animate-in fade-in slide-in-from-right-4 duration-500">
+                            {/* Top: Icon/Badge */}
+                            <div className="flex justify-between items-start">
+                                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner border border-white/10">
+                                    <Mic size={24} />
+                                </div>
+                                <div className="px-2 py-1 rounded-lg bg-white/10 border border-white/10 backdrop-blur-md">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/90">Próximo</span>
+                                </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <h2 className="text-3xl md:text-5xl font-black leading-none tracking-tight">
-                                    {activeEvent?.title}
-                                </h2>
-                                <p className="text-indigo-100 text-lg font-medium opacity-90 max-w-lg line-clamp-2">
-                                    {activeEvent?.description || 'Detalles próximamente...'}
-                                </p>
-                            </div>
-
-                            <div className="flex items-center gap-4 text-sm font-bold bg-black/10 w-fit px-4 py-2 rounded-xl backdrop-blur-sm">
-                                <span className="flex items-center gap-2 opacity-90">
-                                    <Calendar size={16} />
-                                    {new Date(activeEvent!.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
-                                </span>
-                                <span className="w-px h-4 bg-white/30"></span>
-                                <span className="flex items-center gap-2 opacity-90">
-                                    <Mic size={16} />
-                                    {activeEvent?.type}
-                                </span>
+                            {/* Bottom: Text */}
+                            <div>
+                                <h2 className="font-bold text-2xl leading-tight mb-1 line-clamp-1">{activeEvent?.title}</h2>
+                                <div className="flex items-center gap-2 text-indigo-100 text-xs font-medium">
+                                    <Calendar size={12} />
+                                    <span>{new Date(activeEvent!.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                                    <span className="w-px h-3 bg-white/30"></span>
+                                    <span>{activeEvent?.time}</span>
+                                </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Dots */}
+                    {/* Dots (Absolute Bottom Right) */}
                     {totalSlides > 1 && (
-                        <div className="absolute bottom-6 right-8 flex gap-2 z-20">
+                        <div className="absolute bottom-6 right-6 flex gap-1.5 z-20">
                             {Array.from({ length: totalSlides }).map((_, idx) => (
                                 <div
                                     key={idx}
-                                    className={`h-2 rounded-full transition-all duration-300 ${idx === currentEventIndex ? 'w-8 bg-white' : 'w-2 bg-white/40'}`}
+                                    className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentEventIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`}
                                 />
                             ))}
                         </div>
