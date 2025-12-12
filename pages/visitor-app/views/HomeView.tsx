@@ -298,7 +298,7 @@ const CarouselHero: React.FC<{
   // Event Slides = Colored Gradients from Admin.
 
   return (
-    <div className="p-1 rounded-[2.5rem] shadow-neu dark:shadow-neu-dark bg-white dark:bg-[#23262f]">
+    <div className="p-1 rounded-[2.5rem] shadow-neu dark:shadow-neu-dark bg-white">
       {/* 
           Container for the inner banner. 
           The 'p-1' on parent + 'bg-white' creates the "fino virilito" (thin border).
