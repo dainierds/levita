@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ChurchTenant, ChurchSettings, ChurchEvent, ServicePlan, MusicTeam } from '../types';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { Lock, Music, Calendar, Radio, Mic2, User, Play, Clock, MapPin, Bell, LogOut } from 'lucide-react';
+import { Lock, Music, Calendar, Radio, Mic2, User, Play, Clock, MapPin, Bell, LogOut, ArrowLeft } from 'lucide-react';
 import { MOCK_TENANTS } from '../constants'; // Fallback
 
 // Helper to get tenant (Simplified version of VisitorLanding logic)
@@ -207,10 +207,19 @@ const MusicMinistryApp: React.FC = () => {
     // --- LOGIN SCREEN ---
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative">
+                {/* Back Button */}
+                <button
+                    onClick={() => navigate('/')}
+                    className="absolute top-8 left-8 text-slate-400 hover:text-white transition-colors flex items-center gap-2 font-bold"
+                >
+                    <ArrowLeft size={20} />
+                    <span>Volver al Inicio</span>
+                </button>
+
                 <div className="bg-white max-w-sm w-full rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-500 to-indigo-500" />
-                    <div className="text-center mb-8">
+                    <div className="text-center mb-8 mt-4">
                         <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4 text-pink-500">
                             <Music size={32} />
                         </div>
