@@ -270,82 +270,116 @@ const CarouselHero: React.FC<{
     return () => clearInterval(interval);
   }, [totalSlides]);
 
-  const renderSlideContent = () => {
+  // Helper to get active event for current slide (if > 0)
+  const activeEvent = currentSlide > 0 ? upcomingEvents[currentSlide - 1] : null;
+
+  // Determine Gradient
+  // Default (Main Slide): Neutral Blue-ish/Gray or Red if Live
+  // Event Slide: Use event.bannerGradient OR fallback
+  const getBackgroundClass = () => {
     if (currentSlide === 0) {
-      // MAIN SLIDE (Live/Next Service)
-      return (
-        <div className="relative z-10 h-full flex flex-col justify-center p-8 md:p-12 animate-in fade-in duration-500">
-          <div className="inline-flex items-center space-x-2 mb-4">
-            <span className={`w-3 h-3 rounded-full animate-pulse ${isLive ? 'bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'bg-brand-500'}`}></span>
-            <span className={`${isLive ? 'text-red-600' : 'text-brand-500'} font-bold tracking-widest text-xs uppercase`}>
-              {isLive ? 'EN VIVO AHORA' : 'Próximo Servicio:'}
-              {!isLive && <span className="text-gray-600 dark:text-gray-400 normal-case ml-1">{heroDate} {heroTime}</span>}
-            </span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-gray-100 mb-2 tracking-tight line-clamp-2">
-            {isLive ? 'Únete Ahora' : 'Te Esperamos'}
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-lg text-lg flex items-center gap-2">
-            <span className="font-bold text-brand-500">Predica:</span> {preacherName}
-          </p>
-
-          <button
-            onClick={() => onNavigate(ViewState.LIVE)}
-            className={`w-max flex items-center space-x-3 px-8 py-4 ${isLive ? 'bg-red-600 text-white shadow-lg shadow-red-200' : 'bg-neu-base dark:bg-neu-base-dark text-brand-500 shadow-neu dark:shadow-neu-dark'} font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all duration-200 group`}
-          >
-            <PlayCircle size={24} className={isLive ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'} />
-            <span>{isLive ? 'Ver Transmisión' : 'Ver Transmisiones'}</span>
-          </button>
-        </div>
-      );
-    } else {
-      // EVENT SLIDE
-      const event = upcomingEvents[currentSlide - 1];
-      if (!event) return null;
-
-      return (
-        <div className="relative z-10 h-full flex flex-col justify-center p-8 md:p-12 animate-in fade-in slide-in-from-right-4 duration-500">
-          <div className="inline-flex items-center space-x-2 mb-4">
-            <span className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></span>
-            <span className="text-blue-500 font-bold tracking-widest text-xs uppercase">
-              Próximo Evento
-            </span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-gray-100 mb-2 tracking-tight line-clamp-2">
-            {event.title}
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-lg text-lg flex items-center gap-4">
-            <span className="flex items-center gap-1"><Calendar size={18} className="text-brand-500" /> {new Date(event.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-            <span className="flex items-center gap-1"><Clock size={18} className="text-brand-500" /> {new Date('2000-01-01T' + event.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
-          </p>
-
-          <button
-            onClick={() => onNavigate(ViewState.EVENTS)}
-            className="w-max flex items-center space-x-3 px-8 py-4 bg-neu-base dark:bg-neu-base-dark text-blue-500 shadow-neu dark:shadow-neu-dark font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all duration-200 group"
-          >
-            <Calendar size={24} className="group-hover:scale-110 transition-transform" />
-            <span>Ver Detalles</span>
-          </button>
-        </div>
-      );
+      if (isLive) return 'bg-gradient-to-br from-red-600 via-red-500 to-orange-500';
+      return 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900'; // Default Neutral for Main Status
     }
+    // Event Slide
+    if (activeEvent?.bannerGradient) {
+      // Ensure we have the full gradient string "bg-gradient-to-r from-x to-y" if user only stored "from-x to-y"
+      // But assuming format is "from-green-400 to-blue-500"
+      return `bg-gradient-to-br ${activeEvent.bannerGradient}`;
+    }
+    return 'bg-gradient-to-br from-blue-500 to-indigo-600'; // Fallback
   };
 
-  return (
-    <div className="p-1 rounded-[2.5rem] shadow-neu dark:shadow-neu-dark">
-      <div className="relative overflow-hidden rounded-[2.3rem] h-80 bg-neu-base dark:bg-neu-base-dark">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0 transition-opacity duration-1000">
-          {/* We can potentially switch background image based on event here if needed */}
-          <img
-            src={`https://api.dicebear.com/9.x/patterns/svg?seed=${currentSlide}&backgroundColor=e5e7eb,d1d5db,9ca3af`}
-            alt="Church Background"
-            className="w-full h-full object-cover opacity-10"
-          />
-          <div className={`absolute inset-0 bg-gradient-to-r ${isLive && currentSlide === 0 ? 'from-red-900/10 via-neu-base/80' : 'from-neu-base via-neu-base/80'} to-transparent dark:from-neu-base-dark dark:via-neu-base-dark/80 transition-colors duration-500`} />
-        </div>
+  // Text Color Logic: If it's the main slide (neutral), use dark text. If it's a gradient event, use white.
+  const isDarkBackground = currentSlide > 0 || isLive;
+  // Actually, users want the "Main" slide to look like the Admin one? 
+  // Admin usually has "Next Service" in logic. 
+  // Let's stick to: Main Slide = Neutral (Morpho) unless Live. 
+  // Event Slides = Colored Gradients from Admin.
 
-        {renderSlideContent()}
+  return (
+    <div className="p-1 rounded-[2.5rem] shadow-neu dark:shadow-neu-dark bg-white dark:bg-[#23262f]">
+      {/* 
+          Container for the inner banner. 
+          The 'p-1' on parent + 'bg-white' creates the "fino virilito" (thin border).
+          We apply the gradient to THIS inner div.
+       */}
+      <div className={`relative overflow-hidden rounded-[2.3rem] h-80 transition-all duration-500 ${getBackgroundClass()}`}>
+
+        {/* Texture Overlay (Optional, keep if refined) */}
+        {!isDarkBackground && (
+          <img
+            src={`https://api.dicebear.com/9.x/patterns/svg?seed=${currentSlide}&backgroundColor=transparent`}
+            alt="Pattern"
+            className="absolute inset-0 w-full h-full object-cover opacity-5 pointer-events-none"
+          />
+        )}
+
+        {/* Abstract Shapes for Gradient Backgrounds */}
+        {isDarkBackground && (
+          <>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full blur-2xl -ml-12 -mb-12 pointer-events-none"></div>
+          </>
+        )}
+
+        {/* Content Render */}
+        {currentSlide === 0 ? (
+          // MAIN SLIDE CONTENT
+          <div className="relative z-10 h-full flex flex-col justify-center p-8 md:p-12 animate-in fade-in duration-500">
+            <div className="inline-flex items-center space-x-2 mb-4">
+              <span className={`w-3 h-3 rounded-full animate-pulse ${isLive ? 'bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)]' : 'bg-brand-500'}`}></span>
+              <span className={`${isLive ? 'text-white' : 'text-brand-500'} font-bold tracking-widest text-xs uppercase`}>
+                {isLive ? 'EN VIVO AHORA' : 'Próximo Servicio:'}
+                {!isLive && <span className="text-gray-600 dark:text-gray-400 normal-case ml-1">{heroDate} {heroTime}</span>}
+              </span>
+            </div>
+            <h2 className={`text-4xl md:text-5xl font-black ${isLive ? 'text-white' : 'text-gray-900 dark:text-gray-100'} mb-2 tracking-tight line-clamp-2`}>
+              {isLive ? 'Únete Ahora' : 'Te Esperamos'}
+            </h2>
+            <p className={`${isLive ? 'text-red-100' : 'text-gray-500 dark:text-gray-400'} mb-8 max-w-lg text-lg flex items-center gap-2`}>
+              <span className={`font-bold ${isLive ? 'text-white' : 'text-brand-500'}`}>Predica:</span> {preacherName}
+            </p>
+
+            <button
+              onClick={() => onNavigate(ViewState.LIVE)}
+              className={`w-max flex items-center space-x-3 px-8 py-4 ${isLive ? 'bg-white text-red-600 shadow-lg' : 'bg-neu-base dark:bg-neu-base-dark text-brand-500 shadow-neu dark:shadow-neu-dark'} font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all duration-200 group`}
+            >
+              <PlayCircle size={24} className="group-hover:scale-110 transition-transform" />
+              <span>{isLive ? 'Ver Transmisión' : 'Ver Transmisiones'}</span>
+            </button>
+          </div>
+        ) : (
+          // EVENT SLIDE CONTENT (Always White Text on Gradient)
+          <div className="relative z-10 h-full flex flex-col justify-center p-8 md:p-12 animate-in fade-in slide-in-from-right-4 duration-500">
+            {activeEvent && (
+              <>
+                <div className="inline-flex items-center space-x-2 mb-4">
+                  <span className="w-3 h-3 rounded-full bg-white/50 backdrop-blur-md animate-pulse"></span>
+                  <span className="text-white/80 font-bold tracking-widest text-xs uppercase border border-white/20 px-2 py-0.5 rounded-full bg-white/10">
+                    Próximo Evento
+                  </span>
+                </div>
+                <h2 className="text-3xl md:text-5xl font-black text-white mb-2 tracking-tight line-clamp-2 drop-shadow-sm">
+                  {activeEvent.title}
+                </h2>
+                <p className="text-white/90 mb-8 max-w-lg text-lg flex items-center gap-4 font-medium">
+                  <span className="flex items-center gap-1"><Calendar size={18} /> {new Date(activeEvent.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                  <span className="w-px h-4 bg-white/40"></span>
+                  <span className="flex items-center gap-1"><Clock size={18} /> {new Date('2000-01-01T' + activeEvent.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                </p>
+
+                <button
+                  onClick={() => onNavigate(ViewState.EVENTS)}
+                  className="w-max flex items-center space-x-3 px-8 py-4 bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold rounded-2xl hover:bg-white hover:text-brand-600 transition-all duration-200 group shadow-lg"
+                >
+                  <Calendar size={24} className="group-hover:scale-110 transition-transform" />
+                  <span>Ver Detalles</span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Dots Indicator */}
         <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
@@ -353,7 +387,7 @@ const CarouselHero: React.FC<{
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentSlide ? 'bg-brand-500 w-8' : 'bg-gray-300 dark:bg-gray-700 hover:bg-gray-400'}`}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentSlide ? (isDarkBackground ? 'bg-white w-8' : 'bg-brand-500 w-8') : (isDarkBackground ? 'bg-white/40 hover:bg-white/60' : 'bg-gray-300 hover:bg-gray-400')}`}
             />
           ))}
         </div>
