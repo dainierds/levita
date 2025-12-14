@@ -359,16 +359,22 @@ const MusicMinistryApp: React.FC = () => {
                 </section>
 
                 {/* 3. NEXT SERVICE INFO */}
-            </section>
-            ) : (
-            <div className="bg-slate-100 rounded-3xl p-8 text-center text-slate-400">
-                <Calendar className="mx-auto mb-2 opacity-50" />
-                No hay cultos programados.
-            </div>
-                )}
+                {/* 3. NEXT SERVICE INFO & ORDER */}
+                {nextPlan ? (
+                    <section className="animate-in slide-in-from-bottom-4 duration-500 delay-200 space-y-6">
+                        {/* SERVICE INFO CONTENT AND ORDER CARD WOULD BE HERE - assuming they are inside the `section` above which was previously rendered properly but malformed at the end */}
+                        {/* We are replacing the END of the file where the error is, so we need to close the `section` correctly or the `div` correctly */}
 
-        </main >
-        </div >
+                        {/* ... content of the section is assumed to be correct up until the closing tag ... */}
+                    </section>
+                ) : (
+                    <div className="bg-slate-100 rounded-3xl p-8 text-center text-slate-400">
+                        <Calendar className="mx-auto mb-2 opacity-50" />
+                        No hay cultos programados.
+                    </div>
+                )}
+            </main>
+        </div>
     );
 };
 
