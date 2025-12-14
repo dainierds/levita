@@ -355,20 +355,22 @@ const MusicMinistryApp: React.FC = () => {
 
                 {/* 3. NEXT SERVICE INFO & ORDER */}
                 {upcomingPlans.length > 0 ? (
-                    <section className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 delay-200">
-                        {upcomingPlans.map((plan, index) => (
-                            <div key={plan.id} className="space-y-6">
-                                {/* CARD: SERVICE INFO & TEAM */}
-                                <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 relative overflow-hidden">
-                                    {/* Badge for Next vs Future */}
-                                    <div className={`absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider ${index === 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'
-                                        }`}>
-                                        {index === 0 ? 'Siguiente Culto' : 'Futuro Evento'}
+                    <section className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 delay-200">
+                        {(() => {
+                            const nextPlan = upcomingPlans[0];
+                            const futurePlan = upcomingPlans[1];
+
+                            // Helper function to render Service Info Card
+                            const renderServiceInfoCard = (plan: typeof nextPlan, label: string, isNext: boolean) => (
+                                <div key={plan.id} className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 relative overflow-hidden">
+                                    {/* Badge */}
+                                    <div className={`absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider ${isNext ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
+                                        {label}
                                     </div>
 
                                     {/* Date & Title */}
                                     <div className="flex items-start gap-4 mb-6">
-                                        <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex flex-col items-center justify-center text-indigo-600 shadow-sm">
+                                        <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm ${isNext ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500'}`}>
                                             <span className="text-[10px] font-bold uppercase">{new Date(plan.date).toLocaleDateString('es-ES', { weekday: 'short' })}</span>
                                             <span className="text-xl font-black">{new Date(plan.date).getDate()}</span>
                                         </div>
@@ -382,7 +384,7 @@ const MusicMinistryApp: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Service Team Grid (Merged with Roster) */}
+                                    {/* Service Team Grid */}
                                     <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2">
                                         {(() => {
                                             const planTeam = plan.team || {};
@@ -418,16 +420,24 @@ const MusicMinistryApp: React.FC = () => {
                                         })()}
                                     </div>
                                 </div>
+                            );
 
-                                {/* CARD 2: ORDER OF SERVICE (Only for the first plan) */}
-                                {index === 0 && (
+                            return (
+                                <>
+                                    {/* 1. Next Service Info */}
+                                    {renderServiceInfoCard(nextPlan, 'Siguiente Culto', true)}
+
+                                    {/* 2. Future Event Info (Requested to be here) */}
+                                    {futurePlan && renderServiceInfoCard(futurePlan, 'Futuro Evento', false)}
+
+                                    {/* 3. Order of Service (For Next Plan) */}
                                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
                                         <div className="flex items-center justify-between mb-6">
                                             <h3 className="font-bold text-slate-800 flex items-center gap-2">
                                                 <List size={20} className="text-indigo-500" />
                                                 Orden del Culto
                                             </h3>
-                                            {plan.isActive && (
+                                            {nextPlan.isActive && (
                                                 <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full animate-pulse">
                                                     En Vivo
                                                 </span>
@@ -435,8 +445,8 @@ const MusicMinistryApp: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-3">
-                                            {plan.items && plan.items.length > 0 ? (
-                                                plan.items.map((item, i) => (
+                                            {nextPlan.items && nextPlan.items.length > 0 ? (
+                                                nextPlan.items.map((item, i) => (
                                                     <div key={item.id} className="flex items-center gap-4 group">
                                                         <div className="text-xs font-bold text-slate-300 w-4 text-center group-hover:text-indigo-400 transition-colors">
                                                             {i + 1}
@@ -450,7 +460,6 @@ const MusicMinistryApp: React.FC = () => {
                                                                 </div>
                                                             </div>
 
-                                                            {/* Icons logic (Links) */}
                                                             <div className="flex gap-1">
                                                                 {item.youtubeLinks?.map((link, lI) => (
                                                                     <a key={lI} href={link} target="_blank" rel="noreferrer" className="w-6 h-6 rounded-full bg-white text-red-400 flex items-center justify-center hover:text-red-600 hover:shadow-sm transition-all border border-slate-100">
@@ -471,9 +480,9 @@ const MusicMinistryApp: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        ))}
+                                </>
+                            );
+                        })()}
                     </section>
                 ) : (
                     <div className="bg-slate-100 rounded-3xl p-8 text-center text-slate-400">
