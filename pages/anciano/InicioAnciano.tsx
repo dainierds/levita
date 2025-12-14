@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useEvents } from '../../hooks/useEvents';
 import { usePlans } from '../../hooks/usePlans';
-import { Calendar, FileText, BookOpen, Mic } from 'lucide-react';
+import { Calendar, FileText, BookOpen, Mic, Clock, MapPin, User, Music, Mic2, Play, List } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const InicioAnciano: React.FC = () => {
-    const { user } = useAuth();
+    const { user, tenant } = useAuth();
     const { events } = useEvents();
     const { plans } = usePlans();
     const navigate = useNavigate();
@@ -102,39 +102,90 @@ const InicioAnciano: React.FC = () => {
                 )}
             </div>
 
-            {/* 2. NAVIGATION GRID (Bottom) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Blue - Próximos Turnos (Now shows top 2) */}
-                <button
-                    onClick={() => navigate('/anciano/mi-turno')}
-                    className="bg-[#3b82f6] rounded-3xl p-5 text-left text-white shadow-lg shadow-blue-200 hover:scale-[1.01] transition-transform relative overflow-hidden flex flex-col justify-between min-h-[140px]"
-                >
-                    <div className="flex justify-between items-start mb-2">
-                        <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center">
-                            <Calendar size={16} />
-                        </div>
-                        <span className="bg-white/20 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">Próximos Turnos</span>
-                    </div>
+            {/* 2. REUSED SERVICE INFO CARDS (From Music App) */}
+            {nextPlans.length > 0 && (
+                <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 delay-200">
+                    {(() => {
+                        const nextPlan = nextPlans[0];
+                        const futurePlan = nextPlans[1];
 
-                    <div className="space-y-2 mt-1">
-                        {nextPlans.length > 0 ? nextPlans.map((plan, i) => (
-                            <div key={plan.id} className={`flex justify-between items-center rounded-lg p-2 ${i === 0 ? 'bg-white/20' : 'bg-white/10'}`}>
-                                <div>
-                                    <p className="font-bold text-xs leading-none">
-                                        {new Date(plan.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}
-                                    </p>
-                                    <p className="text-[10px] opacity-80 truncate max-w-[120px]">
-                                        {plan.team?.elder || 'Sin Anciano'}
-                                    </p>
+                        // Helper function to render Service Info Card
+                        const renderServiceInfoCard = (plan: typeof nextPlan, label: string, isNext: boolean) => (
+                            <div key={plan.id} className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 relative overflow-hidden">
+                                {/* Badge */}
+                                <div className={`absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider ${isNext ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
+                                    {label}
                                 </div>
-                                {i === 0 && <div className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-sm animate-pulse"></div>}
-                            </div>
-                        )) : (
-                            <p className="text-xs opacity-80 font-medium">No hay turnos programados.</p>
-                        )}
-                    </div>
-                </button>
 
+                                {/* Date & Title */}
+                                <div className="flex items-start gap-4 mb-6">
+                                    <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm ${isNext ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500'}`}>
+                                        <span className="text-[10px] font-bold uppercase">{new Date(plan.date).toLocaleDateString('es-ES', { weekday: 'short' })}</span>
+                                        <span className="text-xl font-black">{new Date(plan.date).getDate()}</span>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold text-slate-800 leading-tight">{plan.title || 'Culto General'}</h2>
+                                        <div className="flex items-center gap-2 text-slate-400 text-xs font-bold mt-1">
+                                            <Clock size={12} /> {plan.time || '10:00 AM'}
+                                            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                            <MapPin size={12} /> {tenant?.name || 'Iglesia'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Service Team Grid */}
+                                <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2">
+                                    {(() => {
+                                        const planTeam = plan.team || {};
+                                        const rosterTeams = (tenant?.settings?.teams || []) as any[];
+                                        const matchingRoster = rosterTeams.find(t => t.date === plan.date);
+                                        const rosterMembers = matchingRoster?.members || {};
+
+                                        const roleMap = [
+                                            { key: 'preacher', rosterKey: 'preacher', label: 'Predicador', icon: User, color: 'text-indigo-500' },
+                                            { key: 'musicDirector', rosterKey: 'musicDirector', label: 'Dir. Música', icon: Music, color: 'text-pink-500' },
+                                            { key: 'elder', rosterKey: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
+                                            { key: 'audioOperator', rosterKey: 'audioOperator', label: 'Audio', icon: Mic2, color: 'text-orange-500' },
+                                            { key: 'videoOperator', rosterKey: 'videoOperator', label: 'Video', icon: Play, color: 'text-blue-500' },
+                                            { key: 'usher', rosterKey: 'usher', label: 'Ujier', icon: User, color: 'text-teal-500' },
+                                        ];
+
+                                        return roleMap.map(roleConfig => {
+                                            const name = planTeam[roleConfig.key] || rosterMembers[roleConfig.rosterKey];
+                                            if (!name) return null;
+
+                                            return (
+                                                <div key={roleConfig.key} className="flex items-center gap-3">
+                                                    <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${roleConfig.color}`}>
+                                                        <roleConfig.icon size={14} />
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider ">{roleConfig.label}</p>
+                                                        <p className="font-bold text-slate-700 text-xs truncate">{name}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        });
+                                    })()}
+                                </div>
+                            </div>
+                        );
+
+                        return (
+                            <>
+                                {/* 1. Next Service Info */}
+                                {renderServiceInfoCard(nextPlan, 'Siguiente Culto', true)}
+
+                                {/* 2. Future Event Info */}
+                                {futurePlan && renderServiceInfoCard(futurePlan, 'Futuro Evento', false)}
+                            </>
+                        );
+                    })()}
+                </div>
+            )}
+
+            {/* 3. NAVIGATION GRID (Bottom) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Purple - Predicación */}
                 <button
                     onClick={() => navigate('/anciano/itinerario')}
