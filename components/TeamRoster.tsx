@@ -237,68 +237,124 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                 <div className="lg:col-span-2">
                     {selectedTeam ? (
                         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b border-slate-100 gap-4">
-                                <div className="flex items-center gap-3 w-full md:w-auto">
-                                    <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 shrink-0">
-                                        <Users size={24} />
+                            <div className="flex justify-between items-start mb-8">
+                                {/* Date Header Block */}
+                                <div className="flex items-center gap-4">
+                                    <div className="w-20 h-20 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-500 font-bold text-3xl shadow-sm">
+                                        {selectedTeam.date ? new Date(selectedTeam.date).getDate() : '?'}
                                     </div>
-                                    <div className="w-full">
-                                        <input
-                                            type="text"
-                                            value={selectedTeam.name}
-                                            onChange={(e) => handleUpdateTeamName(e.target.value)}
-                                            className="text-2xl font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 focus:outline-none w-full transition-colors"
-                                            placeholder="Nombre del Equipo"
-                                            disabled={!isAdmin}
-                                        />
-                                        <p className="text-slate-500 text-sm">Configuración del equipo</p>
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-pink-500 font-bold uppercase tracking-widest text-sm">
+                                                {selectedTeam.date
+                                                    ? new Date(selectedTeam.date).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+                                                    : 'Seleccionar Fecha'}
+                                            </span>
+                                            {/* Date Picker Trigger (Invisible Input Overlay or separate button?) 
+                                                For this design, the text should probably trigger the picker or be the picker.
+                                                I'll make the whole text block a label for an invisible input.
+                                            */}
+                                            <input
+                                                type="date"
+                                                value={selectedTeam.date || ''}
+                                                onChange={(e) => handleUpdateTeamDate(e.target.value)}
+                                                className="w-6 h-6 p-0 border-none opacity-0 absolute cursor-pointer" // Hacky overlay or just adjacent?
+                                            // Let's keep a small clean picker button nearby or make the text editable via click.
+                                            // Functionally, let's add a small edit icon next to it that triggers input
+                                            />
+                                        </div>
+                                        <h2 className="text-3xl font-black text-slate-800 capitalize">
+                                            {selectedTeam.date
+                                                ? new Date(selectedTeam.date).toLocaleDateString('es-ES', { weekday: 'long' })
+                                                : 'Sin Fecha'}
+                                        </h2>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                                    <span className="text-xs font-bold text-slate-500 uppercase px-2">Fecha:</span>
-                                    <input
-                                        type="date"
-                                        value={selectedTeam.date || ''}
-                                        onChange={(e) => handleUpdateTeamDate(e.target.value)}
-                                        className="bg-transparent text-sm font-bold text-slate-700 outline-none"
-                                        disabled={!isAdmin}
-                                    />
+                                {/* Actions */}
+                                <div className="flex gap-2">
+                                    {/* Rename Input as a discrete action or just keep current "Name" field? 
+                                        The design doesn't show a team "Name" prominently, mostly the date.
+                                        But we rely on Name in the sidebar. I will keep the Name input but perhaps more subtle or separate.
+                                    */}
+                                    <div className="relative group">
+                                        {/* We'll put the name edit here loosely or just assume Date IS the identifier visually? 
+                                            Let's keep the Name input but maybe as a small field top right or below date?
+                                            Actually, let's keep it simple: Date is main header. 
+                                            Name can be edited via a small pencil next to text if needed, or just a standard input.
+                                            I'll add the Trash icon here as requested in design.
+                                         */}
+                                        {isAdmin && (
+                                            <button
+                                                onClick={() => handleDeleteTeam(selectedTeam.id)}
+                                                className="p-3 bg-white border border-slate-100 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all shadow-sm"
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
+                            </div>
+
+                            {/* Hidden/Subtle Name Input (Since Design focuses on Date) */}
+                            <div className="mb-8">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Nombre del Equipo</label>
+                                <input
+                                    type="text"
+                                    value={selectedTeam.name}
+                                    onChange={(e) => handleUpdateTeamName(e.target.value)}
+                                    className="w-full text-lg font-bold text-slate-700 bg-slate-50 border-none rounded-xl px-4 py-2 focus:ring-2 ring-indigo-500/20"
+                                    placeholder="Nombre del Equipo"
+                                    disabled={!isAdmin}
+                                />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {ROLES_CONFIG.map(roleConfig => {
                                     const roleUsers = users.filter(u => u.role === roleConfig.role);
                                     const currentValue = (selectedTeam.members as any)?.[roleConfig.key] || '';
-
                                     const isElder = role === 'ELDER';
                                     const canEdit = isAdmin || (isElder && roleConfig.key === 'elder');
 
                                     return (
-                                        <div key={roleConfig.key} className={`bg-slate-50 p-4 rounded-2xl border border-slate-100 ${!canEdit ? 'opacity-75' : ''}`}>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <div className={`p-2 rounded-lg ${roleConfig.color}`}>
-                                                    <roleConfig.icon size={16} />
+                                        <div key={roleConfig.key} className="bg-slate-50/50 p-6 rounded-[1.5rem] border border-slate-100">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                {/* Colored Icon */}
+                                                <div className={`
+                                                    ${roleConfig.key === 'elder' ? 'text-blue-500' : ''}
+                                                    ${roleConfig.key === 'preacher' ? 'text-purple-500' : ''}
+                                                    ${roleConfig.key === 'musicDirector' ? 'text-pink-500' : ''}
+                                                    ${roleConfig.key === 'audioOperator' ? 'text-orange-500' : ''}
+                                                `}>
+                                                    <roleConfig.icon size={18} strokeWidth={2.5} />
                                                 </div>
-                                                <span className="text-sm font-bold text-slate-700 uppercase">{roleConfig.label}</span>
+                                                <span className="text-xs font-black text-slate-600 uppercase tracking-wider">
+                                                    {roleConfig.label}
+                                                </span>
                                             </div>
 
-                                            <select
-                                                value={currentValue}
-                                                onChange={(e) => handleUpdateTeamMember(roleConfig.key, e.target.value)}
-                                                disabled={!canEdit}
-                                                className={`w-full px-4 py-3 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 text-sm font-medium text-slate-700 transition-all ${!canEdit ? 'bg-slate-100 cursor-not-allowed text-slate-500' : 'bg-white'}`}
-                                            >
-                                                <option value="">Sin asignar</option>
-                                                {roleUsers.map(u => (
-                                                    <option key={u.id} value={u.name}>{u.name}</option>
-                                                ))}
-                                                {/* Fallback for users not in list */}
-                                                {currentValue && !roleUsers.find(u => u.name === currentValue) && (
-                                                    <option value={currentValue}>{currentValue}</option>
-                                                )}
-                                            </select>
+                                            <div className="relative">
+                                                <select
+                                                    value={currentValue}
+                                                    onChange={(e) => handleUpdateTeamMember(roleConfig.key, e.target.value)}
+                                                    disabled={!canEdit}
+                                                    className="w-full appearance-none bg-white text-slate-700 font-bold px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all disabled:opacity-50 disabled:bg-slate-100"
+                                                >
+                                                    <option value="">Seleccionar...</option>
+                                                    {roleUsers.map(u => (
+                                                        <option key={u.id} value={u.name}>{u.name}</option>
+                                                    ))}
+                                                    {currentValue && !roleUsers.find(u => u.name === currentValue) && (
+                                                        <option value={currentValue}>{currentValue}</option>
+                                                    )}
+                                                </select>
+                                                {/* Custom Arrow */}
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="m6 9 6 6 6-6" />
+                                                    </svg>
+                                                </div>
+                                            </div>
                                         </div>
                                     );
                                 })}
