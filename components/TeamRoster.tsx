@@ -238,12 +238,12 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                     {selectedTeam ? (
                         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
                             <div className="flex justify-between items-start mb-8">
-                                {/* Date Header Block */}
-                                <div className="flex items-center gap-4">
-                                    <div className="w-20 h-20 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-500 font-bold text-3xl shadow-sm">
+                                {/* Date Header Block - Entire block is now clickable */}
+                                <div className="relative flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity group">
+                                    <div className="w-20 h-20 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-500 font-bold text-3xl shadow-sm group-hover:scale-105 transition-transform">
                                         {selectedTeam.date ? new Date(selectedTeam.date).getDate() : '?'}
                                     </div>
-                                    <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
+                                    <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-pink-500 font-bold uppercase tracking-widest text-sm">
                                                 {selectedTeam.date
@@ -251,7 +251,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                                                     : 'Seleccionar Fecha'}
                                             </span>
                                             <div className="bg-pink-50 text-pink-500 rounded-full p-1">
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                                             </div>
                                         </div>
                                         <h2 className="text-3xl font-black text-slate-800 capitalize leading-none">
@@ -259,14 +259,16 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                                                 ? new Date(selectedTeam.date).toLocaleDateString('es-ES', { weekday: 'long' })
                                                 : 'Sin Fecha'}
                                         </h2>
-
-                                        <input
-                                            type="date"
-                                            value={selectedTeam.date || ''}
-                                            onChange={(e) => handleUpdateTeamDate(e.target.value)}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                        />
                                     </div>
+
+                                    {/* Invisible Overlay Input ensuring full coverage */}
+                                    <input
+                                        type="date"
+                                        value={selectedTeam.date || ''}
+                                        onChange={(e) => handleUpdateTeamDate(e.target.value)}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                        title="Cambiar fecha del equipo"
+                                    />
                                 </div>
 
                                 {/* Actions */}
