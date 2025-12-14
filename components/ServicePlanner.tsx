@@ -49,6 +49,21 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
     setDraggedIndex(null);
   };
 
+  const handleMoveItem = async (index: number, direction: -1 | 1) => {
+    if (!selectedPlan) return;
+    const newItems = [...selectedPlan.items];
+
+    // Boundary checks
+    if (direction === -1 && index === 0) return;
+    if (direction === 1 && index === newItems.length - 1) return;
+
+    const targetIndex = index + direction;
+    const [movedItem] = newItems.splice(index, 1);
+    newItems.splice(targetIndex, 0, movedItem);
+
+    await savePlan({ ...selectedPlan, items: newItems });
+  };
+
   const handleAddItem = async () => {
     if (!selectedPlan) return;
 
@@ -277,9 +292,31 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
               onDrop={(e) => handleDrop(e, index)}
               className={`group relative card-soft p-6 hover:shadow-md transition-all ${draggedIndex === index ? 'opacity-50 border-2 border-dashed border-indigo-300' : ''}`}
             >
-              {/* Drag Handle */}
-              <div className="absolute left-3 top-1/2 -mt-3 text-slate-300 cursor-move hover:text-indigo-400 p-1">
-                <GripVertical size={20} />
+              {/* Drag Handle & Mobile Moving Controls */}
+              <div className="absolute left-3 top-1/2 -mt-8 flex flex-col gap-1 items-center z-10">
+                {index > 0 && (
+                  <button
+                    onClick={() => handleMoveItem(index, -1)}
+                    className="p-1 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-full transition-colors md:hidden"
+                    title="Mover Arriba"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
+                  </button>
+                )}
+
+                <div className="text-slate-300 cursor-move hover:text-indigo-400 p-1 hidden md:block">
+                  <GripVertical size={20} />
+                </div>
+
+                {index < timelineItems.length - 1 && (
+                  <button
+                    onClick={() => handleMoveItem(index, 1)}
+                    className="p-1 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-full transition-colors md:hidden"
+                    title="Mover Abajo"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                  </button>
+                )}
               </div>
 
               <div className="flex items-start gap-4 pl-6">
