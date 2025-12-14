@@ -354,126 +354,126 @@ const MusicMinistryApp: React.FC = () => {
                 </section>
 
                 {/* 3. NEXT SERVICE INFO & ORDER */}
-                {nextPlan ? (
-                    <section className="animate-in slide-in-from-bottom-4 duration-500 delay-200 space-y-6">
-                        {/* CARD 1: SERVICE INFO & TEAM */}
-                        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-1">
-                                        <h4 className="text-xl font-bold text-slate-800">{nextPlan.title || 'Servicio General'}</h4>
-                                        {nextPlan.isActive && (
-                                            <span className="text-[10px] font-bold bg-green-100 text-green-600 px-2 py-1 rounded-full animate-pulse">
-                                                EN VIVO
-                                            </span>
-                                        )}
+                {upcomingPlans.length > 0 ? (
+                    <section className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 delay-200">
+                        {upcomingPlans.map((plan, index) => (
+                            <div key={plan.id} className="space-y-6">
+                                {/* CARD: SERVICE INFO & TEAM */}
+                                <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 relative overflow-hidden">
+                                    {/* Badge for Next vs Future */}
+                                    <div className={`absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider ${index === 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'
+                                        }`}>
+                                        {index === 0 ? 'Siguiente Culto' : 'Futuro Evento'}
                                     </div>
-                                    <p className="text-sm text-slate-500 font-medium capitalize">
-                                        {new Date(nextPlan.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                        {' • '}{nextPlan.startTime}
-                                    </p>
-                                </div>
-                                <div className="text-center bg-indigo-50 px-3 py-2 rounded-xl">
-                                    <span className="block text-2xl font-black text-indigo-600 leading-none">{new Date(nextPlan.date).getDate()}</span>
-                                    <span className="block text-[10px] font-bold text-indigo-400 uppercase">{new Date(nextPlan.date).toLocaleDateString('es-ES', { month: 'short' })}</span>
-                                </div>
-                            </div>
 
-                            {/* Service Team Grid (Merged with Roster) */}
-                            <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2">
-                                {(() => {
-                                    // Logic to Merge Plan Team with Roster Team
-                                    // 1. Get Plan Team
-                                    const planTeam = nextPlan.team || {};
-
-                                    // 2. Find matching Roster Team (ShiftTeam) from settings
-                                    const rosterTeams = (tenant?.settings?.teams || []) as any[];
-                                    const matchingRoster = rosterTeams.find(t => t.date === nextPlan.date);
-                                    const rosterMembers = matchingRoster?.members || {};
-
-                                    // 3. Define the roles we specifically want to show
-                                    // This mapping aligns ServicePlanner keys with TeamRoster keys
-                                    const roleMap = [
-                                        { key: 'preacher', rosterKey: 'preacher', label: 'Predicador', icon: User, color: 'text-indigo-500' },
-                                        { key: 'musicDirector', rosterKey: 'musicDirector', label: 'Dir. Música', icon: Music, color: 'text-pink-500' }, // Specifically requested
-                                        { key: 'elder', rosterKey: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
-                                        { key: 'audioOperator', rosterKey: 'audioOperator', label: 'Audio', icon: Mic2, color: 'text-orange-500' },
-                                        { key: 'videoOperator', rosterKey: 'videoOperator', label: 'Video', icon: Play, color: 'text-blue-500' },
-                                        { key: 'usher', rosterKey: 'usher', label: 'Ujier', icon: User, color: 'text-teal-500' },
-                                    ];
-
-                                    return roleMap.map(roleConfig => {
-                                        // Priority: Plan Team > Roster Team
-                                        const name = planTeam[roleConfig.key] || rosterMembers[roleConfig.rosterKey];
-
-                                        if (!name) return null;
-
-                                        return (
-                                            <div key={roleConfig.key} className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${roleConfig.color}`}>
-                                                    <roleConfig.icon size={14} />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-[10px] uppercase font-bold text-slate-400">{roleConfig.label}</p>
-                                                    <p className="text-xs font-bold text-slate-700 truncate">{name}</p>
-                                                </div>
-                                            </div>
-                                        );
-                                    });
-                                })()}
-                            </div>
-                        </div>
-
-                        {/* CARD 2: REAL-TIME SERVICE ORDER (LITURGY) */}
-                        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <List size={14} /> Orden del Culto
-                            </h3>
-                            <div className="space-y-3">
-                                {nextPlan.items && nextPlan.items.length > 0 ? (
-                                    nextPlan.items.map((item, idx) => (
-                                        <div key={item.id || idx} className="group p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all flex justify-between items-center">
-                                            <div className="flex items-start gap-3">
-                                                <span className="text-xs font-bold text-slate-300 mt-1 w-6">#{String(idx + 1).padStart(2, '0')}</span>
-                                                <div>
-                                                    <h4 className="font-bold text-slate-700 text-sm">{item.title}</h4>
-                                                    <div className="flex items-center gap-2 text-[10px] mt-0.5">
-                                                        <span className="font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">
-                                                            {item.type === 'min' ? 'MINISTERIO' : item.type}
-                                                        </span>
-                                                        {item.type === 'WORSHIP' && item.key && (
-                                                            <span className="text-pink-500 font-bold bg-pink-50 px-1.5 py-0.5 rounded-md">Key: {item.key}</span>
-                                                        )}
-                                                    </div>
-                                                    {/* YouTube/External Links */}
-                                                    {item.type === 'WORSHIP' && (
-                                                        <div className="flex flex-wrap gap-2 mt-1.5">
-                                                            {item.youtubeLinks?.map((link, lIdx) => (
-                                                                <a key={`l-${lIdx}`} href={link} target="_blank" rel="noopener noreferrer" className="text-[9px] bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full hover:bg-red-100 flex items-center gap-1">
-                                                                    <Play size={8} /> Link {lIdx + 1}
-                                                                </a>
-                                                            ))}
-                                                            {item.links?.map((link, lIdx) => (
-                                                                <a key={`n-${lIdx}`} href={link.url} target="_blank" rel="noopener noreferrer" className="text-[9px] bg-indigo-50 text-indigo-500 border border-indigo-100 px-2 py-0.5 rounded-full hover:bg-indigo-100 flex items-center gap-1" title={link.url}>
-                                                                    <Play size={8} /> {link.label}
-                                                                </a>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg tabular-nums">
-                                                {item.durationMinutes}m
-                                            </span>
+                                    {/* Date & Title */}
+                                    <div className="flex items-start gap-4 mb-6">
+                                        <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex flex-col items-center justify-center text-indigo-600 shadow-sm">
+                                            <span className="text-[10px] font-bold uppercase">{new Date(plan.date).toLocaleDateString('es-ES', { weekday: 'short' })}</span>
+                                            <span className="text-xl font-black">{new Date(plan.date).getDate()}</span>
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="text-center py-4 text-slate-400 text-xs italic">
-                                        No hay items en el orden de culto.
+                                        <div>
+                                            <h2 className="text-xl font-bold text-slate-800 leading-tight">{plan.title || 'Culto General'}</h2>
+                                            <div className="flex items-center gap-2 text-slate-400 text-xs font-bold mt-1">
+                                                <Clock size={12} /> {plan.time || '10:00 AM'}
+                                                <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                                <MapPin size={12} /> {tenant.name}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Service Team Grid (Merged with Roster) */}
+                                    <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2">
+                                        {(() => {
+                                            const planTeam = plan.team || {};
+                                            const rosterTeams = (tenant?.settings?.teams || []) as any[];
+                                            const matchingRoster = rosterTeams.find(t => t.date === plan.date);
+                                            const rosterMembers = matchingRoster?.members || {};
+
+                                            const roleMap = [
+                                                { key: 'preacher', rosterKey: 'preacher', label: 'Predicador', icon: User, color: 'text-indigo-500' },
+                                                { key: 'musicDirector', rosterKey: 'musicDirector', label: 'Dir. Música', icon: Music, color: 'text-pink-500' },
+                                                { key: 'elder', rosterKey: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
+                                                { key: 'audioOperator', rosterKey: 'audioOperator', label: 'Audio', icon: Mic2, color: 'text-orange-500' },
+                                                { key: 'videoOperator', rosterKey: 'videoOperator', label: 'Video', icon: Play, color: 'text-blue-500' },
+                                                { key: 'usher', rosterKey: 'usher', label: 'Ujier', icon: User, color: 'text-teal-500' },
+                                            ];
+
+                                            return roleMap.map(roleConfig => {
+                                                const name = planTeam[roleConfig.key] || rosterMembers[roleConfig.rosterKey];
+                                                if (!name) return null;
+
+                                                return (
+                                                    <div key={roleConfig.key} className="flex items-center gap-3">
+                                                        <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${roleConfig.color}`}>
+                                                            <roleConfig.icon size={14} />
+                                                        </div>
+                                                        <div className="overflow-hidden">
+                                                            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider ">{roleConfig.label}</p>
+                                                            <p className="font-bold text-slate-700 text-xs truncate">{name}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            });
+                                        })()}
+                                    </div>
+                                </div>
+
+                                {/* CARD 2: ORDER OF SERVICE (Only for the first plan) */}
+                                {index === 0 && (
+                                    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                                <List size={20} className="text-indigo-500" />
+                                                Orden del Culto
+                                            </h3>
+                                            {plan.isActive && (
+                                                <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full animate-pulse">
+                                                    En Vivo
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {plan.items && plan.items.length > 0 ? (
+                                                plan.items.map((item, i) => (
+                                                    <div key={item.id} className="flex items-center gap-4 group">
+                                                        <div className="text-xs font-bold text-slate-300 w-4 text-center group-hover:text-indigo-400 transition-colors">
+                                                            {i + 1}
+                                                        </div>
+                                                        <div className="flex-1 bg-slate-50 rounded-xl p-3 flex items-center justify-between group-hover:bg-slate-100 transition-colors">
+                                                            <div>
+                                                                <p className="font-bold text-slate-700 text-sm">{item.title}</p>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{item.type} • {item.durationMinutes}m</p>
+                                                                    {item.key && <span className="text-[10px] font-bold bg-pink-100 text-pink-500 px-1 rounded">{item.key}</span>}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Icons logic (Links) */}
+                                                            <div className="flex gap-1">
+                                                                {item.youtubeLinks?.map((link, lI) => (
+                                                                    <a key={lI} href={link} target="_blank" rel="noreferrer" className="w-6 h-6 rounded-full bg-white text-red-400 flex items-center justify-center hover:text-red-600 hover:shadow-sm transition-all border border-slate-100">
+                                                                        <Play size={10} />
+                                                                    </a>
+                                                                ))}
+                                                                {item.links?.map((link, lI) => (
+                                                                    <a key={lI} href={link.url} target="_blank" rel="noreferrer" className="w-6 h-6 rounded-full bg-white text-indigo-400 flex items-center justify-center hover:text-indigo-600 hover:shadow-sm transition-all border border-slate-100">
+                                                                        <LinkIcon size={10} />
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-center text-slate-400 text-xs py-4 italic">No hay liturgia definida.</p>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        ))}
                     </section>
                 ) : (
                     <div className="bg-slate-100 rounded-3xl p-8 text-center text-slate-400">
