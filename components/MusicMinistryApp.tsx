@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ChurchTenant, ChurchSettings, ChurchEvent, ServicePlan, MusicTeam } from '../types';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs, orderBy, limit, onSnapshot } from 'firebase/firestore';
-import { Lock, Music, Calendar, Radio, Mic2, User, Play, Clock, MapPin, Bell, LogOut, ArrowLeft, List } from 'lucide-react';
+import { Lock, Music, Calendar, Radio, Mic2, User, Play, Clock, MapPin, Bell, LogOut, ArrowLeft, List, Link as LinkIcon } from 'lucide-react';
 import { MOCK_TENANTS } from '../constants'; // Fallback
 
 // Helper to get tenant (Simplified version of VisitorLanding logic)
