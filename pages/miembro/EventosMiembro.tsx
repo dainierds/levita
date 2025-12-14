@@ -31,15 +31,26 @@ const EventosMiembro: React.FC = () => {
 
     const addToCalendar = (event: any, type: 'google' | 'apple') => {
         const startDate = new Date(event.date + 'T' + event.time);
-        const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // Assume 2 hours
+        const iso = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, '');
+
+        let endDateIso;
+        if (event.endDate) {
+            const endD = new Date(event.endDate + 'T' + event.time);
+            // End date usually needs to be end of that day or +duration. 
+            // Assuming same time event on end date for now or just +duration logic if simple.
+            // Let's stick strictly to what works:
+            endDateIso = iso(new Date(endD.getTime() + 2 * 60 * 60 * 1000));
+        } else {
+            const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours default
+            endDateIso = iso(endDate);
+        }
+
         const text = encodeURIComponent(event.title);
         const details = encodeURIComponent(event.description || '');
         const location = encodeURIComponent(event.address || '');
 
-        const iso = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, '');
-
         if (type === 'google') {
-            window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${iso(startDate)}/${iso(endDate)}&details=${details}&location=${location}`, '_blank');
+            window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${iso(startDate)}/${endDateIso}&details=${details}&location=${location}`, '_blank');
         } else {
             // iCal logic
             const icsContent = `BEGIN:VCALENDAR
@@ -48,7 +59,7 @@ BEGIN:VEVENT
 SUMMARY:${event.title}
 DESCRIPTION:${event.description || ''}
 DTSTART:${iso(startDate)}
-DTEND:${iso(endDate)}
+DTEND:${endDateIso}
 LOCATION:${event.address || ''}
 END:VEVENT
 END:VCALENDAR`;
@@ -92,7 +103,17 @@ END:VCALENDAR`;
                     {placeholders.map(i => <div key={`p-${i}`} />)}
                     {daysArray.map(day => {
                         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                        const dayEvents = allEvents.filter(e => e.date === dateStr);
+                        const targetDate = new Date(dateStr + 'T00:00:00');
+
+                        const dayEvents = allEvents.filter(e => {
+                            const start = new Date(e.date + 'T00:00:00');
+                            if (e.date === dateStr) return true;
+                            if (e.endDate) {
+                                const end = new Date(e.endDate + 'T00:00:00');
+                                return targetDate >= start && targetDate <= end;
+                            }
+                            return false;
+                        });
                         const hasEvent = dayEvents.length > 0;
                         const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
 
@@ -172,6 +193,11 @@ END:VCALENDAR`;
                                         </span>
                                         <span className="block text-xl font-black text-slate-800 leading-none mt-0.5">
                                             {new Date(event.date).getDate()}
+                                            {event.endDate && event.endDate !== event.date && (
+                                                <span className="text-[10px] block mt-1 text-slate-400">
+                                                    - {new Date(event.endDate).getDate()}
+                                                </span>
+                                            )}
                                         </span>
                                     </div>
                                     <div className="absolute top-3 left-3">
@@ -238,7 +264,7 @@ END:VCALENDAR`;
                 </div>
             )}
 
-            {/* Calendar Modal Logic (kept if user switches to calendar view and clicks event) */}
+            {/* Calendar Modal Logic */}
             {selectedEvent && (
                 <div
                     className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
@@ -279,7 +305,8 @@ END:VCALENDAR`;
                                 <div>
                                     <p className="text-xs font-bold text-slate-400 uppercase">Fecha</p>
                                     <p className="font-semibold capitalize">
-                                        {new Date(selectedEvent.date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                        {new Date(selectedEvent.date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
+                                        {selectedEvent.endDate && selectedEvent.endDate !== selectedEvent.date && ` - ${new Date(selectedEvent.endDate).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}`}
                                     </p>
                                 </div>
                             </div>

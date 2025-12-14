@@ -475,7 +475,10 @@ const EventCarousel: React.FC<{ events: ChurchEvent[] }> = ({ events }) => {
                         <div className="flex items-center gap-4 text-sm font-bold bg-black/10 w-fit px-4 py-2 rounded-xl backdrop-blur-sm">
                             <span className="flex items-center gap-2 opacity-90">
                                 <Calendar size={16} />
-                                {new Date(activeEvent.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                                {new Date(activeEvent.date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                                {activeEvent.endDate && activeEvent.endDate !== activeEvent.date && (
+                                    <> - {new Date(activeEvent.endDate + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</>
+                                )}
                             </span>
                             {activeEvent.time && (
                                 <>

@@ -7,6 +7,7 @@ export interface ChurchEvent {
   id: string;
   title: string;
   date: string;
+  endDate?: string;
   time: string;
   type: EventType;
   location: string;

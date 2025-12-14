@@ -38,15 +38,36 @@ export const EventsView: React.FC<EventsViewProps> = ({ events = [] }) => {
   };
 
   const getEventsForDate = (day: number) => {
+    const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    targetDate.setHours(0, 0, 0, 0);
+
     return sortedEvents.filter(e => {
-      const d = new Date(e.date + 'T00:00:00'); // Ensure local date match
-      return d.getDate() === day && d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
+      const start = new Date(e.date + 'T00:00:00');
+      start.setHours(0, 0, 0, 0);
+
+      if (start.getTime() === targetDate.getTime()) return true;
+
+      if (e.endDate) {
+        const end = new Date(e.endDate + 'T00:00:00');
+        end.setHours(0, 0, 0, 0);
+        return targetDate >= start && targetDate <= end;
+      }
+      return false;
     });
   };
 
   const addToGoogleCalendar = (event: ChurchEvent) => {
     const startTime = new Date(`${event.date}T${event.time}`).toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const endTime = new Date(new Date(`${event.date}T${event.time}`).getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/-|:|\.\d\d\d/g, ""); // Assume 2 hours
+    // Use endDate if available, else +2 hours
+    const endDateTimeStr = event.endDate ? `${event.endDate}T${event.time}` : null;
+    let endTime;
+
+    if (endDateTimeStr) {
+      endTime = new Date(new Date(endDateTimeStr).getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/-|:|\.\d\d\d/g, "");
+    } else {
+      endTime = new Date(new Date(`${event.date}T${event.time}`).getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/-|:|\.\d\d\d/g, "");
+    }
+
     const details = encodeURIComponent(event.description || '');
     const location = encodeURIComponent(event.address || event.placeName || '');
     const title = encodeURIComponent(event.title);
@@ -54,10 +75,17 @@ export const EventsView: React.FC<EventsViewProps> = ({ events = [] }) => {
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startTime}/${endTime}&details=${details}&location=${location}`;
     window.open(url, '_blank');
   };
-
   const downloadICal = (event: ChurchEvent) => {
     const startTime = new Date(`${event.date}T${event.time}`).toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const endTime = new Date(new Date(`${event.date}T${event.time}`).getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/-|:|\.\d\d\d/g, "");
+
+    const endDateTimeStr = event.endDate ? `${event.endDate}T${event.time}` : null;
+    let endTime;
+
+    if (endDateTimeStr) {
+      endTime = new Date(new Date(endDateTimeStr).getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/-|:|\.\d\d\d/g, "");
+    } else {
+      endTime = new Date(new Date(`${event.date}T${event.time}`).getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/-|:|\.\d\d\d/g, "");
+    }
 
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -80,11 +108,15 @@ END:VCALENDAR`;
     link.click();
     document.body.removeChild(link);
   };
-
   const renderEventCard = (event: ChurchEvent, isModal = false) => {
     const dateObj = new Date(event.date + 'T00:00:00');
     const day = dateObj.getDate();
     const month = dateObj.toLocaleDateString('es-ES', { month: 'short' });
+
+    // Logic for range display
+    const endDateObj = event.endDate ? new Date(event.endDate + 'T00:00:00') : null;
+    const isMultiDay = endDateObj && endDateObj.getTime() !== dateObj.getTime();
+
     const timeStr = new Date('2000-01-01T' + event.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true });
 
     return (
@@ -97,9 +129,15 @@ END:VCALENDAR`;
             alt={event.title}
             className={`w-full h-full object-cover rounded-[1.8rem] opacity-90 transition-transform duration-700 ${!isModal && 'group-hover:scale-110'}`}
           />
-          <div className="absolute top-4 right-4 bg-neu-base/90 dark:bg-neu-base-dark/90 backdrop-blur px-4 py-2 rounded-xl shadow-lg flex flex-col items-center">
+          <div className="absolute top-4 right-4 bg-neu-base/90 dark:bg-neu-base-dark/90 backdrop-blur px-4 py-2 rounded-xl shadow-lg flex flex-col items-center min-w-[60px]">
             <span className="text-xs font-bold text-gray-400 uppercase">{month}</span>
             <span className="text-xl font-black text-gray-800 dark:text-gray-100">{day}</span>
+            {isMultiDay && endDateObj && (
+              <>
+                <span className="h-px w-3 bg-gray-300 my-1"></span>
+                <span className="text-xl font-black text-gray-800 dark:text-gray-100">{endDateObj.getDate()}</span>
+              </>
+            )}
           </div>
         </div>
 

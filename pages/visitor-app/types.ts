@@ -19,7 +19,8 @@ export interface NavItem {
 export interface EventItem {
   id: string;
   title: string;
-  date: string;
+  date: string; // Start Date
+  endDate?: string; // Optional End Date for multi-day events
   time: string;
   location: string;
   image: string;
