@@ -359,18 +359,15 @@ const MusicMinistryApp: React.FC = () => {
                 </section>
 
                 {/* 3. NEXT SERVICE INFO */}
-        </div>
-                                </div >
-                            </section >
-                        ) : (
-): (
-        <div className = "bg-slate-100 rounded-3xl p-8 text-center text-slate-400">
-                        <Calendar className = "mx-auto mb-2 opacity-50" />
-                        No hay cultos programados.
-                    </div >
+            </section>
+            ) : (
+            <div className="bg-slate-100 rounded-3xl p-8 text-center text-slate-400">
+                <Calendar className="mx-auto mb-2 opacity-50" />
+                No hay cultos programados.
+            </div>
                 )}
 
-            </main >
+        </main >
         </div >
     );
 };
