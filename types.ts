@@ -115,6 +115,7 @@ export interface ChurchSettings {
 export interface ShiftTeam {
   id: string;
   name: string;
+  date?: string; // New field for date-based duty teams
   members: Partial<ServiceTeam>;
 }
 

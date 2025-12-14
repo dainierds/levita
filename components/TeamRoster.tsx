@@ -25,24 +25,37 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
     const [hasChanges, setHasChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Sync local state when props change (only if not dirty, or force sync?)
-    // To avoid overwriting local edits, we only sync if we haven't touched it, 
-    // but for simplicity let's just initialize.
+    // Sync local state when props change
     useEffect(() => {
-        setLocalSettings(settings);
+        // Sort teams by date before setting
+        const sortedTeams = [...(settings.teams || [])].sort((a, b) => {
+            if (!a.date) return 1;
+            if (!b.date) return -1;
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+        setLocalSettings({ ...settings, teams: sortedTeams });
+
         // Select first team if none selected and teams exist
-        if (!selectedTeamId && settings.teams && settings.teams.length > 0) {
-            setSelectedTeamId(settings.teams[0].id);
+        if (!selectedTeamId && sortedTeams.length > 0) {
+            setSelectedTeamId(sortedTeams[0].id);
         }
     }, [settings]);
 
     const handleCreateTeam = () => {
+        const today = new Date().toISOString().split('T')[0];
         const newTeam: ShiftTeam = {
             id: crypto.randomUUID(),
-            name: `Nuevo Equipo ${localSettings.teams?.length ? localSettings.teams.length + 1 : 1}`,
+            name: `Equipo ${localSettings.teams?.length ? localSettings.teams.length + 1 : 1}`,
+            date: today,
             members: {}
         };
-        const updatedTeams = [...(localSettings.teams || []), newTeam];
+        const updatedTeams = [...(localSettings.teams || []), newTeam].sort((a, b) => {
+            // Keep sorted
+            if (!a.date) return 1;
+            if (!b.date) return -1;
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+
         setLocalSettings({ ...localSettings, teams: updatedTeams });
         setSelectedTeamId(newTeam.id);
         setHasChanges(true);
@@ -82,8 +95,19 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
         setHasChanges(true);
     };
 
-    const handleSetActiveTeam = (teamId: string) => {
-        setLocalSettings({ ...localSettings, activeTeamId: teamId });
+    const handleUpdateTeamDate = (date: string) => {
+        if (!selectedTeamId) return;
+        const updatedTeams = localSettings.teams?.map(t => {
+            if (t.id === selectedTeamId) {
+                return { ...t, date };
+            }
+            return t;
+        }).sort((a, b) => {
+            if (!a.date) return 1;
+            if (!b.date) return -1;
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+        }) || [];
+        setLocalSettings({ ...localSettings, teams: updatedTeams });
         setHasChanges(true);
     };
 
@@ -103,12 +127,28 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
     const selectedTeam = localSettings.teams?.find(t => t.id === selectedTeamId);
     const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
 
+    // Helper to determine if a team is the "Active" one (Nearest Future or Today)
+    const getActiveTeamId = () => {
+        if (!localSettings.teams || localSettings.teams.length === 0) return null;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const upcomingTeams = localSettings.teams
+            .filter(t => t.date && new Date(t.date + 'T00:00:00') >= today)
+            .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
+
+        return upcomingTeams.length > 0 ? upcomingTeams[0].id : null;
+    };
+
+    const computedActiveId = getActiveTeamId();
+
     return (
         <div className="p-4 md:p-8 md:pt-24 space-y-8 max-w-full mx-auto">
             <header className="flex justify-between items-center">
                 <div>
                     <h2 className="text-3xl font-bold text-slate-800">Gestión de Equipos</h2>
-                    <p className="text-slate-500">Crea y administra los equipos de turno.</p>
+                    <p className="text-slate-500">Crea los equipos de la semana. El más cercano será el activo.</p>
                 </div>
                 {hasChanges && (
                     <button
@@ -126,7 +166,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                 {/* Sidebar: Team List */}
                 <div className="lg:col-span-1 space-y-4">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-bold text-slate-700">Mis Equipos</h3>
+                        <h3 className="font-bold text-slate-700">Equipos Programados</h3>
                         {isAdmin && (
                             <button
                                 onClick={handleCreateTeam}
@@ -138,40 +178,50 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                         )}
                     </div>
 
-                    <div className="space-y-3">
-                        {localSettings.teams?.map(team => (
-                            <div
-                                key={team.id}
-                                className={`relative group w-full text-left p-4 rounded-2xl transition-all border cursor-pointer ${selectedTeamId === team.id
-                                    ? 'bg-white border-indigo-500 shadow-md ring-1 ring-indigo-500'
-                                    : 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-indigo-50'
-                                    }`}
-                                onClick={() => setSelectedTeamId(team.id)}
-                            >
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className={`font-bold text-lg ${selectedTeamId === team.id ? 'text-indigo-700' : 'text-slate-700'}`}>
-                                        {team.name}
-                                    </span>
-                                    {localSettings.activeTeamId === team.id && (
-                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-bold uppercase flex items-center gap-1">
-                                            <CheckCircle size={10} /> Activo
+                    <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                        {localSettings.teams?.map(team => {
+                            const isActive = computedActiveId === team.id;
+                            const isPast = team.date && new Date(team.date) < new Date(new Date().setHours(0, 0, 0, 0));
+
+                            return (
+                                <div
+                                    key={team.id}
+                                    className={`relative group w-full text-left p-4 rounded-2xl transition-all border cursor-pointer ${selectedTeamId === team.id
+                                        ? 'bg-white border-indigo-500 shadow-md ring-1 ring-indigo-500'
+                                        : 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-indigo-50'
+                                        } ${isPast ? 'opacity-60 grayscale-[0.5]' : ''}`}
+                                    onClick={() => setSelectedTeamId(team.id)}
+                                >
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className={`font-bold text-lg ${selectedTeamId === team.id ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                            {team.name}
                                         </span>
+                                        {isActive && (
+                                            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px] font-bold uppercase flex items-center gap-1">
+                                                <CheckCircle size={10} /> Activo
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-xs text-slate-400 flex items-center justify-between">
+                                        <span>{Object.keys(team.members).length} miembros</span>
+                                        {team.date && (
+                                            <span className={`font-medium ${isPast ? 'text-slate-500' : 'text-indigo-500'}`}>
+                                                {new Date(team.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {isAdmin && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteTeam(team.id); }}
+                                            className="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     )}
                                 </div>
-                                <div className="text-xs text-slate-400">
-                                    {Object.keys(team.members).length} miembros asignados
-                                </div>
-
-                                {isAdmin && (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteTeam(team.id); }}
-                                        className="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
+                            )
+                        })}
 
                         {(!localSettings.teams || localSettings.teams.length === 0) && (
                             <div className="text-center p-8 bg-slate-50 rounded-2xl text-slate-400 border border-dashed border-slate-200">
@@ -201,28 +251,20 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                                             placeholder="Nombre del Equipo"
                                             disabled={!isAdmin}
                                         />
-                                        <p className="text-slate-500 text-sm">Editando integrantes</p>
+                                        <p className="text-slate-500 text-sm">Configuración del equipo</p>
                                     </div>
                                 </div>
 
-                                {isAdmin && (
-                                    <button
-                                        onClick={() => handleSetActiveTeam(selectedTeam.id)}
-                                        disabled={localSettings.activeTeamId === selectedTeam.id}
-                                        className={`px-4 py-2 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${localSettings.activeTeamId === selectedTeam.id
-                                            ? 'bg-green-100 text-green-700 cursor-default'
-                                            : 'bg-slate-100 text-slate-600 hover:bg-indigo-600 hover:text-white'
-                                            }`}
-                                    >
-                                        {localSettings.activeTeamId === selectedTeam.id ? (
-                                            <>
-                                                <CheckCircle size={16} /> Equipo Activo
-                                            </>
-                                        ) : (
-                                            'Establecer como Activo'
-                                        )}
-                                    </button>
-                                )}
+                                <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                                    <span className="text-xs font-bold text-slate-500 uppercase px-2">Fecha:</span>
+                                    <input
+                                        type="date"
+                                        value={selectedTeam.date || ''}
+                                        onChange={(e) => handleUpdateTeamDate(e.target.value)}
+                                        className="bg-transparent text-sm font-bold text-slate-700 outline-none"
+                                        disabled={!isAdmin}
+                                    />
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
