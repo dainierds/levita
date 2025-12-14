@@ -281,7 +281,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
         </div>
 
         {/* User List - Grouped by Role */}
-        <div className="lg:col-span-2 xl:col-span-3 space-y-8">
+        <div className="lg:col-span-2 xl:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 
           {(() => {
             // Define sections order and configuration
