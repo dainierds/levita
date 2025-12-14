@@ -358,20 +358,145 @@ const MusicMinistryApp: React.FC = () => {
                     )}
                 </section>
 
-                {/* 3. NEXT SERVICE INFO */}
                 {/* 3. NEXT SERVICE INFO & ORDER */}
                 {nextPlan ? (
                     <section className="animate-in slide-in-from-bottom-4 duration-500 delay-200 space-y-6">
-                        {/* SERVICE INFO CONTENT AND ORDER CARD WOULD BE HERE - assuming they are inside the `section` above which was previously rendered properly but malformed at the end */}
-                        {/* We are replacing the END of the file where the error is, so we need to close the `section` correctly or the `div` correctly */}
+                        {/* CARD 1: SERVICE INFO & TEAM */}
+                        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <h4 className="text-xl font-bold text-slate-800">{nextPlan.title || 'Servicio General'}</h4>
+                                        {nextPlan.isActive && (
+                                            <span className="text-[10px] font-bold bg-green-100 text-green-600 px-2 py-1 rounded-full animate-pulse">
+                                                EN VIVO
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-slate-500 font-medium capitalize">
+                                        {new Date(nextPlan.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                        {' • '}{nextPlan.startTime}
+                                    </p>
+                                </div>
+                                <div className="text-center bg-indigo-50 px-3 py-2 rounded-xl">
+                                    <span className="block text-2xl font-black text-indigo-600 leading-none">{new Date(nextPlan.date).getDate()}</span>
+                                    <span className="block text-[10px] font-bold text-indigo-400 uppercase">{new Date(nextPlan.date).toLocaleDateString('es-ES', { month: 'short' })}</span>
+                                </div>
+                            </div>
 
-                        {/* ... content of the section is assumed to be correct up until the closing tag ... */}
+                            {/* Service Team Grid (Merged with Roster) */}
+                            <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2">
+                                {(() => {
+                                    // Logic to Merge Plan Team with Roster Team
+                                    // 1. Get Plan Team
+                                    const planTeam = nextPlan.team || {};
+
+                                    // 2. Find matching Roster Team (ShiftTeam) from settings
+                                    const rosterTeams = (tenant?.settings?.teams || []) as any[];
+                                    const matchingRoster = rosterTeams.find(t => t.date === nextPlan.date);
+                                    const rosterMembers = matchingRoster?.members || {};
+
+                                    // 3. Define the roles we specifically want to show
+                                    // This mapping aligns ServicePlanner keys with TeamRoster keys
+                                    const roleMap = [
+                                        { key: 'preacher', rosterKey: 'preacher', label: 'Predicador', icon: User, color: 'text-indigo-500' },
+                                        { key: 'musicDirector', rosterKey: 'musicDirector', label: 'Dir. Música', icon: Music, color: 'text-pink-500' }, // Specifically requested
+                                        { key: 'elder', rosterKey: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
+                                        { key: 'audioOperator', rosterKey: 'audioOperator', label: 'Audio', icon: Mic2, color: 'text-orange-500' },
+                                        { key: 'videoOperator', rosterKey: 'videoOperator', label: 'Video', icon: Play, color: 'text-blue-500' },
+                                        { key: 'usher', rosterKey: 'usher', label: 'Ujier', icon: User, color: 'text-teal-500' },
+                                    ];
+
+                                    return roleMap.map(roleConfig => {
+                                        // Priority: Plan Team > Roster Team
+                                        const name = planTeam[roleConfig.key] || rosterMembers[roleConfig.rosterKey];
+
+                                        if (!name) return null;
+
+                                        return (
+                                            <div key={roleConfig.key} className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${roleConfig.color}`}>
+                                                    <roleConfig.icon size={14} />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-[10px] uppercase font-bold text-slate-400">{roleConfig.label}</p>
+                                                    <p className="text-xs font-bold text-slate-700 truncate">{name}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    });
+                                })()}
+                            </div>
+                        </div>
+
+                        {/* CARD 2: REAL-TIME SERVICE ORDER (LITURGY) */}
+                        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <List size={14} /> Orden del Culto
+                            </h3>
+                            <div className="space-y-3">
+                                {nextPlan.items && nextPlan.items.length > 0 ? (
+                                    nextPlan.items.map((item, idx) => (
+                                        <div key={item.id || idx} className="group p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all flex justify-between items-center">
+                                            <div className="flex items-start gap-3">
+                                                <span className="text-xs font-bold text-slate-300 mt-1 w-6">#{String(idx + 1).padStart(2, '0')}</span>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-700 text-sm">{item.title}</h4>
+                                                    <div className="flex items-center gap-2 text-[10px] mt-0.5">
+                                                        <span className="font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                                                            {item.type === 'min' ? 'MINISTERIO' : item.type}
+                                                        </span>
+                                                        {item.type === 'WORSHIP' && item.key && (
+                                                            <span className="text-pink-500 font-bold bg-pink-50 px-1.5 py-0.5 rounded-md">Key: {item.key}</span>
+                                                        )}
+                                                    </div>
+                                                    {/* YouTube/External Links */}
+                                                    {item.type === 'WORSHIP' && (
+                                                        <div className="flex flex-wrap gap-2 mt-1.5">
+                                                            {item.youtubeLinks?.map((link, lIdx) => (
+                                                                <a key={`l-${lIdx}`} href={link} target="_blank" rel="noopener noreferrer" className="text-[9px] bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full hover:bg-red-100 flex items-center gap-1">
+                                                                    <Play size={8} /> Link {lIdx + 1}
+                                                                </a>
+                                                            ))}
+                                                            {item.links?.map((link, lIdx) => (
+                                                                <a key={`n-${lIdx}`} href={link.url} target="_blank" rel="noopener noreferrer" className="text-[9px] bg-indigo-50 text-indigo-500 border border-indigo-100 px-2 py-0.5 rounded-full hover:bg-indigo-100 flex items-center gap-1" title={link.url}>
+                                                                    <Play size={8} /> {link.label}
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg tabular-nums">
+                                                {item.durationMinutes}m
+                                            </span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-4 text-slate-400 text-xs italic">
+                                        No hay items en el orden de culto.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </section>
                 ) : (
                     <div className="bg-slate-100 rounded-3xl p-8 text-center text-slate-400">
                         <Calendar className="mx-auto mb-2 opacity-50" />
                         No hay cultos programados.
                     </div>
+                )}
+                <section className="animate-in slide-in-from-bottom-4 duration-500 delay-200 space-y-6">
+                    {/* SERVICE INFO CONTENT AND ORDER CARD WOULD BE HERE - assuming they are inside the `section` above which was previously rendered properly but malformed at the end */}
+                    {/* We are replacing the END of the file where the error is, so we need to close the `section` correctly or the `div` correctly */}
+
+                    {/* ... content of the section is assumed to be correct up until the closing tag ... */}
+                </section>
+                ) : (
+                <div className="bg-slate-100 rounded-3xl p-8 text-center text-slate-400">
+                    <Calendar className="mx-auto mb-2 opacity-50" />
+                    No hay cultos programados.
+                </div>
                 )}
             </main>
         </div>
