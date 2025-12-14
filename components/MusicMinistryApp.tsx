@@ -371,7 +371,7 @@ const MusicMinistryApp: React.FC = () => {
                                 {nextPlan.team && Object.entries(nextPlan.team).map(([role, name]) => {
                                     if (!name) return null; // Skip empty roles
                                     // Filter out technical fields and TeamNames (case insensitive)
-                                    const ignoredFields = ['id', 'tenantid', 'teamname', 'createdat', 'updatedat'];
+                                    const ignoredFields = ['id', 'tenantid', 'teamname', 'createdat', 'updatedat', 'worshipleader'];
                                     if (ignoredFields.includes(role.toLowerCase())) return null;
 
                                     // Helper for labels and icons
