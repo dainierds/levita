@@ -62,7 +62,7 @@ const MusicMinistryApp: React.FC = () => {
 
     // ... Data State ...
     const [events, setEvents] = useState<ChurchEvent[]>([]);
-    const [nextPlan, setNextPlan] = useState<ServicePlan | null>(null);
+    const [upcomingPlans, setUpcomingPlans] = useState<ServicePlan[]>([]);
     const [musicTeam, setMusicTeam] = useState<MusicTeam | null>(null);
     const [musicMembers, setMusicMembers] = useState<any[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(false);
@@ -85,18 +85,13 @@ const MusicMinistryApp: React.FC = () => {
             const unsubscribe = onSnapshot(q, (snapshot) => {
                 const plans = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
 
-                // 1. Priority: Active Plan (Live)
-                const active = plans.find(p => p.isActive);
+                // Filter for future or active plans
+                const futurePlans = plans
+                    .filter(p => p.isActive || new Date(p.date + 'T00:00:00') >= today)
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .slice(0, 2); // Take top 2
 
-                if (active) {
-                    setNextPlan(active);
-                } else {
-                    // 2. Priority: Nearest Upcoming Plan
-                    const upcoming = plans
-                        .filter(p => new Date(p.date + 'T00:00:00') >= today)
-                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-                    setNextPlan(upcoming || null);
-                }
+                setUpcomingPlans(futurePlans);
             });
 
             return () => unsubscribe();
