@@ -46,7 +46,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
         const newTeam: ShiftTeam = {
             id: crypto.randomUUID(),
             name: `Equipo ${localSettings.teams?.length ? localSettings.teams.length + 1 : 1}`,
-            date: today,
+            date: '', // Support manual date selection
             members: {}
         };
         const updatedTeams = [...(localSettings.teams || []), newTeam].sort((a, b) => {
@@ -243,37 +243,35 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
                                     <div className="w-20 h-20 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-500 font-bold text-3xl shadow-sm">
                                         {selectedTeam.date ? new Date(selectedTeam.date).getDate() : '?'}
                                     </div>
-                                    <div>
+                                    <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-pink-500 font-bold uppercase tracking-widest text-sm">
                                                 {selectedTeam.date
                                                     ? new Date(selectedTeam.date).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
                                                     : 'Seleccionar Fecha'}
                                             </span>
-                                            {/* Date Picker Trigger (Invisible Input Overlay or separate button?) 
-                                                For this design, the text should probably trigger the picker or be the picker.
-                                                I'll make the whole text block a label for an invisible input.
-                                            */}
-                                            <input
-                                                type="date"
-                                                value={selectedTeam.date || ''}
-                                                onChange={(e) => handleUpdateTeamDate(e.target.value)}
-                                                className="w-6 h-6 p-0 border-none opacity-0 absolute cursor-pointer" // Hacky overlay or just adjacent?
-                                            // Let's keep a small clean picker button nearby or make the text editable via click.
-                                            // Functionally, let's add a small edit icon next to it that triggers input
-                                            />
+                                            <div className="bg-pink-50 text-pink-500 rounded-full p-1">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                            </div>
                                         </div>
-                                        <h2 className="text-3xl font-black text-slate-800 capitalize">
+                                        <h2 className="text-3xl font-black text-slate-800 capitalize leading-none">
                                             {selectedTeam.date
                                                 ? new Date(selectedTeam.date).toLocaleDateString('es-ES', { weekday: 'long' })
                                                 : 'Sin Fecha'}
                                         </h2>
+
+                                        <input
+                                            type="date"
+                                            value={selectedTeam.date || ''}
+                                            onChange={(e) => handleUpdateTeamDate(e.target.value)}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                        />
                                     </div>
                                 </div>
 
                                 {/* Actions */}
                                 <div className="flex gap-2">
-                                    {/* Rename Input as a discrete action or just keep current "Name" field? 
+                                    {/* Rename Input as a discrete action or just keep current "Name" field?
                                         The design doesn't show a team "Name" prominently, mostly the date.
                                         But we rely on Name in the sidebar. I will keep the Name input but perhaps more subtle or separate.
                                     */}
