@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ChurchTenant, ChurchSettings, ChurchEvent, ServicePlan, MusicTeam } from '../types';
 import { db } from '../services/firebase';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { Lock, Music, Calendar, Radio, Mic2, User, Play, Clock, MapPin, Bell, LogOut, ArrowLeft } from 'lucide-react';
+import { collection, query, where, getDocs, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { Lock, Music, Calendar, Radio, Mic2, User, Play, Clock, MapPin, Bell, LogOut, ArrowLeft, List } from 'lucide-react';
 import { MOCK_TENANTS } from '../constants'; // Fallback
 
 // Helper to get tenant (Simplified version of VisitorLanding logic)
@@ -71,6 +71,35 @@ const MusicMinistryApp: React.FC = () => {
     useEffect(() => {
         if (isAuthenticated && tenant) {
             fetchDashboardData();
+
+            // Real-time Service Plan Listener
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const q = query(
+                collection(db, 'servicePlans'),
+                where('tenantId', '==', tenant.id),
+                orderBy('date', 'asc') // Order by date to easily find upcoming
+            );
+
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const plans = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
+
+                // 1. Priority: Active Plan (Live)
+                const active = plans.find(p => p.isActive);
+
+                if (active) {
+                    setNextPlan(active);
+                } else {
+                    // 2. Priority: Nearest Upcoming Plan
+                    const upcoming = plans
+                        .filter(p => new Date(p.date + 'T00:00:00') >= today)
+                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+                    setNextPlan(upcoming || null);
+                }
+            });
+
+            return () => unsubscribe();
         }
     }, [isAuthenticated, tenant?.id]);
 
@@ -137,23 +166,9 @@ const MusicMinistryApp: React.FC = () => {
                 });
             setEvents(fetchedEvents.slice(0, 5));
 
-            // 2. Fetch Next Service Plan
-            const plansQ = query(
-                collection(db, 'servicePlans'), // Root collection
-                where('tenantId', '==', tenant.id),
-                orderBy('date', 'asc')
-            );
-            const plansSnap = await getDocs(plansQ);
-
-            const allPlans = plansSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
-            const upcomingPlan = allPlans
-                .filter(p => {
-                    const planDate = new Date(p.date + 'T00:00:00');
-                    return planDate >= today;
-                })
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-
-            setNextPlan(upcomingPlan || null);
+            // 2. Fetch Next Service Plan (Handled by Real-time Listener now)
+            // We keep this empty or remove it to avoid race conditions/double sets.
+            // The useEffect listener above handles setNextPlan.
 
             // 3. Fetch Nearest Music Team (Independent of Plan)
             // Music Teams ARE stored in subcollections (confirmed working)
@@ -344,17 +359,21 @@ const MusicMinistryApp: React.FC = () => {
                 </section>
 
                 {/* 3. NEXT SERVICE INFO */}
+                {/* 3. NEXT SERVICE INFO & ORDER */}
                 {nextPlan ? (
-                    <section className="animate-in slide-in-from-bottom-4 duration-500 delay-200">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Calendar className="text-indigo-500" size={20} />
-                            <h3 className="font-bold text-lg">Próximo Culto</h3>
-                        </div>
-
+                    <section className="animate-in slide-in-from-bottom-4 duration-500 delay-200 space-y-6">
+                        {/* Plan Header Card */}
                         <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
-                                    <h4 className="text-xl font-bold text-slate-800">{nextPlan.title || 'Servicio General'}</h4>
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <h4 className="text-xl font-bold text-slate-800">{nextPlan.title || 'Servicio General'}</h4>
+                                        {nextPlan.isActive && (
+                                            <span className="text-[10px] font-bold bg-green-100 text-green-600 px-2 py-1 rounded-full animate-pulse">
+                                                EN VIVO
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="text-sm text-slate-500 font-medium capitalize">
                                         {new Date(nextPlan.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
                                         {' • '}{nextPlan.startTime}
@@ -366,15 +385,13 @@ const MusicMinistryApp: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Service Team */}
-                            <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2">
+                            {/* Service Team Grid */}
+                            <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2 mb-6">
                                 {nextPlan.team && Object.entries(nextPlan.team).map(([role, name]) => {
-                                    if (!name) return null; // Skip empty roles
-                                    // Filter out technical fields and TeamNames (case insensitive)
+                                    if (!name) return null;
                                     const ignoredFields = ['id', 'tenantid', 'teamname', 'createdat', 'updatedat', 'worshipleader'];
                                     if (ignoredFields.includes(role.toLowerCase())) return null;
 
-                                    // Helper for labels and icons
                                     const getRoleInfo = (r: string) => {
                                         switch (r) {
                                             case 'preacher': return { label: 'Predicador', icon: User, color: 'text-indigo-500' };
@@ -402,6 +419,57 @@ const MusicMinistryApp: React.FC = () => {
                                         </div>
                                     );
                                 })}
+                            </div>
+
+                            {/* Real-time Order of Service Items */}
+                            <div className="border-t border-slate-100 pt-6">
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <List size={14} /> Orden del Culto
+                                </h3>
+                                <div className="space-y-3">
+                                    {nextPlan.items && nextPlan.items.length > 0 ? (
+                                        nextPlan.items.map((item, idx) => (
+                                            <div key={item.id || idx} className="group p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all flex justify-between items-center">
+                                                <div className="flex items-start gap-3">
+                                                    <span className="text-xs font-bold text-slate-300 mt-1 w-6">#{String(idx + 1).padStart(2, '0')}</span>
+                                                    <div>
+                                                        <h4 className="font-bold text-slate-700 text-sm">{item.title}</h4>
+                                                        <div className="flex items-center gap-2 text-[10px] mt-0.5">
+                                                            <span className="font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                                                                {item.type === 'min' ? 'MINISTERIO' : item.type}
+                                                            </span>
+                                                            {item.type === 'WORSHIP' && item.key && (
+                                                                <span className="text-pink-500 font-bold bg-pink-50 px-1.5 py-0.5 rounded-md">Key: {item.key}</span>
+                                                            )}
+                                                        </div>
+                                                        {/* YouTube/External Links */}
+                                                        {item.type === 'WORSHIP' && (
+                                                            <div className="flex flex-wrap gap-2 mt-1.5">
+                                                                {item.youtubeLinks?.map((link, lIdx) => (
+                                                                    <a key={`l-${lIdx}`} href={link} target="_blank" rel="noopener noreferrer" className="text-[9px] bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full hover:bg-red-100 flex items-center gap-1">
+                                                                        <Play size={8} /> Link {lIdx + 1}
+                                                                    </a>
+                                                                ))}
+                                                                {item.links?.map((link, lIdx) => (
+                                                                    <a key={`n-${lIdx}`} href={link.url} target="_blank" rel="noopener noreferrer" className="text-[9px] bg-indigo-50 text-indigo-500 border border-indigo-100 px-2 py-0.5 rounded-full hover:bg-indigo-100 flex items-center gap-1" title={link.url}>
+                                                                        <Play size={8} /> {link.label}
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg tabular-nums">
+                                                    {item.durationMinutes}m
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-4 text-slate-400 text-xs italic">
+                                            No hay items en el orden de culto.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </section>
