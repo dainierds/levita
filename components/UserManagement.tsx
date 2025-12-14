@@ -280,98 +280,119 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
           </div>
         </div>
 
-        {/* User List */}
-        <div className="lg:col-span-2 xl:col-span-3 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
-          <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <Shield size={20} className="text-indigo-500" /> Usuarios Activos
-          </h3>
+        {/* User List - Grouped by Role */}
+        <div className="lg:col-span-2 xl:col-span-3 space-y-8">
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-xs font-bold text-slate-400 uppercase border-b border-slate-100">
-                  <th className="pb-4 pl-4">Usuario</th>
-                  <th className="pb-4">Rol</th>
-                  <th className="pb-4">Estado</th>
-                  <th className="pb-4 text-right pr-4">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {users.map((u) => (
-                  <tr key={u.id} className="group hover:bg-slate-50 transition-colors">
-                    <td className="py-4 pl-4">
-                      <div>
-                        <p className="font-bold text-slate-800">{u.name}</p>
-                        <p className="text-xs text-slate-500">{u.email}</p>
-                      </div>
-                    </td>
-                    <td className="py-4">
-                      <span className={`
-                        px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider
-                        ${u.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-600' :
-                          u.role === 'MUSIC' ? 'bg-pink-100 text-pink-600' :
-                            u.role === 'ELDER' ? 'bg-blue-100 text-blue-600' :
-                              u.role === 'PREACHER' ? 'bg-purple-100 text-purple-600' :
-                                'bg-slate-100 text-slate-500'}
-                      `}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="py-4">
-                      <div className="flex items-center gap-2">
-                        {u.status === 'ACTIVE' ? (
-                          <>
-                            <CheckCircle size={14} className="text-green-500" />
-                            <span className="text-xs font-bold text-green-600">Activo</span>
-                          </>
-                        ) : (
-                          <>
-                            <Shield size={14} className="text-orange-400" />
-                            <span className="text-xs font-bold text-orange-500">Pendiente</span>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 text-right pr-4">
-                      {u.id !== currentUser.id && (
-                        userToDelete === u.id ? (
-                          <div className="flex items-center justify-end gap-2 animate-in fade-in slide-in-from-right-4">
-                            <span className="text-xs font-bold text-red-500 mr-2">¿Seguro?</span>
-                            <button
-                              onClick={() => handleDeleteUser(u.id)}
-                              className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                            >
-                              <Check size={16} />
-                            </button>
-                            <button
-                              onClick={() => setUserToDelete(null)}
-                              className="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors"
-                            >
-                              <span className="text-xs font-bold">X</span>
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setUserToDelete(u.id)}
-                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                            title="Eliminar Usuario"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        )
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {(() => {
+            // Define sections order and configuration
+            const ROLE_SECTIONS = [
+              { key: 'ADMIN', label: 'Administradores', icon: Shield, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+              { key: 'ELDER', label: 'Ancianos', icon: CheckCircle, color: 'text-blue-600', bg: 'bg-blue-100' },
+              { key: 'PREACHER', label: 'Predicadores', icon: User, color: 'text-purple-600', bg: 'bg-purple-100' },
+              { key: 'MUSIC', label: 'Músicos & Vocales', icon: User, color: 'text-pink-600', bg: 'bg-pink-100' },
+              { key: 'AUDIO', label: 'Operadores de Audio', icon: User, color: 'text-orange-600', bg: 'bg-orange-100' },
+              { key: 'MEMBER', label: 'Miembros', icon: User, color: 'text-slate-600', bg: 'bg-slate-100' },
+            ];
 
-            {users.length === 0 && (
-              <div className="text-center py-12 text-slate-400">
-                <p>No hay usuarios registrados aún.</p>
+            // Filter users into groups
+            const groupedUsers = ROLE_SECTIONS.map(section => ({
+              ...section,
+              users: users.filter(u => u.role === section.key)
+            })).filter(group => group.users.length > 0);
+
+            if (groupedUsers.length === 0) {
+              return (
+                <div className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-100 text-center text-slate-400">
+                  <p>No hay usuarios registrados aún.</p>
+                </div>
+              );
+            }
+
+            return groupedUsers.map(group => (
+              <div key={group.key} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
+                <h3 className={`font-bold text-lg mb-6 flex items-center gap-2 ${group.color}`}>
+                  <div className={`w-8 h-8 rounded-full ${group.bg} flex items-center justify-center`}>
+                    <group.icon size={16} />
+                  </div>
+                  {group.label}
+                  <span className="text-xs ml-auto bg-slate-100 text-slate-500 px-2 py-1 rounded-full">{group.users.length}</span>
+                </h3>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-xs font-bold text-slate-400 uppercase border-b border-slate-100">
+                        <th className="pb-4 pl-4">Usuario</th>
+                        <th className="pb-4">Estado</th>
+                        <th className="pb-4 text-right pr-4">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {group.users.map((u) => (
+                        <tr key={u.id} className="group hover:bg-slate-50 transition-colors">
+                          <td className="py-4 pl-4">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${group.bg} ${group.color}`}>
+                                {u.name.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800 text-sm">{u.name}</p>
+                                <p className="text-[10px] text-slate-500">{u.email}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4">
+                            <div className="flex items-center gap-2">
+                              {u.status === 'ACTIVE' ? (
+                                <>
+                                  <CheckCircle size={14} className="text-green-500" />
+                                  <span className="text-xs font-bold text-green-600">Activo</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Shield size={14} className="text-orange-400" />
+                                  <span className="text-xs font-bold text-orange-500">Pendiente</span>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-4 text-right pr-4">
+                            {u.id !== currentUser.id && (
+                              userToDelete === u.id ? (
+                                <div className="flex items-center justify-end gap-2 animate-in fade-in slide-in-from-right-4">
+                                  <span className="text-xs font-bold text-red-500 mr-2">¿Seguro?</span>
+                                  <button
+                                    onClick={() => handleDeleteUser(u.id)}
+                                    className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                  >
+                                    <Check size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => setUserToDelete(null)}
+                                    className="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors"
+                                  >
+                                    <span className="text-xs font-bold">X</span>
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setUserToDelete(u.id)}
+                                  className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                                  title="Eliminar Usuario"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            )}
-          </div>
+            ));
+          })()}
         </div>
       </div>
     </div>
