@@ -110,31 +110,31 @@ const InicioAnciano: React.FC = () => {
                         const futurePlan = nextPlans[1];
 
                         // Helper function to render Service Info Card
-                        const renderServiceInfoCard = (plan: typeof nextPlan, label: string, isNext: boolean) => (
-                            <div key={plan.id} className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 relative overflow-hidden">
+                        const renderServiceInfoCard = (plan: typeof nextPlan, label: string, isNext: boolean, themeBg: string) => (
+                            <div key={plan.id} className={`${themeBg} rounded-[2rem] p-6 shadow-lg border border-white relative overflow-hidden text-white`}>
                                 {/* Badge */}
-                                <div className={`absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider ${isNext ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
+                                <div className="absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider bg-white/20 text-white backdrop-blur-sm">
                                     {label}
                                 </div>
 
                                 {/* Date & Title */}
                                 <div className="flex items-start gap-4 mb-6">
-                                    <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm ${isNext ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500'}`}>
+                                    <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm bg-white/20 text-white backdrop-blur-md">
                                         <span className="text-[10px] font-bold uppercase">{new Date(plan.date).toLocaleDateString('es-ES', { weekday: 'short' })}</span>
                                         <span className="text-xl font-black">{new Date(plan.date).getDate()}</span>
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-bold text-slate-800 leading-tight">{plan.title || 'Culto General'}</h2>
-                                        <div className="flex items-center gap-2 text-slate-400 text-xs font-bold mt-1">
+                                        <h2 className="text-xl font-bold leading-tight drop-shadow-sm">{plan.title || 'Culto General'}</h2>
+                                        <div className="flex items-center gap-2 text-white/80 text-xs font-bold mt-1">
                                             <Clock size={12} /> {plan.time || '10:00 AM'}
-                                            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                            <span className="w-1 h-1 bg-white/50 rounded-full"></span>
                                             <MapPin size={12} /> {tenant?.name || 'Iglesia'}
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Service Team Grid */}
-                                <div className="bg-slate-50 rounded-2xl p-4 gap-4 grid grid-cols-2">
+                                <div className="bg-white/10 rounded-2xl p-4 gap-4 grid grid-cols-2 backdrop-blur-sm">
                                     {(() => {
                                         const planTeam = plan.team || {};
                                         const rosterTeams = (tenant?.settings?.teams || []) as any[];
@@ -160,8 +160,8 @@ const InicioAnciano: React.FC = () => {
                                                         <roleConfig.icon size={14} />
                                                     </div>
                                                     <div className="overflow-hidden">
-                                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider ">{roleConfig.label}</p>
-                                                        <p className="font-bold text-slate-700 text-xs truncate">{name}</p>
+                                                        <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider ">{roleConfig.label}</p>
+                                                        <p className="font-bold text-white text-xs truncate drop-shadow-sm">{name}</p>
                                                     </div>
                                                 </div>
                                             );
@@ -173,11 +173,11 @@ const InicioAnciano: React.FC = () => {
 
                         return (
                             <>
-                                {/* 1. Next Service Info */}
-                                {renderServiceInfoCard(nextPlan, 'Siguiente Culto', true)}
+                                {/* 1. Next Service Info (Blue) */}
+                                {renderServiceInfoCard(nextPlan, 'Siguiente Culto', true, 'bg-[#3b82f6] shadow-blue-200')}
 
-                                {/* 2. Future Event Info */}
-                                {futurePlan && renderServiceInfoCard(futurePlan, 'Futuro Evento', false)}
+                                {/* 2. Future Event Info (Indigo) */}
+                                {futurePlan && renderServiceInfoCard(futurePlan, 'Futuro Evento', false, 'bg-[#6366f1] shadow-indigo-200')}
                             </>
                         );
                     })()}
