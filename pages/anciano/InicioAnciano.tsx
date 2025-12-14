@@ -34,11 +34,11 @@ const InicioAnciano: React.FC = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Next Turn
-    const nextPlan = plans
+    // Next Turns (General - Top 2)
+    const nextPlans = plans
         .filter(p => !p.isActive && new Date(p.date) >= today)
-        .filter(p => p.team.elder === user?.name || p.team.preacher === user?.name || p.team.musicDirector === user?.name || p.team.audioOperator === user?.name)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(0, 2);
 
     // Next Preaching
     const nextPreaching = plans
@@ -104,20 +104,35 @@ const InicioAnciano: React.FC = () => {
 
             {/* 2. NAVIGATION GRID (Bottom) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Blue - Mi Próximo Turno */}
+                {/* Blue - Próximos Turnos (Now shows top 2) */}
                 <button
                     onClick={() => navigate('/anciano/mi-turno')}
-                    className="bg-[#3b82f6] rounded-3xl p-6 text-left text-white shadow-lg shadow-blue-200 hover:scale-[1.01] transition-transform relative overflow-hidden h-32 flex flex-col justify-between"
+                    className="bg-[#3b82f6] rounded-3xl p-5 text-left text-white shadow-lg shadow-blue-200 hover:scale-[1.01] transition-transform relative overflow-hidden flex flex-col justify-between min-h-[140px]"
                 >
-                    <div>
-                        <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center mb-2">
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center">
                             <Calendar size={16} />
                         </div>
-                        <h3 className="font-bold text-lg leading-none">Mi Próximo Turno</h3>
+                        <span className="bg-white/20 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">Próximos Turnos</span>
                     </div>
-                    <p className="text-xs opacity-80 font-medium">
-                        {nextPlan ? new Date(nextPlan.date).toLocaleDateString() : 'Sin turnos próximos'}
-                    </p>
+
+                    <div className="space-y-2 mt-1">
+                        {nextPlans.length > 0 ? nextPlans.map((plan, i) => (
+                            <div key={plan.id} className={`flex justify-between items-center rounded-lg p-2 ${i === 0 ? 'bg-white/20' : 'bg-white/10'}`}>
+                                <div>
+                                    <p className="font-bold text-xs leading-none">
+                                        {new Date(plan.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}
+                                    </p>
+                                    <p className="text-[10px] opacity-80 truncate max-w-[120px]">
+                                        {plan.team?.elder || 'Sin Anciano'}
+                                    </p>
+                                </div>
+                                {i === 0 && <div className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-sm animate-pulse"></div>}
+                            </div>
+                        )) : (
+                            <p className="text-xs opacity-80 font-medium">No hay turnos programados.</p>
+                        )}
+                    </div>
                 </button>
 
                 {/* Purple - Predicación */}
