@@ -192,12 +192,15 @@ const LandingPage: React.FC = () => {
     // STEP 3: LOGIN FORM
     return (
         <div className="min-h-screen bg-[#F2F4F8] flex items-center justify-center p-4">
-            <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200 max-w-md w-full relative">
-                <button onClick={() => setStep(selectedRoleType === 'admin' ? 'ministry_select' : 'role')} className="absolute top-8 left-8 text-slate-300 hover:text-slate-500">
+            <div className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200 max-w-md w-full relative">
+                <button
+                    onClick={() => setStep(selectedRoleType === 'admin' ? 'ministry_select' : 'role')}
+                    className="absolute top-6 left-6 md:top-8 md:left-8 text-slate-300 hover:text-slate-500 p-2"
+                >
                     ←
                 </button>
 
-                <div className="text-center mb-8 mt-4">
+                <div className="text-center mb-8 mt-8 md:mt-4">
                     <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 mx-auto mb-6">
                         <LogIn size={32} />
                     </div>
@@ -214,7 +217,7 @@ const LandingPage: React.FC = () => {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="input-soft"
+                            className="input-soft text-base" // Added text-base for iOS zoom prevention
                             placeholder="nombre@levita.com"
                         />
                     </div>
@@ -222,7 +225,7 @@ const LandingPage: React.FC = () => {
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('password')}</label>
                         <input
                             type="password"
-                            className="input-soft"
+                            className="input-soft text-base" // Added text-base for iOS zoom prevention
                             placeholder="••••••••"
                             defaultValue="demo123"
                         />
@@ -231,7 +234,7 @@ const LandingPage: React.FC = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full btn-primary mt-4 flex justify-center"
+                        className="w-full btn-primary mt-4 flex justify-center py-4 md:py-3" // Larger touch target on mobile
                     >
                         {loading ? <span className="animate-spin">⏳</span> : t('enter')}
                     </button>
