@@ -22,17 +22,75 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', settings, users = [] }) => {
   const { events, loading: eventsLoading } = useEvents();
   const { plans, loading: plansLoading } = usePlans();
+  const { user } = useAuth();
 
   // Elders see ALL banners. Admins see ALL. Others might be restricted but Dashboard is mostly Admin/Elder.
   const activeEvents = events.filter(e => e.activeInBanner);
-
   const activePlan = plans.find(p => p.isActive);
-  const nextPlan = plans.find(p => !p.isActive && new Date(p.date) >= new Date()) || plans[0];
 
-  // Determine Active Team: Priority to Global Active Team (from settings), fallback to Active Plan Team
-  const globalActiveTeam = settings?.teams?.find(t => t.id === settings.activeTeamId);
+  // --- LOGIC: Resolved Next Service (Plan vs Team vs Recurrence) ---
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  // Construct a displayable team object
+  // 1. Future Service Plans
+  const futurePlans = plans
+    .filter(p => !p.isActive && new Date(p.date) >= today)
+    .map(p => ({
+      dateStr: p.date,
+      dateObj: new Date(p.date),
+      time: p.startTime, // Plan has explicit time
+      preacher: p.team.preacher,
+      type: 'PLAN'
+    }));
+
+  // 2. Future Teams (Roster)
+  // Check if a team exists for a date that DOESN'T have a plan yet? 
+  // Or just merge them and let Plan take precedence if dupe date.
+  const futureTeams = (settings?.teams || [])
+    .filter(t => t.date && new Date(t.date) >= today)
+    .map(t => {
+      // Find recurrent time for this day of week
+      const dateObj = new Date(t.date!);
+      const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+      const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+      const recTime = settings?.meetingTimes?.[capitalizedDay] || '10:00'; // Default if not found
+
+      return {
+        dateStr: t.date!,
+        dateObj: dateObj,
+        time: recTime,
+        preacher: t.members.preacher,
+        type: 'TEAM'
+      };
+    });
+
+  // 3. Merge & Sort
+  const allUpcoming = [...futurePlans, ...futureTeams].sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+
+  // Deduplicate by date (Plan wins)
+  const uniqueUpcoming: typeof allUpcoming = [];
+  const seenDates = new Set<string>();
+  allUpcoming.forEach(item => {
+    if (!seenDates.has(item.dateStr)) {
+      seenDates.add(item.dateStr);
+      uniqueUpcoming.push(item);
+    } else {
+      // If we already have this date, it was likely a Plan (since we put Plans first? No, we sorted by date).
+      // If mixed, we want Plan to win.
+      // Let's refine: Filter futureTeams to exclude dates present in futurePlans.
+    }
+  });
+
+  // Refined Merge:
+  const planDates = new Set(futurePlans.map(p => p.dateStr));
+  const uniqueTeams = futureTeams.filter(t => !planDates.has(t.dateStr));
+  const resolvedNextItem = [...futurePlans, ...uniqueTeams].sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime())[0];
+
+
+  // --- Display Values ---
+  const activeTeamId = settings?.activeTeamId;
+  const globalActiveTeam = settings?.teams?.find(t => t.id === activeTeamId);
+
   const displayTeam = globalActiveTeam ? {
     teamName: globalActiveTeam.name,
     preacher: globalActiveTeam.members.preacher,
@@ -41,42 +99,17 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
     elder: globalActiveTeam.members.elder
   } : (activePlan?.team || null);
 
-  // Find the *next* preacher (from nextPlan)
-  const nextPreacher = nextPlan?.team.preacher || 'Por definir';
 
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [musicTeamMembers, setMusicTeamMembers] = useState<UserType[]>([]);
 
-  // Fetch Music Team for the relevant date (Active Plan Date or Next Plan Date)
-  useEffect(() => {
-    const fetchMusicTeam = async () => {
-      if (!settings?.tenantId) return; // Need tenantId, assuming it's in settings or user context (but simplified here)
-      // Wait, settings usually has tenantId? No, settings is inside tenant.
-      // Let's assume we can query subcollection if we know the path. Active user has tenantId.
-      // Since we passed 'users', we might not have tenantId handy in props easily without passing 'user' object or using context.
-      // Let's use the hook for auth context if needed, or rely on the plan's data if we had it.
-      // But plans don't have music team members, only IDs maybe? No, plans have 'team' (strings).
-      // The Music Team is in 'music_teams' collection collection.
-
-      // Fallback: If we don't have tenantId easily, skip.
-      // Actually AdminApp has 'user' which has tenantId. But Dashboard props don't have 'user' object just 'role'.
-      // Let's add 'user' to Dashboard props in next step if needed, OR just use 'users' associated to the plan? 
-      // Wait, 'users' prop contains all users. We just need the MusicTeam doc to get memberIds.
-
-      // Let's fallback to using no fetch if we can't.
-      // Update: The previous step didn't pass 'user' object to Dashboard. 
-      // I should grab it from useAuth() inside Dashboard.
-    };
-    // actually, let's implement the effect below with useAuth
-  }, [nextPlan]);
-
-  // REAL IMPLEMENTATION with useAuth
-  const { user } = useAuth(); // Need to import useAuth
-
+  // Fetch Music Team Logic
   useEffect(() => {
     const getMusicTeam = async () => {
       if (!user?.tenantId) return;
-      const targetDate = activePlan?.date || nextPlan?.date;
+      // Target date: Active Plan -> Resolved Next Item -> "Next Tuesday" Recurrence Date (Logic required)
+
+      const targetDate = activePlan?.date || resolvedNextItem?.dateStr;
       if (!targetDate) return;
 
       try {
@@ -101,7 +134,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
     if (users.length > 0) {
       getMusicTeam();
     }
-  }, [activePlan, nextPlan, user?.tenantId, users]);
+  }, [activePlan, resolvedNextItem, user?.tenantId, users]);
 
 
   useEffect(() => {
@@ -355,6 +388,20 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
 
           <div className="bg-gradient-to-br from-cyan-400 to-blue-500 rounded-soft p-6 text-white shadow-lg shadow-cyan-200">
             {(() => {
+              // Resolved Next Item Logic (Render)
+              if (resolvedNextItem) {
+                const dayName = resolvedNextItem.dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+                const displayDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
+                return (
+                  <>
+                    <h3 className="text-lg font-bold opacity-90 mb-1">Próximo {displayDay}</h3>
+                    <p className="text-3xl font-bold">{resolvedNextItem.time}</p>
+                  </>
+                );
+              }
+
+              // Fallback to Recurrence if no resolved item
               let displayDay = 'Domingo';
               let displayTime = '10:30 AM';
 
@@ -373,7 +420,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     const dayName = dayOrder[checkIndex];
                     if (days.includes(dayName)) {
                       foundDay = dayName;
-                      // If it's today, maybe check time? For simplicity, if today is a meeting day, show it.
                       break;
                     }
                   }
@@ -395,7 +441,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
 
             <div className="mt-4 pt-4 border-t border-white/20">
               <p className="text-xs font-bold uppercase opacity-80 mb-1 flex items-center gap-1"><User size={12} /> Próximo Predicador</p>
-              <p className="text-xl font-bold">{nextPreacher}</p>
+              <p className="text-xl font-bold">
+                {resolvedNextItem ? (resolvedNextItem.preacher || 'Por definir') : 'Por definir'}
+              </p>
             </div>
 
             <p className="opacity-80 mt-4 text-sm">Prepárate para el servicio de adoración.</p>
