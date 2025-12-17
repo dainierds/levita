@@ -65,6 +65,7 @@ export interface ServiceTeam {
   musicDirector: string;
   audioOperator: string;
   teamName?: string;
+  musicians?: string[];
 }
 
 export interface ServicePlan {
