@@ -318,75 +318,67 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     };
 
     // --- Auto Assign Logic ---
-    const handleAutoAssign = async () => {
+    // --- Auto Assign Logic ---
+    const [showAutoAssignModal, setShowAutoAssignModal] = useState(false);
+
+    const handleAutoAssignClick = () => {
+        // If only one day type exists in valid days, maybe auto-select? 
+        // But better to always ask or check available days in "serviceDays".
+        setShowAutoAssignModal(true);
+    };
+
+    const confirmAutoAssign = async (selectedDayName: string) => {
         const targetRoleConfig = ROLES_CONFIG.find(r => r.key === selectedRoleTab);
+        if (!targetRoleConfig || targetRoleConfig.key === 'teams') return;
 
-        if (!targetRoleConfig || targetRoleConfig.key === 'teams') {
-            addNotification('error', 'Error', 'Selecciona un rol específico para auto-asignar (no Equipos).');
+        setShowAutoAssignModal(false);
+        addNotification('info', 'Autocompletando...', `Asignando turnos de ${targetRoleConfig.label} para los ${selectedDayName}s.`);
+
+        const poolIds = settings.dayPools?.[selectedDayName]?.[targetRoleConfig.key] || [];
+
+        // If no pool defined, fallback to ALL users of that role? 
+        // User implied: "me autoasigne solo a ese dia usando las personas que estan dentro de esa seccion de ese dia"
+        // So strictly USE THE POOL.
+        if (poolIds.length === 0) {
+            addNotification('warning', 'Poceta Vacía', `No hay voluntarios configurados para ${selectedDayName} en Gestionar Equipos.`);
             return;
         }
 
-        // Skip for Music Groups for now as it's complex
-        if (targetRoleConfig.key === 'musicDirector') {
-            addNotification('info', 'Manual', 'Por favor asigna los grupos de música manualmente.');
-            return;
-        }
-
-        addNotification('info', 'Autocompletando...', `Asignando turnos de ${targetRoleConfig.label} para este mes.`);
+        const poolUsers = users.filter(u => poolIds.includes(u.id));
 
         let updatesCount = 0;
         const promises: Promise<any>[] = [];
-
-        // Track locally modified plans to prevent duplicates during this batch
         const batchPlans = [...plans];
 
-        // Helper to find candidate with least assignments
-        const getBestCandidate = (candidates: User[], roleKey: string) => {
-            if (candidates.length === 0) return null;
+        // Assignment History Tracker for fairness within this batch
+        const usageCount: Record<string, number> = {};
+        poolUsers.forEach(u => usageCount[u.id] = 0);
 
-            // Count assignments in the last 60 days
-            const usageCount: Record<string, number> = {};
-            candidates.forEach(c => usageCount[c.id] = 0);
+        // Pre-fill usage from existing plans in last 60 days
+        const twoMonthsAgo = new Date();
+        twoMonthsAgo.setDate(twoMonthsAgo.getDate() - 60);
 
-            const twoMonthsAgo = new Date();
-            twoMonthsAgo.setDate(twoMonthsAgo.getDate() - 60);
+        plans.forEach(p => {
+            if (new Date(p.date) >= twoMonthsAgo) {
+                const assignedName = (p.team as any)[targetRoleConfig.key];
+                const u = poolUsers.find(user => user.name === assignedName);
+                if (u) usageCount[u.id]++;
+            }
+        });
 
-            plans.forEach(p => {
-                if (new Date(p.date) >= twoMonthsAgo) {
-                    const assignedName = (p.team as any)[roleKey];
-                    if (assignedName) {
-                        const user = candidates.find(c => c.name === assignedName);
-                        if (user) usageCount[user.id]++;
-                    }
-                }
-            });
+        // Filter dates to ONLY match the selected Day Name
+        const targetDates = serviceDates.filter(d => {
+            const dayName = d.toLocaleString('es-ES', { weekday: 'long' });
+            // Uppercase first letter to match Settings convention "Martes", "Sábado"
+            const capitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+            return capitalized === selectedDayName;
+        });
 
-            // Also count assignments in the CURRENT batch to balance this month
-            batchPlans.forEach(p => {
-                const assignedName = (p.team as any)[roleKey];
-                if (assignedName) {
-                    const user = candidates.find(c => c.name === assignedName);
-                    if (user) usageCount[user.id]++;
-                }
-            });
-
-            // Sort by usage (asc) -> random
-            const sorted = [...candidates].sort((a, b) => {
-                const countDiff = usageCount[a.id] - usageCount[b.id];
-                if (countDiff !== 0) return countDiff;
-                return Math.random() - 0.5;
-            });
-
-            return sorted[0];
-        };
-
-        for (const date of serviceDates) {
+        for (const date of targetDates) {
             const localDateStr = date.toLocaleDateString('en-CA');
-
-            // Check in batchPlans first (which starts as copy of plans)
             let plan = batchPlans.find(p => p.date === localDateStr);
 
-            // If plan doesn't exist, create scaffold
+            // Scaffold if needed
             if (!plan) {
                 plan = {
                     id: `auto-${Math.random().toString(36).substr(2, 9)}`,
@@ -399,29 +391,31 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                     team: { elder: '', preacher: '', musicDirector: '', audioOperator: '' },
                     isRosterDraft: true
                 };
-                batchPlans.push(plan); // Add to batch so next iteration sees it
+                batchPlans.push(plan);
             }
 
-            const roleKey = targetRoleConfig.key as keyof typeof plan.team;
+            // Assign if empty
+            if (!plan.team[targetRoleConfig.key as keyof typeof plan.team]) {
+                // Find least used candidate
+                const sortedCandidates = [...poolUsers].sort((a, b) => {
+                    const diff = usageCount[a.id] - usageCount[b.id];
+                    if (diff !== 0) return diff;
+                    return Math.random() - 0.5;
+                });
 
-            // Only assign if the specific role slot is empty
-            if (!plan.team[roleKey]) {
-                // Find candidates specifically for this role
-                const candidates = users.filter(u => u.role === targetRoleConfig.roleType);
+                if (sortedCandidates.length > 0) {
+                    const selected = sortedCandidates[0];
+                    usageCount[selected.id]++; // Increment usage for next iteration fairness
 
-                const bestCandidate = getBestCandidate(candidates, roleKey);
-
-                if (bestCandidate) {
-                    // Create a new object to save
                     const updatedPlan = {
                         ...plan,
                         team: {
                             ...plan.team,
-                            [roleKey]: bestCandidate.name
+                            [targetRoleConfig.key]: selected.name
                         }
                     };
 
-                    // Update batchPlans
+                    // Update batch reference
                     const idx = batchPlans.findIndex(p => p.id === plan!.id);
                     if (idx >= 0) batchPlans[idx] = updatedPlan;
 
@@ -434,13 +428,13 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         try {
             await Promise.all(promises);
             if (updatesCount > 0) {
-                addNotification('success', 'Completado', `Se asignaron ${updatesCount} turnos de ${targetRoleConfig.label} equitativamente.`);
+                addNotification('success', 'Asignación Completada', `Se asignaron ${updatesCount} turnos para ${selectedDayName}.`);
             } else {
-                addNotification('info', 'Sin cambios', `No habían espacios vacíos de ${targetRoleConfig.label} o no hay voluntarios disponibles.`);
+                addNotification('info', 'Sin Cambios', `No se requirieron asignaciones nuevas para ${selectedDayName}.`);
             }
         } catch (error) {
             console.error(error);
-            addNotification('error', 'Error', 'Hubo un problema al guardar los cambios automáticos.');
+            addNotification('error', 'Error', 'Fallo al guardar turnos.');
         }
     };
 
@@ -588,7 +582,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                             </button>
                             {canEdit && selectedRoleTab !== 'teams' && selectedRoleTab !== 'musicDirector' && (
                                 <button
-                                    onClick={handleAutoAssign}
+                                    onClick={handleAutoAssignClick}
                                     className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center gap-2"
                                 >
                                     <Sparkles size={14} /> Auto Asignar {currentRoleConfig?.label}
@@ -596,6 +590,41 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                             )}
                         </div>
                     </div>
+
+                    {/* Auto Assign Modal selection */}
+                    {showAutoAssignModal && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                            <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl animate-in zoom-in duration-200">
+                                <h3 className="text-xl font-bold text-slate-800 mb-2">Selecciona un Día</h3>
+                                <p className="text-slate-500 text-sm mb-6">
+                                    ¿Para qué día de reunión deseas auto-asignar voluntarios?
+                                </p>
+
+                                <div className="space-y-3">
+                                    {settings.meetingDays.map(day => (
+                                        <button
+                                            key={day}
+                                            onClick={() => confirmAutoAssign(day)}
+                                            className="w-full p-4 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-xl flex items-center justify-between group transition-all"
+                                        >
+                                            <span className="font-bold text-slate-700 group-hover:text-indigo-700 capitalize">{day}</span>
+                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                                <Sparkles size={14} className="text-indigo-500" />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => setShowAutoAssignModal(false)}
+                                    className="mt-6 w-full py-3 text-slate-400 font-bold hover:text-slate-600"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
 
                     {/* Grid */}
                     <div className="flex-1 overflow-y-auto p-6 no-scrollbar">

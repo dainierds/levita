@@ -110,6 +110,9 @@ export interface ChurchSettings {
   rosterAutoNotifications: boolean;
   memberPin?: string; // PIN for member access
   teams?: ShiftTeam[];
+  // New: Day-based Volunteer Pools
+  // Structure: { "Domingo": { "elder": ["id1", "id2"], "preacher": ["id3"] } }
+  dayPools?: Record<string, Record<string, string[]>>;
   activeTeamId?: string;
   musicMinistryPin?: string; // New field for Music Ministry access
 }
