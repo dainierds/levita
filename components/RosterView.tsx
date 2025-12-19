@@ -449,20 +449,42 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     // Filter users based on selected Tab
     // Updated Logic: Include Music Groups
 
-    let availableList: (User | ShiftTeam | MusicTeam)[] = [];
+    // --- Filter users based on selected Tab + Day Pools ---
+    // Updated Logic: Show sections: Day 1, Day 2, ..., Otros.
 
-    if (selectedRoleTab === 'teams') {
-        availableList = settings.teams || [];
-    } else if (selectedRoleTab === 'musicDirector') {
-        // Combine Groups and Individuals? Or just Groups?
-        // User requested Groups. Let's show Groups FIRST, then Users.
-        const folks = users.filter(u => u.role === currentRoleConfig?.roleType);
-        availableList = [...musicGroups, ...folks];
-    } else {
-        availableList = users.filter(u => u.role === currentRoleConfig?.roleType);
-    }
+    // 1. Identify Sections
+    const daySections = settings.meetingDays.map(day => ({
+        key: day,
+        label: `${day}s`,
+        users: [] as User[]
+    }));
 
-    const availableItems = availableList;
+    // 2. Distribute Users
+    const roleUsers = users.filter(u => u.role === currentRoleConfig?.roleType);
+    const otherUsers: User[] = [];
+
+    roleUsers.forEach(u => {
+        let assignedToAny = false;
+        settings.meetingDays.forEach(day => {
+            const pool = settings.dayPools?.[day]?.[currentRoleConfig?.key || ''] || [];
+            if (pool.includes(u.id)) {
+                const section = daySections.find(s => s.key === day);
+                section?.users.push(u);
+                assignedToAny = true;
+            }
+        });
+
+        // If not assigned to any specific day (or if we want to show them in "Others" regardless?)
+        // Let's assume logical separation: If in pool -> in section using pool.
+        // If not in ANY pool -> "Otros".
+        // Note: User can be in multiple pools.
+        if (!assignedToAny) {
+            otherUsers.push(u);
+        }
+    });
+
+    const isMusicTab = selectedRoleTab === 'musicDirector';
+    const isTeamsTab = selectedRoleTab === 'teams';
 
     return (
         <div className="p-4 md:p-8 max-w-full mx-auto space-y-1 h-screen flex flex-col overflow-hidden pb-4">
@@ -506,66 +528,124 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             <div className="flex-1 flex flex-col lg:flex-row gap-8 min-h-0">
 
                 {/* Left Col: Source List (Scrollable) */}
-                <div className="lg:w-64 flex-shrink-0 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
-                    <div className="p-6 border-b border-slate-50">
-                        <h3 className="font-bold text-slate-800">Disponibles</h3>
+                <div className="lg:w-72 flex-shrink-0 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
+                    <div className="p-6 border-b border-slate-50 bg-slate-50/50">
+                        <h3 className="font-bold text-xl text-slate-800">Disponible</h3>
                         <p className="text-xs text-slate-400">Arrastra al calendario</p>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
-                        {availableItems.length > 0 ? (
-                            availableItems.map((item: any) => {
-                                const isTeam = selectedRoleTab === 'teams';
-                                const isMusicGroup = selectedRoleTab === 'musicDirector' && 'memberIds' in item;
 
-                                const team = item as ShiftTeam;
-                                const group = item as MusicTeam;
-                                const user = item as User;
+                    <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
 
-                                return (
+                        {/* 0. Teams Special Case */}
+                        {isTeamsTab && (
+                            <div className="space-y-3">
+                                {settings.teams?.map(team => (
                                     <div
-                                        key={isMusicGroup ? `group-${group.id}` : (isTeam ? team.id : user.id)}
+                                        key={team.id}
                                         draggable={canEdit}
-                                        onDragStart={(e) => handleDragStart(e, item, isMusicGroup ? 'MUSIC_GROUP' : (isTeam ? 'TEAM' : 'USER'))}
-                                        className={`bg-slate-50 border border-slate-100 p-4 rounded-2xl transition-all group flex items-center justify-between ${canEdit ? 'hover:bg-white cursor-grab active:cursor-grabbing hover:shadow-md' : 'opacity-60 cursor-not-allowed'
-                                            }`}
+                                        onDragStart={(e) => handleDragStart(e, team, 'TEAM')}
+                                        className="bg-slate-50 border border-slate-100 p-4 rounded-2xl transition-all group flex items-center gap-3 hover:bg-white cursor-grab active:cursor-grabbing hover:shadow-md"
                                     >
-                                        <div className="flex items-center gap-3 overflow-hidden">
-                                            {isMusicGroup ? (
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-pink-500 text-white flex-shrink-0`}>
-                                                    <Users size={14} />
-                                                </div>
-                                            ) : (
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${currentRoleConfig?.color.replace('text-', 'bg-').split(' ')[0]} text-white flex-shrink-0`}>
-                                                    {isTeam ? <Users size={14} /> : user.name.charAt(0)}
-                                                </div>
-                                            )}
-
-                                            <div className="overflow-hidden">
-                                                {isMusicGroup ? (
-                                                    <>
-                                                        <span className="text-xs font-bold text-slate-700 block truncate">Grupo de Música</span>
-                                                        <span className="text-[10px] text-slate-400 block truncate">
-                                                            {group.memberIds.length} miembros ({users.find(u => u.id === group.memberIds[0])?.name.split(' ')[0]}...)
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-sm font-bold text-slate-700 truncate block">{isTeam ? team.name : user.name}</span>
-                                                )}
-                                            </div>
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-indigo-500 text-white flex-shrink-0">
+                                            <Users size={14} />
                                         </div>
-                                        {canEdit && <GripVertical size={16} className="text-slate-300 group-hover:text-slate-400 flex-shrink-0" />}
+                                        <span className="text-sm font-bold text-slate-700 truncate block">{team.name}</span>
                                     </div>
-                                );
-                            })
-                        ) : (
-                            <div className="text-center p-4 text-xs text-slate-400">
-                                No hay {selectedRoleTab === 'teams' ? 'equipos' : 'usuarios'} disponibles.
-                                <br />
-                                {selectedRoleTab === 'teams' ? 'Crea uno en Gestionar Equipos.' : 'Ve a Gestión de Usuarios.'}
+                                ))}
                             </div>
                         )}
+
+                        {/* 0.1 Music Groups Special Case */}
+                        {isMusicTab && musicGroups.length > 0 && (
+                            <div className="space-y-2">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Grupos de Música</h4>
+                                {musicGroups.map(group => (
+                                    <div
+                                        key={group.id}
+                                        draggable={canEdit}
+                                        onDragStart={(e) => handleDragStart(e, group, 'MUSIC_GROUP')}
+                                        className="bg-pink-50 border border-pink-100 p-3 rounded-2xl transition-all group flex items-center gap-3 hover:bg-white cursor-grab active:cursor-grabbing hover:shadow-md"
+                                    >
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-pink-500 text-white flex-shrink-0">
+                                            <Users size={14} />
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <span className="text-xs font-bold text-slate-700 block truncate">Grupo de Música</span>
+                                            <span className="text-[10px] text-pink-400 block truncate">
+                                                {group.memberIds.length} miembros ({users.find(u => u.id === group.memberIds[0])?.name.split(' ')[0]}...)
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+
+                        {/* 1. Day Sections */}
+                        {!isTeamsTab && daySections.map(section => (
+                            <div key={section.key} className="space-y-2">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <h4 className="text-lg font-black text-slate-800 uppercase tracking-tight">{section.key}</h4>
+                                    <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full">{section.users.length}</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {section.users.map(user => (
+                                        <div
+                                            key={`${section.key}-${user.id}`}
+                                            draggable={canEdit}
+                                            onDragStart={(e) => handleDragStart(e, user, 'USER')}
+                                            className={`bg-white border border-slate-100 p-3 rounded-2xl transition-all group flex items-center justify-between ${canEdit ? 'hover:border-indigo-200 cursor-grab active:cursor-grabbing hover:shadow-md' : 'opacity-60 cursor-not-allowed'}`}
+                                        >
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${currentRoleConfig?.color.replace('text-', 'bg-').split(' ')[0]} text-white flex-shrink-0`}>
+                                                    {user.name.charAt(0)}
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-700 truncate block">{user.name}</span>
+                                            </div>
+                                            {canEdit && <GripVertical size={16} className="text-slate-300 group-hover:text-slate-400 flex-shrink-0" />}
+                                        </div>
+                                    ))}
+                                    {section.users.length === 0 && (
+                                        <p className="text-[10px] text-slate-400 italic px-2">Sin voluntarios asignados.</p>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* 2. Others Section */}
+                        {!isTeamsTab && otherUsers.length > 0 && (
+                            <div className="space-y-2 pt-4 border-t border-dashed border-slate-200">
+                                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Otros / Disponibles</h4>
+                                <div className="space-y-2">
+                                    {otherUsers.map(user => (
+                                        <div
+                                            key={`other-${user.id}`}
+                                            draggable={canEdit}
+                                            onDragStart={(e) => handleDragStart(e, user, 'USER')}
+                                            className={`bg-slate-50 border border-slate-100 p-3 rounded-2xl transition-all group flex items-center justify-between ${canEdit ? 'hover:bg-white cursor-grab active:cursor-grabbing hover:shadow-md' : 'opacity-60 cursor-not-allowed'}`}
+                                        >
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-slate-400 text-white flex-shrink-0`}>
+                                                    {user.name.charAt(0)}
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-600 truncate block">{user.name}</span>
+                                            </div>
+                                            {canEdit && <GripVertical size={16} className="text-slate-300 group-hover:text-slate-400 flex-shrink-0" />}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {!isTeamsTab && roleUsers.length === 0 && (
+                            <div className="text-center p-4 text-xs text-slate-400">
+                                No hay usuarios con este rol.
+                            </div>
+                        )}
+
                     </div>
                 </div>
+
                 {/* Right Col: Calendar Grid (Scrollable) */}
                 <div className="flex-1 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
 
