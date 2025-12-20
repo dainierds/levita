@@ -7,6 +7,7 @@ import { Bell, Radio, Mic, List, Loader2, PlayCircle, Check, X } from 'lucide-re
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import TranslationMaster from './TranslationMaster';
+import VisitorTranslationMonitor from './VisitorTranslationMonitor';
 
 const AudioDashboard: React.FC = () => {
     const { user } = useAuth();
