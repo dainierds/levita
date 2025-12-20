@@ -4,7 +4,7 @@ import { Radio, Send, User } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../services/firebase';
-import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 
 interface ChatMessage {
     id: string;
@@ -17,6 +17,26 @@ const EnVivoMiembro: React.FC = () => {
     const { plans } = usePlans();
     const { t } = useLanguage();
     const { user } = useAuth();
+    const [channelId, setChannelId] = useState('');
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            if (!user?.tenantId) return;
+            try {
+                const docRef = doc(db, 'tenants', user.tenantId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const settings = docSnap.data().settings;
+                    if (settings?.youtubeChannelId) {
+                        setChannelId(settings.youtubeChannelId);
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching settings:", err);
+            }
+        };
+        fetchSettings();
+    }, [user?.tenantId]);
 
     // Logic to find ANY active or upcoming plan to show (prioritize active)
     const active = plans.find(p => p.isActive);
@@ -89,10 +109,10 @@ const EnVivoMiembro: React.FC = () => {
                 {/* VIDEO SECTION */}
                 <div className="lg:col-span-2 flex flex-col gap-4">
                     <div className="w-full bg-black rounded-[1.5rem] overflow-hidden shadow-lg aspect-video relative">
-                        {displayPlan ? (
+                        {displayPlan && channelId ? (
                             <iframe
                                 className="w-full h-full"
-                                src={`https://www.youtube.com/embed/live_stream?channel=UCjaxadventista7morenacersda63&autoplay=1&mute=1&playsinline=1`}
+                                src={`https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1&mute=1&playsinline=1`}
                                 title="Live Service"
                                 frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -102,7 +122,7 @@ const EnVivoMiembro: React.FC = () => {
                             <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 bg-slate-900">
                                 <Radio size={32} className="mb-2 opacity-50" />
                                 <p className="text-xs font-bold uppercase tracking-widest text-center px-4">
-                                    No hay señal disponible
+                                    {!channelId ? 'Configuración Incompleta (ID Canal)' : 'No hay señal disponible'}
                                 </p>
                             </div>
                         )}

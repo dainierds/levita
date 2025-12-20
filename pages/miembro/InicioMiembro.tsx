@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useEvents } from '../../hooks/useEvents';
 import { Video, List, Heart, Calendar, Mic, ArrowRight, PlayCircle, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 
 const InicioMiembro: React.FC = () => {
     const { user } = useAuth();
@@ -11,6 +13,26 @@ const InicioMiembro: React.FC = () => {
 
     // --- CAROUSEL LOGIC ---
     const [currentEventIndex, setCurrentEventIndex] = useState(0);
+    const [settings, setSettings] = useState<any>(null);
+
+    // Fetch Settings for Live Status
+    useEffect(() => {
+        const fetchSettings = async () => {
+            if (!user?.tenantId) return;
+            try {
+                const docRef = doc(db, 'tenants', user.tenantId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    setSettings(docSnap.data().settings);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchSettings();
+    }, [user?.tenantId]);
+
+    const isLive = settings?.isLive;
 
     // Filter only future events for the carousel
     const upcomingEvents = events
@@ -43,24 +65,35 @@ const InicioMiembro: React.FC = () => {
 
             {/* 1. MORPHO HERO BANNER (Matches Card Size h-48) */}
             <div className="p-1 rounded-[2.2rem] shadow-xl shadow-indigo-200/50 bg-white">
-                <div className="relative w-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 rounded-[2rem] p-6 text-white overflow-hidden h-48 flex flex-col justify-between">
+                <div className={`relative w-full rounded-[2rem] p-6 text-white overflow-hidden h-48 flex flex-col justify-between transition-colors duration-500 ${isLive && currentEventIndex === 0
+                    ? 'bg-gradient-to-br from-red-600 via-red-500 to-orange-500 shadow-inner'
+                    : 'bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600'
+                    }`}>
 
                     {/* Abstract Decorative Shapes */}
                     <div className="absolute top-0 right-0 w-48 h-48 bg-white opacity-10 rounded-full blur-3xl -mr-12 -mt-12 pointer-events-none"></div>
                     <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-900 opacity-20 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none"></div>
 
                     {currentEventIndex === 0 ? (
-                        // SLIDE 0: Welcome / General
+                        // SLIDE 0: Welcome / General OR LIVE
                         <div className="relative z-10 h-full flex flex-col justify-between animate-in fade-in slide-in-from-bottom-2 duration-500">
                             {/* Top: Icon/Badge */}
                             <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner border border-white/10">
-                                <Calendar size={24} />
+                                {isLive ? <Video className="animate-pulse" size={24} /> : <Calendar size={24} />}
                             </div>
 
                             {/* Bottom: Text */}
                             <div>
-                                <h2 className="font-bold text-2xl leading-none mb-1">Tu Comunidad</h2>
-                                <p className="text-indigo-100 text-xs font-medium">Ver calendario completo</p>
+                                <h2 className="font-bold text-2xl leading-none mb-1">
+                                    {isLive ? '🔴 EN VIVO AHORA' : 'Tu Comunidad'}
+                                </h2>
+                                <p className="text-indigo-100 text-xs font-medium flex items-center gap-2 cursor-pointer hover:underline" onClick={() => isLive && navigate('/miembro/en-vivo')}>
+                                    {isLive ? (
+                                        <span className="flex items-center gap-1 font-bold text-white"><PlayCircle size={12} /> Ver Transmisión</span>
+                                    ) : (
+                                        'Ver calendario completo'
+                                    )}
+                                </p>
                             </div>
                         </div>
                     ) : (

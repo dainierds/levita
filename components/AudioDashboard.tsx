@@ -4,6 +4,8 @@ import { usePlans } from '../hooks/usePlans';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
 import { Bell, Radio, Mic, List, Loader2, PlayCircle, Check, X } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import TranslationMaster from './TranslationMaster';
 
 const AudioDashboard: React.FC = () => {
@@ -12,26 +14,38 @@ const AudioDashboard: React.FC = () => {
     const { plans, loading } = usePlans();
 
     // Use the real notifications hook
-    // We assume 'AUDIO' role for this dashboard, or user.role
     const { notifications, unreadCount, markAsRead } = useNotifications(
         user?.tenantId,
         user?.id,
-        'AUDIO' // Hardcoded role for this dashboard context if user role varies, or better: user?.role
+        'AUDIO'
     );
 
-    // Filter to show only recent unread/read toast-like notifications? 
-    // Or just show the badge. 
-    // User request: "verify no mocks... ready to receive".
-    // We successfully hook it up.
-
-    // Filter events: Public + Members + Staff (Exclude Elders Only)
     const visibleEvents = events.filter(e =>
         e.activeInBanner && e.targetAudience !== 'ELDERS_ONLY'
     );
 
-    // Find the ACTIVE plan (the one currently being run)
     const activePlan = plans.find(p => p.isActive);
     const [showNotifPanel, setShowNotifPanel] = useState(false);
+    const [channelId, setChannelId] = useState('');
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            if (!user?.tenantId) return;
+            try {
+                const docRef = doc(db, 'tenants', user.tenantId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const settings = docSnap.data().settings;
+                    if (settings?.youtubeChannelId) {
+                        setChannelId(settings.youtubeChannelId);
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching settings:", err);
+            }
+        };
+        fetchSettings();
+    }, [user?.tenantId]);
 
     if (loading) {
         return (
@@ -101,11 +115,11 @@ const AudioDashboard: React.FC = () => {
                 <div className="space-y-8">
                     {/* Live Monitor */}
                     <div className="bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-800 aspect-video relative group">
-                        {activePlan ? (
+                        {channelId ? (
                             <iframe
                                 width="100%"
                                 height="100%"
-                                src="https://www.youtube.com/embed/live_stream?channel=UCjaxadventista7morenacersda63&autoplay=1&mute=1"
+                                src={`https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1&mute=1`}
                                 title="Live Monitor"
                                 frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -115,7 +129,7 @@ const AudioDashboard: React.FC = () => {
                         ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center text-slate-600">
                                 <Radio size={48} className="mb-4 opacity-50" />
-                                <p className="font-bold uppercase tracking-widest">Sin Señal Activa</p>
+                                <p className="font-bold uppercase tracking-widest text-xs px-4 text-center">Sin Canal Configurado</p>
                             </div>
                         )}
                         <div className="absolute top-4 left-4 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">

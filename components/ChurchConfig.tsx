@@ -303,6 +303,29 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
         </div>
       </section>
 
+      {/* 6. Live Stream Config */}
+      <section className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+        <div className="flex items-center gap-2 mb-6 text-slate-800">
+          <Youtube className="text-red-500" size={24} />
+          <h3 className="text-xl font-bold">Transmisión en Vivo</h3>
+        </div>
+        <p className="text-sm text-slate-500 mb-6">Configura tu canal de YouTube para la transmisión.</p>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">YouTube Channel ID</label>
+          <input
+            type="text"
+            value={config.youtubeChannelId || ''}
+            onChange={(e) => setConfig({ ...config, youtubeChannelId: e.target.value })}
+            className="w-full md:w-1/2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 font-mono text-sm"
+            placeholder="UC..."
+          />
+          <p className="text-xs text-slate-400 mt-2">
+            El ID de tu canal comienza con "UC". <a href="https://commentpicker.com/youtube-channel-id.php" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">Encuéntralo aquí</a>.
+          </p>
+        </div>
+      </section>
+
       {/* Summary Footer (Static) */}
       <div className="mt-8 bg-white border border-slate-200 p-6 rounded-[2.5rem] shadow-sm">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">

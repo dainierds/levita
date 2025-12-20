@@ -34,7 +34,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, events = [], nex
   };
 
   // Live if Active AND (It's the specific Date OR It's a recurring Meeting Day)
-  const isLive = (nextPlan?.isActive && (checkIsToday(nextPlan.date) || checkIsMeetingDay())) || false;
+  // OR if Manual "Go Live" override is on
+  const isLive = settings?.isLive || ((nextPlan?.isActive && (checkIsToday(nextPlan.date) || checkIsMeetingDay())) || false);
 
   // Date rendering
   let heroDate = 'Domingo';

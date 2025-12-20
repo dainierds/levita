@@ -115,6 +115,8 @@ export interface ChurchSettings {
   dayPools?: Record<string, Record<string, string[]>>;
   activeTeamId?: string;
   musicMinistryPin?: string; // New field for Music Ministry access
+  youtubeChannelId?: string; // YouTube Channel ID for Live Stream (e.g. UC...)
+  isLive?: boolean; // Manual override status for "Live Now" banner
 }
 
 export interface ShiftTeam {

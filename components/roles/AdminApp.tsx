@@ -84,6 +84,27 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 {/* Desktop Top Bar - Hide for Elder */}
                 {role !== 'ELDER' && (
                     <div className="hidden md:flex absolute top-6 right-8 z-50 items-center gap-4">
+
+                        {/* LIVE TOGGLE */}
+                        <button
+                            onClick={async () => {
+                                if (user?.tenantId) {
+                                    try {
+                                        await updateTenantSettings(user.tenantId, { ...settings, isLive: !settings?.isLive });
+                                    } catch (err) {
+                                        console.error("Error toggling live:", err);
+                                    }
+                                }
+                            }}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs transition-all shadow-sm border ${settings?.isLive
+                                    ? 'bg-red-500 text-white border-red-600 animate-pulse shadow-red-500/50'
+                                    : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'
+                                }`}
+                        >
+                            <div className={`w-2 h-2 rounded-full ${settings?.isLive ? 'bg-white' : 'bg-slate-300'}`} />
+                            {settings?.isLive ? 'EN VIVO' : 'OFFLINE'}
+                        </button>
+
                         <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100">
                             <span className="text-xs font-bold text-slate-400 uppercase">Iglesia:</span>
                             <span className="text-sm font-bold text-indigo-600">{settings?.churchName || 'Mi Iglesia'}</span>
