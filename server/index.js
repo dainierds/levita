@@ -61,26 +61,36 @@ Output: ONLY the translation, no explanations.`
         }]
     };
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+    let attempts = 0;
+    const maxRetries = 3;
 
-        if (!response.ok) {
-            const errText = await response.text();
-            console.error(`Gemini API Error ${response.status}:`, errText);
-            return "";
+    while (attempts < maxRetries) {
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                // console.error(`Gemini API Error (Attempt ${attempts + 1}):`, errText); // Optional: uncomment for debug
+                attempts++;
+                if (attempts < maxRetries) await new Promise(r => setTimeout(r, 500));
+                continue;
+            }
+
+            const data = await response.json();
+            const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            return translatedText ? translatedText.trim() : "";
+        } catch (error) {
+            console.error(`Translation Network Error (Attempt ${attempts + 1}):`, error);
+            attempts++;
+            if (attempts < maxRetries) await new Promise(r => setTimeout(r, 500));
         }
-
-        const data = await response.json();
-        const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        return translatedText ? translatedText.trim() : "";
-    } catch (error) {
-        console.error("Translation Fetch Error:", error);
-        return "";
     }
+
+    return ""; // Failed after retries
 };
 
 
