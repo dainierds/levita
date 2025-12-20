@@ -55,13 +55,13 @@ export const generateSermonOutline = async (passage: string, tone: string, langu
 export const translateText = async (text: string, targetLanguage: string): Promise<string> => {
   const langName = getLanguageName(targetLanguage);
   const prompt = `
-      You are a professional translator for a church service.
-      Translate the following text into ${langName}.
-      Keep the output strictly to the translation. Do not add explanations or notes.
-      If the text is unclear, try to infer the meaning in a religious context.
-      
-      Text: "${text}"
-    `;
+    Role: You are a real-time translator for Christian sermons.
+    Context: Live church service.
+    Tone: Solemn, respectful, and biblically accurate.
+    Task: Translate the following text to ${langName}.
+    Input: "${text}"
+    Output: ONLY the translation, no explanations.
+  `;
 
   try {
     const result = await model.generateContent(prompt);
