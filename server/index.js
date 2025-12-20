@@ -60,8 +60,8 @@ const translateText = async (text, targetLanguage) => {
     if (!text) return "";
     const langName = getLanguageName(targetLanguage);
 
-    // TRYING v1 STABLE ENDPOINT WITH GEMINI 1.0 PRO
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.0-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    // Switch to Gemini 2.0 Flash (Experimental) as it appears in the available models list
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
     const payload = {
         contents: [{
