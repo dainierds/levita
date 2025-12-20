@@ -1,7 +1,7 @@
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { createClient, LiveTranscriptionEvents } from '@deepgram/sdk';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 import http from 'http';
 
@@ -20,7 +20,8 @@ if (!DEEPGRAM_KEY || !GEMINI_KEY) {
 }
 
 // Initialize Gemini
-const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
+const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // --- Translation Logic (Same as Frontend Service) ---
 const getLanguageName = (code) => {
@@ -49,11 +50,9 @@ const translateText = async (text, targetLanguage) => {
   `;
 
     try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash-001',
-            contents: prompt,
-        });
-        return response.text ? response.text.trim() : "";
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text() ? response.text().trim() : "";
     } catch (error) {
         console.error("Translation Error (Gemini):", error.message);
         return ""; // Fail silently to not break stream
