@@ -20,8 +20,8 @@ if (!DEEPGRAM_KEY || !GEMINI_KEY) {
 }
 
 // Initialize Gemini
-const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+// const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+// const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // --- Translation Logic (Same as Frontend Service) ---
 const getLanguageName = (code) => {
@@ -41,21 +41,36 @@ const translateText = async (text, targetLanguage) => {
     if (!text) return "";
     const langName = getLanguageName(targetLanguage);
 
-    // Prompt optimized for Speed & Religion
-    const prompt = `
-    Context: Live church service.
-    Task: Translate to ${langName}.
-    Input: "${text}"
-    Output: ONLY the translation.
-  `;
+    // Direct REST API call to bypass SDK 404 issues
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+
+    const payload = {
+        contents: [{
+            parts: [{
+                text: `Context: Live church service. Task: Translate to ${langName}. Input: "${text}". Output: ONLY the translation.`
+            }]
+        }]
+    };
 
     try {
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text() ? response.text().trim() : "";
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            console.error(`Gemini API Error ${response.status}:`, errText);
+            return "";
+        }
+
+        const data = await response.json();
+        const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        return translatedText ? translatedText.trim() : "";
     } catch (error) {
-        console.error("Translation Error (Gemini):", error.message);
-        return ""; // Fail silently to not break stream
+        console.error("Translation Fetch Error:", error);
+        return "";
     }
 };
 
