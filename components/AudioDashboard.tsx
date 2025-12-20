@@ -110,7 +110,7 @@ const AudioDashboard: React.FC = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
                 {/* LEFT COLUMN: Stream & Translation */}
                 <div className="space-y-8">
@@ -238,6 +238,11 @@ const AudioDashboard: React.FC = () => {
                         )}
                     </div>
                 </div >
+
+                {/* RIGHT COLUMN: Visitor Monitor */}
+                <div>
+                    <VisitorTranslationMonitor tenantId={user?.tenantId} />
+                </div>
 
             </div >
         </div >
