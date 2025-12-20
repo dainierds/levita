@@ -51,7 +51,12 @@ const translateText = async (text, targetLanguage) => {
     const payload = {
         contents: [{
             parts: [{
-                text: `Context: Live church service. Task: Translate to ${langName}. Input: "${text}". Output: ONLY the translation.`
+                text: `Role: You are a real-time translator for Christian sermons.
+Context: Live church service.
+Tone: Solemn, respectful, and biblically accurate. 
+Task: Translate the following text to ${langName}.
+Input: "${text}"
+Output: ONLY the translation, no explanations.`
             }]
         }]
     };
