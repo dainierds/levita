@@ -23,8 +23,10 @@ const TranslationMaster: React.FC = () => {
     const rafRef = useRef<number | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
 
-    // Recognition Ref
-    const recognitionRef = useRef<any>(null);
+    // Deepgram/Socket Refs
+    const wsRef = useRef<WebSocket | null>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
 
     // 1. Initial Device Enumeration (and permission request if needed)
     useEffect(() => {
@@ -118,14 +120,58 @@ const TranslationMaster: React.FC = () => {
                 };
                 updateLevel();
 
-                // Setup Speech Recognition (Separate from AudioContext usually)
-                setupRecognition(stream); // Note: Web Speech API manages its own stream usually, but passing current stream is not standard.
-                // We'll rely on global SpeechRecognition which generally uses system default info or we might just have to accept 
-                // that SpeechRecognition is separate. 
-                // However, for the USER requirement "verify interface I select here... matches",
-                // we are at least *Visualizing* the correct mic. 
-                // *CRITICAL*: Standard Web Speech API does NOT support selecting a specific mediaStream/track easily in all browsers. 
-                // But we will re-initialize it when toggling.
+                // --- Setup Deepgram WebSocket ---
+                const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
+                console.log("Connecting to Translation Server:", wsUrl);
+
+                const socket = new WebSocket(wsUrl);
+                wsRef.current = socket;
+
+                socket.onopen = () => {
+                    console.log('Connected to Translation Server');
+
+                    // Start Recorder
+                    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                    mediaRecorderRef.current = mediaRecorder;
+
+                    mediaRecorder.addEventListener('dataavailable', (event) => {
+                        if (event.data.size > 0 && socket.readyState === 1) {
+                            socket.send(event.data);
+                        }
+                    });
+
+                    mediaRecorder.start(250); // Send every 250ms
+                };
+
+                socket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'TRANSCRIPTION' && data.isFinal) {
+                            // Save to Firestore
+                            if (user?.tenantId && data.original) {
+                                const docRef = doc(db, 'tenants', user.tenantId, 'live', 'transcription');
+                                setDoc(docRef, {
+                                    text: data.original,
+                                    // Save the server-side translation if available!
+                                    // But note: Client architecture might expect raw text and translate itself.
+                                    // However, since we now translate in backend, let's utilize that if the client app supports it.
+                                    // For now, we save the ORIGINAL text as the primary 'text' field so the existing flow works.
+                                    // We can optionally save 'serverTranslation': data.translation
+                                    timestamp: serverTimestamp(),
+                                    isFinal: true,
+                                    sourceLang: 'es'
+                                }).catch(err => console.error("Error writing transcript:", err));
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Socket message error:", e);
+                    }
+                };
+
+                socket.onerror = (error) => {
+                    console.error("WebSocket Error:", error);
+                    // Optional: setPermissionError('Error de conexión con el servidor de traducción.'); 
+                };
 
             } catch (err) {
                 console.error("Audio Start Error:", err);
@@ -145,81 +191,22 @@ const TranslationMaster: React.FC = () => {
         if (sourceRef.current) sourceRef.current.disconnect();
         if (audioContextRef.current) audioContextRef.current.close();
         if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-        if (recognitionRef.current) recognitionRef.current.stop();
+
+        // Cleanup Socket & Recorder
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+        }
+        if (wsRef.current) {
+            wsRef.current.close();
+        }
 
         audioContextRef.current = null;
         analyserRef.current = null;
         sourceRef.current = null;
         streamRef.current = null;
+        wsRef.current = null;
+        mediaRecorderRef.current = null;
         setLevel(0);
-    };
-
-    // 3. Speech Recognition Logic
-    const setupRecognition = (mediaStream: MediaStream) => {
-        if (!(window as any).webkitSpeechRecognition && !(window as any).SpeechRecognition) {
-            console.warn("Speech Recognition not supported");
-            return;
-        }
-
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'es-ES';
-
-        // NOTE: We cannot easily force SpeechRecognition to use 'mediaStream' in standard API.
-        // It always uses the default microphone. 
-        // To strictly solve "Device Selection" for transcription, we'd need a backend service (Whisper etc).
-        // For this Web Prototype, we Visualizing the audio confirms the mic works, 
-        // and we assume the OS Default matches if user selects it.
-        // BUT, showing the user the REAL visualizer for the selected mic helps trust.
-
-        recognition.onresult = (event: any) => {
-            let interimTranscript = '';
-            let finalTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
-                }
-            }
-
-            const textToPublish = finalTranscript || interimTranscript;
-
-            // Write to Firestore if there's content
-            if (user?.tenantId && textToPublish.trim()) {
-                const docRef = doc(db, 'tenants', user.tenantId, 'live', 'transcription');
-                setDoc(docRef, {
-                    text: textToPublish,
-                    timestamp: serverTimestamp(),
-                    isFinal: !!finalTranscript,
-                    // Sending language info so client knows what to translate FROM
-                    sourceLang: 'es'
-                }).catch(err => console.error("Error writing transcript:", err));
-            }
-        };
-
-        recognition.onerror = (event: any) => {
-            // console.error("Speech Recognition Error:", event.error);
-            if (event.error === 'not-allowed') {
-                setIsActive(false);
-                setPermissionError('Permiso de voz denegado.');
-            }
-        };
-
-        recognition.onend = () => {
-            // Restart if still active
-            if (isActive && recognitionRef.current) {
-                try { recognition.start(); } catch { }
-            }
-        };
-
-        try {
-            recognition.start();
-            recognitionRef.current = recognition;
-        } catch (e) { console.error(e); }
     };
 
 

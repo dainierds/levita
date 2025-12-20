@@ -1,0 +1,21 @@
+{
+  "name": "levita-audio-server",
+  "version": "1.0.0",
+  "description": "Backend for Deepgram + Gemini Live Translation",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@deepgram/sdk": "^3.1.1",
+    "@google/genai": "^0.1.1",
+    "dotenv": "^16.4.5",
+    "ws": "^8.18.0",
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
