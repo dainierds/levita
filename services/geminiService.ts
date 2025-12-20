@@ -3,6 +3,19 @@ import { GoogleGenAI } from "@google/genai";
 // Initialize the Gemini client
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
+const getLanguageName = (code: string): string => {
+  const map: Record<string, string> = {
+    'es': 'Spanish',
+    'en': 'English',
+    'pt': 'Portuguese',
+    'fr': 'French',
+    'de': 'German',
+    'ko': 'Korean',
+    'zh': 'Chinese'
+  };
+  return map[code] || code;
+};
+
 export const generateSermonOutline = async (passage: string, tone: string, language: string = 'Spanish'): Promise<string> => {
   try {
     const prompt = `
@@ -22,7 +35,7 @@ export const generateSermonOutline = async (passage: string, tone: string, langu
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       contents: prompt,
     });
 
@@ -35,21 +48,22 @@ export const generateSermonOutline = async (passage: string, tone: string, langu
 
 export const translateText = async (text: string, targetLanguage: string): Promise<string> => {
   try {
+    const langName = getLanguageName(targetLanguage);
     const prompt = `
-      Translate the following religious/church context text into ${targetLanguage}. 
-      Maintain the spiritual tone and accuracy.
+      You are a professional translator for a church service.
+      Translate the following text into ${langName}.
+      Keep the output strictly to the translation. Do not add explanations or notes.
+      If the text is unclear, try to infer the meaning in a religious context.
       
-      Text to translate: "${text}"
-      
-      Only return the translated text, nothing else.
+      Text: "${text}"
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       contents: prompt,
     });
 
-    return response.text || "";
+    return response.text?.trim() || "";
   } catch (error) {
     console.error("Translation error:", error);
     return "Error in translation.";
