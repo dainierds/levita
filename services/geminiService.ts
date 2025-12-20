@@ -1,7 +1,9 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize the Gemini client
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
 
 const getLanguageName = (code: string): string => {
   const map: Record<string, string> = {
@@ -34,19 +36,15 @@ export const generateSermonOutline = async (passage: string, tone: string, langu
     `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash-001',
-      contents: prompt,
-    });
-    return response.text || "Could not generate outline.";
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text() || "Could not generate outline.";
   } catch (error) {
     console.warn("Primary model failed, retrying with fallback...", error);
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-pro',
-        contents: prompt,
-      });
-      return response.text || "Could not generate outline.";
+      const result = await fallbackModel.generateContent(prompt);
+      const response = await result.response;
+      return response.text() || "Could not generate outline.";
     } catch (fallbackError) {
       console.error("Error generating sermon:", fallbackError);
       return "Error generating sermon outline. Please check your API key and try again.";
@@ -66,19 +64,15 @@ export const translateText = async (text: string, targetLanguage: string): Promi
     `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash-001',
-      contents: prompt,
-    });
-    return response.text?.trim() || "";
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text() ? response.text().trim() : "";
   } catch (error) {
     console.warn("Primary model translation failed, retrying with fallback...", error);
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-pro',
-        contents: prompt,
-      });
-      return response.text?.trim() || "";
+      const result = await fallbackModel.generateContent(prompt);
+      const response = await result.response;
+      return response.text() ? response.text().trim() : "";
     } catch (fallbackError) {
       console.error("Translation error:", fallbackError);
       return "Error in translation.";
