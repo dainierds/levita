@@ -156,7 +156,7 @@ const TranslationMaster: React.FC = () => {
 
     // 3. Speech Recognition Logic
     const setupRecognition = (mediaStream: MediaStream) => {
-        if (!window.webkitSpeechRecognition && !window.SpeechRecognition) {
+        if (!(window as any).webkitSpeechRecognition && !(window as any).SpeechRecognition) {
             console.warn("Speech Recognition not supported");
             return;
         }
@@ -273,13 +273,22 @@ const TranslationMaster: React.FC = () => {
                             </select>
                         </div>
                         {isActive && (
-                            <p className="text-[10px] text-green-400 mt-1 font-medium animate-pulse">
-                                ● Dispositivo Activo - Capturando Audio
-                            </p>
+                            <div className="flex flex-col gap-2 mt-2">
+                                <p className="text-[10px] text-green-400 font-medium animate-pulse flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block" /> Dispositivo Activo
+                                </p>
+                            </div>
                         )}
-                        <p className="text-[10px] text-slate-500 mt-1 italic hidden">
-                            Selecciona la interfaz que usará el sistema para escuchar.
-                        </p>
+
+                        {inputDevice !== 'default' && (
+                            <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg flex gap-2 items-start">
+                                <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={14} />
+                                <p className="text-[10px] text-amber-400 leading-tight">
+                                    <span className="font-bold block mb-0.5">Nota Importante:</span>
+                                    El motor de voz de Chrome escucha el <b>Micrófono Predeterminado</b> de Windows. Si la traducción no funciona, cambia el dispositivo por defecto en tu sistema operativo.
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     <div>

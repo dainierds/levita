@@ -507,6 +507,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
     const isMusicTab = selectedRoleTab === 'musicDirector';
     const isTeamsTab = selectedRoleTab === 'teams';
+    const showGroupsColumn = !isMusicTab && !isTeamsTab;
 
     return (
         <div className="p-4 md:p-8 max-w-full mx-auto space-y-1 h-screen flex flex-col overflow-hidden pb-4">
@@ -547,7 +548,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             </div>
 
             {/* Main Content: 3-Column Layout */}
-            <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[260px_260px_1fr] gap-6">
+            <div className={`flex-1 min-h-0 grid gap-6 ${showGroupsColumn ? 'grid-cols-1 lg:grid-cols-[260px_260px_1fr]' : 'grid-cols-1 lg:grid-cols-[260px_1fr]'}`}>
 
                 {/* COL 1: POOL (Source) */}
                 <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
@@ -595,65 +596,67 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                     </div>
                 </div>
 
-                {/* COL 2: DAY BUCKETS (Config) */}
-                <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
-                    <div className="p-6 border-b border-slate-50 bg-slate-50/50">
-                        <h3 className="font-bold text-xl text-slate-800">Grupos</h3>
-                        <p className="text-xs text-slate-400">Organiza voluntarios por día</p>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
-                        {(!isTeamsTab && !isMusicTab) ? settings.meetingDays.map(day => {
-                            const poolIds = settings.dayPools?.[day]?.[currentRoleConfig?.key || ''] || [];
-                            const poolUsers = users.filter(u => poolIds.includes(u.id));
+                {/* COL 2: DAY BUCKETS (Config) - Conditionally Rendered */}
+                {showGroupsColumn && (
+                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
+                        <div className="p-6 border-b border-slate-50 bg-slate-50/50">
+                            <h3 className="font-bold text-xl text-slate-800">Grupos</h3>
+                            <p className="text-xs text-slate-400">Organiza voluntarios por día</p>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
+                            {(!isTeamsTab && !isMusicTab) ? settings.meetingDays.map(day => {
+                                const poolIds = settings.dayPools?.[day]?.[currentRoleConfig?.key || ''] || [];
+                                const poolUsers = users.filter(u => poolIds.includes(u.id));
 
-                            return (
-                                <div
-                                    key={day}
-                                    onDragOver={handleDragOver}
-                                    onDrop={(e) => handleBucketDrop(e, day)}
-                                    className="space-y-2 transition-colors duration-200 rounded-3xl p-2 hover:bg-slate-50"
-                                >
-                                    <div className="flex items-center gap-2 mb-2 px-2">
-                                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">{day}</h4>
-                                        <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full">{poolUsers.length}</span>
+                                return (
+                                    <div
+                                        key={day}
+                                        onDragOver={handleDragOver}
+                                        onDrop={(e) => handleBucketDrop(e, day)}
+                                        className="space-y-2 transition-colors duration-200 rounded-3xl p-2 hover:bg-slate-50"
+                                    >
+                                        <div className="flex items-center gap-2 mb-2 px-2">
+                                            <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">{day}</h4>
+                                            <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full">{poolUsers.length}</span>
+                                        </div>
+
+                                        {poolUsers.length === 0 ? (
+                                            <div className="border-2 border-dashed border-slate-100 rounded-2xl p-4 text-center">
+                                                <p className="text-[10px] text-slate-400">Arrastra aquí</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {poolUsers.map(user => (
+                                                    <div
+                                                        key={`${day}-${user.id}`}
+                                                        draggable={canEdit}
+                                                        onDragStart={(e) => handleDragStart(e, user, 'USER')}
+                                                        className="bg-white border border-slate-100 p-2 pl-3 rounded-2xl flex items-center justify-between group hover:shadow-sm"
+                                                    >
+                                                        <span className="text-xs font-bold text-slate-600 truncate">{user.name}</span>
+                                                        {canEdit && (
+                                                            <button
+                                                                onClick={() => removeFromBucket(day, user.id)}
+                                                                className="text-slate-300 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <Plus size={14} className="rotate-45" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-
-                                    {poolUsers.length === 0 ? (
-                                        <div className="border-2 border-dashed border-slate-100 rounded-2xl p-4 text-center">
-                                            <p className="text-[10px] text-slate-400">Arrastra aquí</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            {poolUsers.map(user => (
-                                                <div
-                                                    key={`${day}-${user.id}`}
-                                                    draggable={canEdit}
-                                                    onDragStart={(e) => handleDragStart(e, user, 'USER')}
-                                                    className="bg-white border border-slate-100 p-2 pl-3 rounded-2xl flex items-center justify-between group hover:shadow-sm"
-                                                >
-                                                    <span className="text-xs font-bold text-slate-600 truncate">{user.name}</span>
-                                                    {canEdit && (
-                                                        <button
-                                                            onClick={() => removeFromBucket(day, user.id)}
-                                                            className="text-slate-300 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        >
-                                                            <Plus size={14} className="rotate-45" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                );
+                            }) : (
+                                <div className="flex flex-col items-center justify-center h-full text-center text-slate-400 p-6">
+                                    <Sparkles className="mb-2 opacity-50" />
+                                    <p className="text-xs">Esta vista solo está disponible para roles individuales (Ancianos, Predicadores, etc).</p>
                                 </div>
-                            );
-                        }) : (
-                            <div className="flex flex-col items-center justify-center h-full text-center text-slate-400 p-6">
-                                <Sparkles className="mb-2 opacity-50" />
-                                <p className="text-xs">Esta vista solo está disponible para roles individuales (Ancianos, Predicadores, etc).</p>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Right Col: Calendar Grid (Scrollable) */}
                 <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
