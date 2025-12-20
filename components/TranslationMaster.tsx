@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Mic, Mic2, Activity, Globe, Power, Settings, Volume2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 
 const TranslationMaster: React.FC = () => {
     const { user } = useAuth();
@@ -148,15 +148,24 @@ const TranslationMaster: React.FC = () => {
                         const data = JSON.parse(event.data);
                         if (data.type === 'TRANSCRIPTION' && data.isFinal) {
                             // Save to Firestore
+                            // Save to Firestore with History (Teleprompter Mode)
                             if (user?.tenantId && data.original) {
                                 const docRef = doc(db, 'tenants', user.tenantId, 'live', 'transcription');
+
+                                const newSegment = {
+                                    original: data.original,
+                                    translation: data.translation || "",
+                                    timestamp: Date.now()
+                                };
+
                                 setDoc(docRef, {
                                     text: data.original,
-                                    translation: data.translation || "", // Save server translation
+                                    translation: data.translation || "",
                                     timestamp: serverTimestamp(),
                                     isFinal: true,
-                                    sourceLang: 'es'
-                                }).catch(err => console.error("Error writing transcript:", err));
+                                    sourceLang: 'es',
+                                    segments: arrayUnion(newSegment)
+                                }, { merge: true }).catch(err => console.error("Error writing transcript:", err));
                             }
                         }
                     } catch (e) {

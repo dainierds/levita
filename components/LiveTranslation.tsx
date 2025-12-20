@@ -24,11 +24,13 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
   const [isActive, setIsActive] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [translation, setTranslation] = useState('');
+  const [segments, setSegments] = useState<any[]>([]); // History
   const [targetLang, setTargetLang] = useState(initialLanguage);
   const [isTranslating, setIsTranslating] = useState(false);
 
   // Previous text to avoid re-translating same content
   const lastTranslatedTextRef = useRef('');
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (initialLanguage) setTargetLang(initialLanguage);
@@ -45,13 +47,16 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
         const text = data.text || '';
 
         setTranscript(text);
+        setSegments(data.segments || []); // Update history
 
-        // Translate if changed and not empty
+        // Translate if changed and not empty (For other languages)
         if (text && text !== lastTranslatedTextRef.current) {
           lastTranslatedTextRef.current = text;
 
           if (targetLang === 'es') {
             setTranslation(text);
+          } else if (targetLang === 'en') {
+            setTranslation(data.translation || "");
           } else {
             setIsTranslating(true);
             try {
@@ -69,6 +74,13 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
 
     return () => unsubscribe();
   }, [tenantId, isActive, targetLang]);
+
+  // Auto-scroll
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [segments, translation]);
 
 
   const toggleActive = () => {
@@ -117,28 +129,38 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
           </p>
         </div>
 
-        {/* Translation Area */}
-        <div className="p-6 bg-indigo-50 rounded-3xl min-h-[150px] relative border border-indigo-100 transition-all">
-          <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
+        {/* Translation Area (Teleprompter) */}
+        <div className="p-6 bg-indigo-50 rounded-3xl h-[400px] relative border border-indigo-100 transition-all flex flex-col">
+          <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
             <span className="text-[10px] font-bold uppercase text-indigo-400">
-              {targetLang === 'es' ? 'Texto' : `Traducción (${LANGUAGES.find(l => l.code === targetLang)?.label})`}
+              {targetLang === 'es' ? 'Texto en Vivo' : `Traducción (${LANGUAGES.find(l => l.code === targetLang)?.label})`}
             </span>
             {translation && (
-              <button onClick={speakTranslation} className="text-indigo-500 hover:text-indigo-700">
+              <button onClick={speakTranslation} className="text-indigo-500 hover:text-indigo-700 bg-white p-2 rounded-full shadow-sm">
                 <Volume2 size={16} />
               </button>
             )}
           </div>
 
-          <p className="mt-6 text-lg md:text-xl text-indigo-900 font-bold leading-relaxed animate-in fade-in">
-            {isTranslating ? (
-              <span className="animate-pulse opacity-50">Traduciendo...</span>
-            ) : (
-              translation || <span className="text-indigo-200/60 italic">
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto space-y-4 no-scrollbar mt-8 mask-fade-top"
+          >
+            {/* History Segments */}
+            {segments.map((seg, i) => (
+              <div key={i} className={`transition-all duration-500 ${i === segments.length - 1 ? 'opacity-100 scale-100' : 'opacity-60 scale-95 origin-left'}`}>
+                <p className={`text-lg md:text-xl font-bold leading-relaxed ${i === segments.length - 1 ? 'text-indigo-900' : 'text-indigo-900/60'}`}>
+                  {targetLang === 'es' ? seg.original : (targetLang === 'en' ? (seg.translation || seg.original) : (i === segments.length - 1 ? translation : (seg.translation || seg.original)))}
+                </p>
+              </div>
+            ))}
+
+            {segments.length === 0 && (
+              <div className="h-full flex items-center justify-center text-indigo-300 italic">
                 {isActive ? "Esperando señal..." : "Pulsa conectar para iniciar."}
-              </span>
+              </div>
             )}
-          </p>
+          </div>
         </div>
       </div>
 
@@ -146,8 +168,8 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
         <button
           onClick={toggleActive}
           className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-105 ${isActive
-              ? 'bg-red-500 text-white shadow-red-200 animate-pulse'
-              : 'bg-indigo-600 text-white shadow-indigo-200'
+            ? 'bg-red-500 text-white shadow-red-200 animate-pulse'
+            : 'bg-indigo-600 text-white shadow-indigo-200'
             }`}
         >
           {isActive ? <MicOff size={32} /> : <Radio size={32} />}

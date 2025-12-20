@@ -10,7 +10,7 @@ interface VisitorTranslationMonitorProps {
 const VisitorTranslationMonitor: React.FC<VisitorTranslationMonitorProps> = ({ tenantId }) => {
     const [translation, setTranslation] = useState('');
     const [original, setOriginal] = useState('');
-    const [targetLang, setTargetLang] = useState('en');
+    const [segments, setSegments] = useState<any[]>([]);
 
     useEffect(() => {
         if (!tenantId) return;
@@ -21,12 +21,21 @@ const VisitorTranslationMonitor: React.FC<VisitorTranslationMonitorProps> = ({ t
             if (snapshot.exists()) {
                 const data = snapshot.data();
                 setOriginal(data.text || '');
-                setTranslation(data.translation || ''); // Assuming backend now sends this
+                setTranslation(data.translation || '');
+                setSegments(data.segments || []);
             }
         });
 
         return () => unsubscribe();
     }, [tenantId]);
+
+    // Auto-scroll effect
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [segments]);
 
     return (
         <div className="bg-[#2d313a]/50 p-6 rounded-[2.5rem] border border-slate-700/50">
@@ -60,18 +69,31 @@ const VisitorTranslationMonitor: React.FC<VisitorTranslationMonitorProps> = ({ t
                     </div>
 
                     {/* Translation Card (The Core Feature) */}
-                    <div className="mt-8">
-                        <div className="p-6 bg-indigo-600 rounded-[2rem] shadow-xl text-white relative min-h-[200px] flex flex-col justify-center text-center">
-                            <span className="absolute top-4 left-0 right-0 text-center text-[10px] font-bold uppercase opacity-50 tracking-widest">
+                    <div className="mt-8 flex-1 flex flex-col min-h-0">
+                        <div className="p-6 bg-indigo-600 rounded-[2rem] shadow-xl text-white relative flex-1 flex flex-col">
+                            <span className="text-center text-[10px] font-bold uppercase opacity-50 tracking-widest mb-4">
                                 TRADUCCIÓN EN VIVO
                             </span>
 
-                            <p className="text-lg font-bold leading-relaxed">
-                                {translation || <span className="opacity-50 italic text-sm">Esperando traducción...</span>}
-                            </p>
+                            <div
+                                reference={scrollRef} // Fix: Use ref attribute if supported or useRef directly on element
+                                ref={scrollRef}
+                                className="flex-1 overflow-y-auto space-y-4 no-scrollbar mask-fade-top"
+                                style={{ maxHeight: '300px' }}
+                            >
+                                {segments.length > 0 ? segments.map((seg, i) => (
+                                    <div key={i} className={`leading-relaxed transition-all duration-500 ${i === segments.length - 1 ? 'text-lg font-bold opacity-100 scale-100' : 'text-sm opacity-60 scale-95 origin-left'}`}>
+                                        {seg.translation || seg.original}
+                                    </div>
+                                )) : (
+                                    <div className="h-full flex items-center justify-center opacity-50 italic text-sm">
+                                        Esperando traducción...
+                                    </div>
+                                )}
+                            </div>
 
-                            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-                                <span className={`w-1.5 h-1.5 rounded-full ${translation ? 'bg-green-400 animate-pulse' : 'bg-white/20'}`}></span>
+                            <div className="mt-4 flex justify-center gap-2">
+                                <span className={`w-1.5 h-1.5 rounded-full ${segments.length > 0 ? 'bg-green-400 animate-pulse' : 'bg-white/20'}`}></span>
                                 <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>
                                 <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>
                             </div>
