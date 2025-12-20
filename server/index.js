@@ -21,7 +21,7 @@ if (!DEEPGRAM_KEY || !GEMINI_KEY) {
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // --- Translation Logic (Same as Frontend Service) ---
 const getLanguageName = (code) => {
@@ -55,7 +55,7 @@ const translateText = async (text, targetLanguage) => {
         return response.text() ? response.text().trim() : "";
     } catch (error) {
         console.error("Translation Error (Gemini):", error.message);
-        return `Error: ${error.message}`; // Return error to client for debugging
+        return ""; // Fail silently to not break stream
     }
 };
 
