@@ -55,7 +55,7 @@ const translateText = async (text, targetLanguage) => {
         return response.text() ? response.text().trim() : "";
     } catch (error) {
         console.error("Translation Error (Gemini):", error.message);
-        return ""; // Fail silently to not break stream
+        return `Error: ${error.message}`; // Return error to client for debugging
     }
 };
 
