@@ -17,8 +17,7 @@ const getLanguageName = (code: string): string => {
 };
 
 export const generateSermonOutline = async (passage: string, tone: string, language: string = 'Spanish'): Promise<string> => {
-  try {
-    const prompt = `
+  const prompt = `
       Act as a senior theologian and homiletics expert. 
       Create a structured sermon outline for the Bible passage: "${passage}".
       The tone of the sermon should be: "${tone}".
@@ -34,22 +33,30 @@ export const generateSermonOutline = async (passage: string, tone: string, langu
       Keep it concise and ready for a preacher's notes. Use Markdown formatting.
     `;
 
+  try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-001',
       contents: prompt,
     });
-
     return response.text || "Could not generate outline.";
   } catch (error) {
-    console.error("Error generating sermon:", error);
-    return "Error generating sermon outline. Please check your API key and try again.";
+    console.warn("Primary model failed, retrying with fallback...", error);
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-pro',
+        contents: prompt,
+      });
+      return response.text || "Could not generate outline.";
+    } catch (fallbackError) {
+      console.error("Error generating sermon:", fallbackError);
+      return "Error generating sermon outline. Please check your API key and try again.";
+    }
   }
 };
 
 export const translateText = async (text: string, targetLanguage: string): Promise<string> => {
-  try {
-    const langName = getLanguageName(targetLanguage);
-    const prompt = `
+  const langName = getLanguageName(targetLanguage);
+  const prompt = `
       You are a professional translator for a church service.
       Translate the following text into ${langName}.
       Keep the output strictly to the translation. Do not add explanations or notes.
@@ -58,14 +65,23 @@ export const translateText = async (text: string, targetLanguage: string): Promi
       Text: "${text}"
     `;
 
+  try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-001',
       contents: prompt,
     });
-
     return response.text?.trim() || "";
   } catch (error) {
-    console.error("Translation error:", error);
-    return "Error in translation.";
+    console.warn("Primary model translation failed, retrying with fallback...", error);
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-pro',
+        contents: prompt,
+      });
+      return response.text?.trim() || "";
+    } catch (fallbackError) {
+      console.error("Translation error:", fallbackError);
+      return "Error in translation.";
+    }
   }
 };
