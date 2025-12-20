@@ -20,8 +20,27 @@ if (!DEEPGRAM_KEY || !GEMINI_KEY) {
 }
 
 // Initialize Gemini
+// Initialize Gemini
 // const genAI = new GoogleGenerativeAI(GEMINI_KEY);
 // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+// --- debug: List Models on Startup ---
+const listModels = async () => {
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log("--- AVAILABLE GUIDED MODELS ---");
+        if (data.models) {
+            data.models.forEach(m => console.log(m.name, m.supportedGenerationMethods));
+        } else {
+            console.log("No models found or error:", data);
+        }
+        console.log("-------------------------------");
+    } catch (e) {
+        console.error("Failed to list models:", e);
+    }
+};
 
 // --- Translation Logic (Same as Frontend Service) ---
 const getLanguageName = (code) => {
@@ -41,8 +60,8 @@ const translateText = async (text, targetLanguage) => {
     if (!text) return "";
     const langName = getLanguageName(targetLanguage);
 
-    // Direct REST API call to bypass SDK 404 issues
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    // TRYING v1 STABLE ENDPOINT WITH GEMINI 1.0 PRO
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.0-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
     const payload = {
         contents: [{
