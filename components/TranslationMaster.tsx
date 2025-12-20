@@ -121,14 +121,14 @@ const TranslationMaster: React.FC = () => {
                 updateLevel();
 
                 // --- Setup Deepgram WebSocket ---
-                const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
+                const wsUrl = import.meta.env.VITE_WS_URL || 'wss://web-production-14c5c.up.railway.app';
                 console.log("Connecting to Translation Server:", wsUrl);
 
                 const socket = new WebSocket(wsUrl);
                 wsRef.current = socket;
 
                 socket.onopen = () => {
-                    console.log('Connected to Translation Server');
+                    console.log('Connected to Translation Server at:', wsUrl);
 
                     // Start Recorder
                     const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
@@ -152,11 +152,7 @@ const TranslationMaster: React.FC = () => {
                                 const docRef = doc(db, 'tenants', user.tenantId, 'live', 'transcription');
                                 setDoc(docRef, {
                                     text: data.original,
-                                    // Save the server-side translation if available!
-                                    // But note: Client architecture might expect raw text and translate itself.
-                                    // However, since we now translate in backend, let's utilize that if the client app supports it.
-                                    // For now, we save the ORIGINAL text as the primary 'text' field so the existing flow works.
-                                    // We can optionally save 'serverTranslation': data.translation
+                                    translation: data.translation || "", // Save server translation
                                     timestamp: serverTimestamp(),
                                     isFinal: true,
                                     sourceLang: 'es'
