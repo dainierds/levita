@@ -21,7 +21,7 @@ if (!DEEPGRAM_KEY || !GEMINI_KEY) {
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // --- Translation Logic (Same as Frontend Service) ---
 const getLanguageName = (code) => {
