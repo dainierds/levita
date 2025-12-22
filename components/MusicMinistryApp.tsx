@@ -63,8 +63,9 @@ const MusicMinistryApp: React.FC = () => {
     // ... Data State ...
     const [events, setEvents] = useState<ChurchEvent[]>([]);
     const [upcomingPlans, setUpcomingPlans] = useState<ServicePlan[]>([]);
-    const [musicTeam, setMusicTeam] = useState<MusicTeam | null>(null);
-    const [musicMembers, setMusicMembers] = useState<any[]>([]);
+    const [upcomingTeams, setUpcomingTeams] = useState<MusicTeam[]>([]); // Changed to array
+    const [musicMembers, setMusicMembers] = useState<any[]>([]); // This might need to be a map or just all users
+    const [allMusicUsers, setAllMusicUsers] = useState<any[]>([]); // To resolve soloists
     const [isLoadingData, setIsLoadingData] = useState(false);
 
     // Trigger data fetch when authenticated
@@ -165,8 +166,7 @@ const MusicMinistryApp: React.FC = () => {
             // We keep this empty or remove it to avoid race conditions/double sets.
             // The useEffect listener above handles setNextPlan.
 
-            // 3. Fetch Nearest Music Team (Independent of Plan)
-            // Music Teams ARE stored in subcollections (confirmed working)
+            // 3. Fetch Next Music Teams (Top 2)
             const musicQ = query(
                 collection(db, 'tenants', tenant.id, 'music_teams'),
                 orderBy('date', 'asc')
@@ -174,37 +174,28 @@ const MusicMinistryApp: React.FC = () => {
             const musicSnap = await getDocs(musicQ);
             const allTeams = musicSnap.docs.map(d => ({ id: d.id, ...d.data() } as MusicTeam));
 
-            // Find the nearest team >= today
-            const nearestTeam = allTeams
+            // Find teams >= today
+            const futureTeams = allTeams
                 .filter(t => {
                     const teamDate = new Date(t.date + 'T00:00:00');
                     return teamDate >= today;
                 })
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .slice(0, 2); // Take top 2
 
-            if (nearestTeam) {
-                setMusicTeam(nearestTeam);
+            setUpcomingTeams(futureTeams);
 
-                // Fetch Member Details
-                if (nearestTeam.memberIds?.length > 0) {
-                    try {
-                        const usersQ = query(
-                            collection(db, 'users'),
-                            where('tenantId', '==', tenant.id)
-                        );
-                        const usersSnap = await getDocs(usersQ);
-                        const allUsers = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                        const teamMembers = allUsers.filter(u => nearestTeam.memberIds.includes(u.id));
-                        setMusicMembers(teamMembers);
-                    } catch (userErr) {
-                        console.error("MusicApp: Error fetching users:", userErr);
-                    }
-                } else {
-                    setMusicMembers([]);
-                }
-            } else {
-                setMusicTeam(null);
-                setMusicMembers([]);
+            // Fetch All Music Users to resolve names
+            try {
+                const usersQ = query(
+                    collection(db, 'users'),
+                    where('tenantId', '==', tenant.id)
+                );
+                const usersSnap = await getDocs(usersQ);
+                const fetchedUsers = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                setAllMusicUsers(fetchedUsers);
+            } catch (userErr) {
+                console.error("MusicApp: Error fetching users:", userErr);
             }
 
         } catch (err) {
@@ -320,49 +311,94 @@ const MusicMinistryApp: React.FC = () => {
                         <h3 className="font-bold text-lg">Equipo de Alabanza</h3>
                     </div>
 
-                    {musicTeam ? (
-                        <div className="bg-white rounded-[2rem] p-6 shadow-lg shadow-pink-100 border border-pink-50">
-                            {/* Date Header */}
-                            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-pink-50">
-                                <div className="bg-pink-50 text-pink-500 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black shadow-inner">
-                                    {new Date(musicTeam.date + 'T12:00:00').getDate()}
-                                </div>
-                                <div>
-                                    <p className="text-pink-500 font-bold text-xs uppercase tracking-widest mb-1">
-                                        {new Date(musicTeam.date + 'T12:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-                                    </p>
-                                    <h4 className="text-2xl font-black text-slate-800 capitalize leading-none">
-                                        {new Date(musicTeam.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long' })}
-                                    </h4>
-                                </div>
-                            </div>
-                            {musicTeam.note && (
-                                <div className="mb-6 bg-yellow-50 text-yellow-800 text-xs font-medium p-3 rounded-xl border border-yellow-100 flex items-start gap-2">
-                                    <span className="text-lg">💡</span>
-                                    <span className="mt-0.5">{musicTeam.note}</span>
-                                </div>
-                            )}
+                    {upcomingTeams.length > 0 ? (
+                        <div className="space-y-6">
+                            {upcomingTeams.map(team => {
+                                const teamDate = new Date(team.date + 'T12:00:00');
+                                const dayNum = teamDate.getDate();
+                                const monthYear = teamDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+                                const dayName = teamDate.toLocaleDateString('es-ES', { weekday: 'long' });
 
-                            <div className="grid grid-cols-2 gap-4">
-                                {musicMembers.map((member, idx) => (
-                                    <div key={member.id || idx} className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0">
-                                            {member.name ? member.name.charAt(0) : '?'}
+                                // Resolve members
+                                const teamMembers = allMusicUsers.filter(u => team.memberIds.includes(u.id));
+                                const s1Name = allMusicUsers.find(u => u.id === team.soloist1)?.name;
+                                const s2Name = allMusicUsers.find(u => u.id === team.soloist2)?.name;
+
+                                return (
+                                    <div key={team.id} className="bg-white rounded-[2rem] p-6 shadow-lg shadow-pink-100 border border-pink-50">
+                                        {/* Date Header */}
+                                        <div className="flex items-center gap-4 mb-6 pb-6 border-b border-pink-50">
+                                            <div className="bg-pink-50 text-pink-500 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black shadow-inner">
+                                                {dayNum}
+                                            </div>
+                                            <div>
+                                                <p className="text-pink-500 font-bold text-xs uppercase tracking-widest mb-1">
+                                                    {monthYear}
+                                                </p>
+                                                <h4 className="text-2xl font-black text-slate-800 capitalize leading-none">
+                                                    {dayName}
+                                                </h4>
+                                            </div>
                                         </div>
-                                        <div className="overflow-hidden">
-                                            <p className="font-bold text-sm text-slate-700 truncate">{member.name}</p>
-                                            <p className="text-xs font-bold text-pink-400 uppercase tracking-wider">Vocal / Músico</p>
+
+                                        {team.note && (
+                                            <div className="mb-6 bg-yellow-50 text-yellow-800 text-xs font-medium p-3 rounded-xl border border-yellow-100 flex items-start gap-2">
+                                                <span className="text-lg">💡</span>
+                                                <span className="mt-0.5">{team.note}</span>
+                                            </div>
+                                        )}
+
+                                        {/* SOLOISTS SECTION */}
+                                        {(s1Name || s2Name) && (
+                                            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {s1Name && (
+                                                    <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center">
+                                                            <Mic2 size={14} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Solista 1er Servicio</p>
+                                                            <p className="font-bold text-indigo-900 text-sm">{s1Name}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {s2Name && (
+                                                    <div className="bg-purple-50 border border-purple-100 p-3 rounded-xl flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center">
+                                                            <Mic2 size={14} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Solista 2do Servicio</p>
+                                                            <p className="font-bold text-purple-900 text-sm">{s2Name}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {teamMembers.map((member, idx) => (
+                                                <div key={member.id || idx} className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0">
+                                                        {member.name ? member.name.charAt(0) : '?'}
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        <p className="font-bold text-sm text-slate-700 truncate">{member.name}</p>
+                                                        <p className="text-xs font-bold text-pink-400 uppercase tracking-wider">Vocal / Músico</p>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="bg-white rounded-[2rem] p-8 text-center border border-dashed border-slate-200">
                             <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
                                 <Music size={24} />
                             </div>
-                            <p className="text-sm text-slate-400 font-medium">No hay equipo asignado para esta fecha aún.</p>
+                            <p className="text-sm text-slate-400 font-medium">No hay equipos asignados próximamente.</p>
                         </div>
                     )}
                 </section>
