@@ -27,10 +27,14 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
         date: string;
         selectedMembers: string[];
         note: string;
+        soloist1: string;
+        soloist2: string;
     }>({
         date: '',
         selectedMembers: [],
-        note: ''
+        note: '',
+        soloist1: '',
+        soloist2: ''
     });
 
     // Filter only MUSIC role users
@@ -72,6 +76,8 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                 date: formData.date,
                 memberIds: formData.selectedMembers,
                 note: formData.note,
+                soloist1: formData.soloist1 || '',
+                soloist2: formData.soloist2 || '',
                 tenantId: user.tenantId
             };
 
@@ -90,7 +96,8 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
             // Reset Layout
             setShowForm(false);
             setEditingTeamId(null);
-            setFormData({ date: '', selectedMembers: [], note: '' });
+            setEditingTeamId(null);
+            setFormData({ date: '', selectedMembers: [], note: '', soloist1: '', soloist2: '' });
 
         } catch (error) {
             console.error(error);
@@ -140,7 +147,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                         if (!showForm) {
                             // Reset state when opening for new entry
                             setEditingTeamId(null);
-                            setFormData({ date: '', selectedMembers: [], note: '' });
+                            setFormData({ date: '', selectedMembers: [], note: '', soloist1: '', soloist2: '' });
                         }
                         setShowForm(!showForm);
                     }}
@@ -177,6 +184,40 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:border-pink-500 h-[52px]"
                                     placeholder="Ej. Especial de Navidad"
                                 />
+                            </div>
+
+                            {/* SOLOIST SELECTORS */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Solista - 1er Servicio</label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.soloist1}
+                                        onChange={e => setFormData({ ...formData, soloist1: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-pink-500 appearance-none text-slate-700 font-bold"
+                                    >
+                                        <option value="">-- Sin Solista / General --</option>
+                                        {musicUsers.map(u => (
+                                            <option key={u.id} value={u.id}>{u.name}</option>
+                                        ))}
+                                    </select>
+                                    <Mic2 size={16} className="absolute right-4 top-3.5 text-slate-400 pointer-events-none" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Solista - 2do Servicio</label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.soloist2}
+                                        onChange={e => setFormData({ ...formData, soloist2: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-pink-500 appearance-none text-slate-700 font-bold"
+                                    >
+                                        <option value="">-- Sin Solista / General --</option>
+                                        {musicUsers.map(u => (
+                                            <option key={u.id} value={u.id}>{u.name}</option>
+                                        ))}
+                                    </select>
+                                    <Mic2 size={16} className="absolute right-4 top-3.5 text-slate-400 pointer-events-none" />
+                                </div>
                             </div>
                         </div>
 
@@ -272,7 +313,9 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                                                 setFormData({
                                                     date: team.date,
                                                     selectedMembers: team.memberIds,
-                                                    note: team.note || ''
+                                                    note: team.note || '',
+                                                    soloist1: team.soloist1 || '',
+                                                    soloist2: team.soloist2 || ''
                                                 });
                                                 setEditingTeamId(team.id);
                                                 setShowForm(true);
