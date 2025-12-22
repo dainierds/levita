@@ -78,8 +78,11 @@ const MusicMinistryApp: React.FC = () => {
                 orderBy('date', 'asc')
             );
             // ... existing lines ...
-            // 4. Fetch Events (Banners) - Robust Fetch
-            const eventsQ = query(collection(db, 'tenants', tenant.id, 'events'));
+            // 4. Fetch Events (Banners) - Global Collection Query
+            const eventsQ = query(
+                collection(db, 'events'),
+                where('tenantId', '==', tenant.id)
+            );
             const unsubscribeEvents = onSnapshot(eventsQ, (snapshot) => {
                 const allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ChurchEvent));
                 setDebugEventsCount(allEvents.length);
@@ -319,6 +322,8 @@ const MusicMinistryApp: React.FC = () => {
                                 <div className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-yellow-800 text-xs font-medium">
                                     <p className="font-bold mb-1">🕵️ Chismoso (Debug):</p>
                                     <p>No se ven banners.</p>
+                                    <p>Tenant ID: {tenant?.id}</p>
+                                    <p>Colección DB: events (global)</p>
                                     <p>Eventos encontrados en DB: {debugEventsCount}</p>
                                     <p>Filtrados (activeInBanner=true): {events.length}</p>
                                     <p className="opacity-70 mt-1">Revisa que 'activeInBanner' sea true en Firestore.</p>
