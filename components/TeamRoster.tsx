@@ -19,6 +19,9 @@ const ROLES_CONFIG = [
 const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings }) => {
     const { role } = useAuth();
 
+    // Sort users alphabetically for all dropdowns
+    const sortedUsers = [...users].sort((a, b) => a.name.localeCompare(b.name));
+
     // Local state for editing settings
     const [localSettings, setLocalSettings] = useState<ChurchSettings>(settings);
     const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
