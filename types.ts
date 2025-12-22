@@ -130,6 +130,8 @@ export interface MusicTeam {
   id: string;
   date: string;
   memberIds: string[]; // User IDs of the 6 singers/musicians
+  soloist1?: string; // ID of soloist for Service 1
+  soloist2?: string; // ID of soloist for Service 2
   note?: string;
   tenantId: string;
 }
