@@ -27,14 +27,14 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
         date: string;
         selectedMembers: string[];
         note: string;
-        soloist1: string;
-        soloist2: string;
+        soloist1: string[];
+        soloist2: string[];
     }>({
         date: '',
         selectedMembers: [],
         note: '',
-        soloist1: '',
-        soloist2: ''
+        soloist1: [],
+        soloist2: []
     });
 
     // Filter only MUSIC role users
@@ -76,8 +76,8 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                 date: formData.date,
                 memberIds: formData.selectedMembers,
                 note: formData.note,
-                soloist1: formData.soloist1 || '',
-                soloist2: formData.soloist2 || '',
+                soloist1: formData.soloist1 || [],
+                soloist2: formData.soloist2 || [],
                 tenantId: user.tenantId
             };
 
@@ -89,7 +89,8 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
             } else {
                 // Create Mode
                 const docRef = await addDoc(collection(db, 'tenants', user.tenantId, 'music_teams'), teamData);
-                setTeams([{ id: docRef.id, ...teamData } as MusicTeam, ...teams]);
+                const newTeam = { id: docRef.id, ...teamData } as MusicTeam;
+                setTeams([...teams, newTeam].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
                 addNotification('success', 'Equipo Creado', 'El equipo de alabanza ha sido programado.');
             }
 
@@ -97,7 +98,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
             setShowForm(false);
             setEditingTeamId(null);
             setEditingTeamId(null);
-            setFormData({ date: '', selectedMembers: [], note: '', soloist1: '', soloist2: '' });
+            setFormData({ date: '', selectedMembers: [], note: '', soloist1: [], soloist2: [] });
 
         } catch (error) {
             console.error(error);
@@ -119,16 +120,19 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
         }
     };
 
-    const toggleMemberSelection = (userId: string) => {
+    const toggleMemberSelection = (userId: string, field: 'selectedMembers' | 'soloist1' | 'soloist2') => {
         setFormData(prev => {
-            const selected = prev.selectedMembers.includes(userId)
-                ? prev.selectedMembers.filter(id => id !== userId)
-                : [...prev.selectedMembers, userId];
+            const currentList = prev[field] as string[];
+            const selected = currentList.includes(userId)
+                ? currentList.filter(id => id !== userId)
+                : [...currentList, userId];
 
-            if (selected.length > 6) {
-                return prev; // Max 6 constraint handled implicitly or silently? Let's stop it.
+            const limit = field === 'selectedMembers' ? 6 : 4; // Max 6 for team, 4 for soloists
+
+            if (selected.length > limit) {
+                return prev;
             }
-            return { ...prev, selectedMembers: selected };
+            return { ...prev, [field]: selected };
         });
     };
 
@@ -147,7 +151,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                         if (!showForm) {
                             // Reset state when opening for new entry
                             setEditingTeamId(null);
-                            setFormData({ date: '', selectedMembers: [], note: '', soloist1: '', soloist2: '' });
+                            setFormData({ date: '', selectedMembers: [], note: '', soloist1: [], soloist2: [] });
                         }
                         setShowForm(!showForm);
                     }}
@@ -186,37 +190,45 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                                 />
                             </div>
 
-                            {/* SOLOIST SELECTORS */}
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Solista - 1er Servicio</label>
-                                <div className="relative">
-                                    <select
-                                        value={formData.soloist1}
-                                        onChange={e => setFormData({ ...formData, soloist1: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-pink-500 appearance-none text-slate-700 font-bold"
-                                    >
-                                        <option value="">-- Sin Solista / General --</option>
-                                        {musicUsers.map(u => (
-                                            <option key={u.id} value={u.id}>{u.name}</option>
-                                        ))}
-                                    </select>
-                                    <Mic2 size={16} className="absolute right-4 top-3.5 text-slate-400 pointer-events-none" />
+                                <div className="flex justify-between items-center mb-3">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase">Solistas 1er Servicio (Máx 4)</label>
+                                    <span className={`text-xs font-bold ${formData.soloist1.length >= 4 ? 'text-red-500' : 'text-indigo-600'}`}>
+                                        {formData.soloist1.length} / 4
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                    {musicUsers.map(u => (
+                                        <button
+                                            key={u.id}
+                                            type="button"
+                                            onClick={() => toggleMemberSelection(u.id, 'soloist1')}
+                                            className={`p-2 rounded-lg border text-xs font-bold transition-all ${formData.soloist1.includes(u.id) ? 'bg-indigo-100 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200 text-slate-500'}`}
+                                        >
+                                            {u.name.split(' ')[0]}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
+
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Solista - 2do Servicio</label>
-                                <div className="relative">
-                                    <select
-                                        value={formData.soloist2}
-                                        onChange={e => setFormData({ ...formData, soloist2: e.target.value })}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-pink-500 appearance-none text-slate-700 font-bold"
-                                    >
-                                        <option value="">-- Sin Solista / General --</option>
-                                        {musicUsers.map(u => (
-                                            <option key={u.id} value={u.id}>{u.name}</option>
-                                        ))}
-                                    </select>
-                                    <Mic2 size={16} className="absolute right-4 top-3.5 text-slate-400 pointer-events-none" />
+                                <div className="flex justify-between items-center mb-3">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase">Solistas 2do Servicio (Máx 4)</label>
+                                    <span className={`text-xs font-bold ${formData.soloist2.length >= 4 ? 'text-red-500' : 'text-purple-600'}`}>
+                                        {formData.soloist2.length} / 4
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                    {musicUsers.map(u => (
+                                        <button
+                                            key={u.id}
+                                            type="button"
+                                            onClick={() => toggleMemberSelection(u.id, 'soloist2')}
+                                            className={`p-2 rounded-lg border text-xs font-bold transition-all ${formData.soloist2.includes(u.id) ? 'bg-purple-100 border-purple-500 text-purple-700' : 'bg-white border-slate-200 text-slate-500'}`}
+                                        >
+                                            {u.name.split(' ')[0]}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -242,7 +254,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                                             <button
                                                 key={u.id}
                                                 type="button"
-                                                onClick={() => toggleMemberSelection(u.id)}
+                                                onClick={() => toggleMemberSelection(u.id, 'selectedMembers')}
                                                 disabled={!isSelected && formData.selectedMembers.length >= 6}
                                                 className={`
                                                     relative p-3 rounded-xl border text-left transition-all
@@ -314,8 +326,8 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                                                     date: team.date,
                                                     selectedMembers: team.memberIds,
                                                     note: team.note || '',
-                                                    soloist1: team.soloist1 || '',
-                                                    soloist2: team.soloist2 || ''
+                                                    soloist1: Array.isArray(team.soloist1) ? team.soloist1 : (typeof team.soloist1 === 'string' && team.soloist1 ? [team.soloist1] : []),
+                                                    soloist2: Array.isArray(team.soloist2) ? team.soloist2 : (typeof team.soloist2 === 'string' && team.soloist2 ? [team.soloist2] : [])
                                                 });
                                                 setEditingTeamId(team.id);
                                                 setShowForm(true);

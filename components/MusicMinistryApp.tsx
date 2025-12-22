@@ -321,8 +321,24 @@ const MusicMinistryApp: React.FC = () => {
 
                                 // Resolve members
                                 const teamMembers = allMusicUsers.filter(u => team.memberIds.includes(u.id));
-                                const s1Name = allMusicUsers.find(u => u.id === team.soloist1)?.name;
-                                const s2Name = allMusicUsers.find(u => u.id === team.soloist2)?.name;
+
+                                const resolveNames = (ids: string[] | string | undefined) => {
+                                    if (!ids) return [];
+                                    const idArray = Array.isArray(ids) ? ids : [ids];
+                                    return idArray.map(id => allMusicUsers.find(u => u.id === id)?.name).filter(Boolean) as string[];
+                                };
+
+                                const s1Names = resolveNames(team.soloist1);
+                                const s2Names = resolveNames(team.soloist2);
+
+                                const getGroupLabel = (count: number, service: number) => {
+                                    const srv = service === 1 ? '1er' : '2do';
+                                    if (count === 1) return `Solista ${srv} Servicio`;
+                                    if (count === 2) return `Dúo ${srv} Servicio`;
+                                    if (count === 3) return `Trío ${srv} Servicio`;
+                                    if (count === 4) return `Cuarteto ${srv} Servicio`;
+                                    return `Grupo ${srv} Servicio`;
+                                };
 
                                 return (
                                     <div key={team.id} className="bg-white rounded-[2rem] p-6 shadow-lg shadow-pink-100 border border-pink-50">
@@ -349,27 +365,27 @@ const MusicMinistryApp: React.FC = () => {
                                         )}
 
                                         {/* SOLOISTS SECTION */}
-                                        {(s1Name || s2Name) && (
+                                        {(s1Names.length > 0 || s2Names.length > 0) && (
                                             <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {s1Name && (
+                                                {s1Names.length > 0 && (
                                                     <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center">
+                                                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0">
                                                             <Mic2 size={14} />
                                                         </div>
-                                                        <div>
-                                                            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Solista 1er Servicio</p>
-                                                            <p className="font-bold text-indigo-900 text-sm">{s1Name}</p>
+                                                        <div className="overflow-hidden">
+                                                            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">{getGroupLabel(s1Names.length, 1)}</p>
+                                                            <p className="font-bold text-indigo-900 text-sm truncate">{s1Names.join(', ')}</p>
                                                         </div>
                                                     </div>
                                                 )}
-                                                {s2Name && (
+                                                {s2Names.length > 0 && (
                                                     <div className="bg-purple-50 border border-purple-100 p-3 rounded-xl flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center">
+                                                        <div className="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center shrink-0">
                                                             <Mic2 size={14} />
                                                         </div>
-                                                        <div>
-                                                            <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Solista 2do Servicio</p>
-                                                            <p className="font-bold text-purple-900 text-sm">{s2Name}</p>
+                                                        <div className="overflow-hidden">
+                                                            <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">{getGroupLabel(s2Names.length, 2)}</p>
+                                                            <p className="font-bold text-purple-900 text-sm truncate">{s2Names.join(', ')}</p>
                                                         </div>
                                                     </div>
                                                 )}
