@@ -136,14 +136,7 @@ const MusicMinistryApp: React.FC = () => {
                 }
             });
 
-            // 4. Fetch Events (Banners) - Robust Fetch
-            const eventsQ = query(collection(db, 'tenants', tenant.id, 'events'));
-            const unsubscribeEvents = onSnapshot(eventsQ, (snapshot) => {
-                const evs = snapshot.docs
-                    .map(d => ({ id: d.id, ...d.data() } as ChurchEvent))
-                    .filter(e => e.activeInBanner === true); // Client-side filter for safety
-                setEvents(evs);
-            });
+
 
             return () => {
                 unsubscribeMusic();
