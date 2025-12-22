@@ -322,6 +322,20 @@ const MusicMinistryApp: React.FC = () => {
 
                     {musicTeam ? (
                         <div className="bg-white rounded-[2rem] p-6 shadow-lg shadow-pink-100 border border-pink-50">
+                            {/* Date Header */}
+                            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-pink-50">
+                                <div className="bg-pink-50 text-pink-500 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black shadow-inner">
+                                    {new Date(musicTeam.date + 'T12:00:00').getDate()}
+                                </div>
+                                <div>
+                                    <p className="text-pink-500 font-bold text-xs uppercase tracking-widest mb-1">
+                                        {new Date(musicTeam.date + 'T12:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                                    </p>
+                                    <h4 className="text-2xl font-black text-slate-800 capitalize leading-none">
+                                        {new Date(musicTeam.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long' })}
+                                    </h4>
+                                </div>
+                            </div>
                             {musicTeam.note && (
                                 <div className="mb-6 bg-yellow-50 text-yellow-800 text-xs font-medium p-3 rounded-xl border border-yellow-100 flex items-start gap-2">
                                     <span className="text-lg">💡</span>
