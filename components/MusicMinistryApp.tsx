@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ChurchTenant, MusicTeam, ShiftTeam } from '../types';
+import { ChurchTenant, MusicTeam, ShiftTeam, ChurchEvent } from '../types';
 import { db } from '../services/firebase';
-import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
-import { Music, Calendar, Mic2, User, Home, Users, Clock } from 'lucide-react';
+import { collection, query, where, getDocs, orderBy, onSnapshot, doc } from 'firebase/firestore';
+import { Music, Calendar, Mic2, User, Home, Users, Clock, MapPin } from 'lucide-react';
 import { MOCK_TENANTS } from '../constants';
 
 // Helper to get tenant
@@ -54,6 +54,7 @@ const MusicMinistryApp: React.FC = () => {
     const [calendarTeams, setCalendarTeams] = useState<MusicTeam[]>([]); // For Itinerary
     const [upcomingShifts, setUpcomingShifts] = useState<ShiftTeam[]>([]); // For Roster
     const [allMusicUsers, setAllMusicUsers] = useState<any[]>([]);
+    const [events, setEvents] = useState<ChurchEvent[]>([]);
 
     // Login State
     const [pin, setPin] = useState('');
@@ -89,12 +90,11 @@ const MusicMinistryApp: React.FC = () => {
                 setUpcomingTeams(futureTeams.slice(0, 2));
 
                 // Calendar Tab: Next 4 Saturdays & 4 Tuesdays (approx 8-10 items logic)
-                // Filter specifically for Tuesdays (2) and Saturdays (6)
                 const rollingCalendar = futureTeams.filter(t => {
-                    const d = new Date(t.date + 'T12:00:00'); // Midday to miss TZ issues
+                    const d = new Date(t.date + 'T12:00:00');
                     const day = d.getDay();
                     return day === 2 || day === 6;
-                }).slice(0, 8); // Limit to next 8 relevant dates
+                }).slice(0, 8);
 
                 setCalendarTeams(rollingCalendar);
             });
@@ -105,25 +105,49 @@ const MusicMinistryApp: React.FC = () => {
                 setAllMusicUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
             });
 
-            // 3. Fetch Roster (from Settings)
-            if (tenant.settings?.teams) {
-                const teams = (tenant.settings.teams as ShiftTeam[])
-                    .filter(t => t.date && new Date(t.date) >= new Date(new Date().setHours(0, 0, 0, 0)))
-                    .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
-                setUpcomingShifts(teams);
-            }
+            // 3. Sync Settings/Roster Realtime
+            const tenantRef = doc(db, 'tenants', tenant.id);
+            const unsubscribeTenant = onSnapshot(tenantRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.settings?.teams) {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const teams = (data.settings.teams as ShiftTeam[])
+                            .filter(t => t.date && new Date(t.date + 'T12:00:00') >= today)
+                            .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime())
+                            .slice(0, 2); // Only take next 2
+                        setUpcomingShifts(teams);
+                    }
+                }
+            });
+
+            // 4. Fetch Events (Banners)
+            const eventsQ = query(collection(db, 'tenants', tenant.id, 'events'), where('activeInBanner', '==', true));
+            const unsubscribeEvents = onSnapshot(eventsQ, (snapshot) => {
+                const evs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ChurchEvent));
+                setEvents(evs);
+            });
 
             return () => {
                 unsubscribeMusic();
+                unsubscribeTenant();
+                unsubscribeEvents();
             };
         }
-    }, [isAuthenticated, tenant?.id, tenant?.settings]);
+    }, [isAuthenticated, tenant?.id]);
 
     // Helpers
     const resolveNames = (ids: string[] | string | undefined) => {
         if (!ids) return [];
         const idArray = Array.isArray(ids) ? ids : [ids];
         return idArray.map(id => allMusicUsers.find(u => u.id === id)?.name).filter(Boolean) as string[];
+    };
+
+    // Helper to resolve single name safely
+    const resolveName = (id: string | undefined) => {
+        if (!id) return null;
+        return allMusicUsers.find(u => u.id === id)?.name || 'Sin Asignar';
     };
 
     const getGroupLabel = (count: number, service: number) => {
@@ -245,6 +269,28 @@ const MusicMinistryApp: React.FC = () => {
                             <Music className="absolute -bottom-6 -right-6 w-32 h-32 opacity-20 rotate-12" />
                         </div>
 
+                        {/* Events Banners Carousel */}
+                        {events.length > 0 && (
+                            <section className="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide flex gap-4 snap-x">
+                                {events.map(event => (
+                                    <div key={event.id} className={`snap-center shrink-0 w-72 h-40 rounded-[2rem] bg-gradient-to-r ${event.bannerGradient || 'from-blue-500 to-cyan-500'} p-6 text-white relative overflow-hidden shadow-lg`}>
+                                        <div className="relative z-10">
+                                            <span className="inline-block px-2 py-1 bg-white/20 backdrop-blur-md rounded-lg text-[10px] font-bold mb-2 uppercase tracking-wider">
+                                                {event.type}
+                                            </span>
+                                            <h3 className="font-black text-xl leading-tight mb-1">{event.title}</h3>
+                                            <p className="text-xs opacity-90 font-medium flex items-center gap-1">
+                                                <Clock size={12} /> {event.time}
+                                            </p>
+                                        </div>
+                                        {/* Decorative Circle */}
+                                        <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                                    </div>
+                                ))}
+                            </section>
+                        )}
+
+
                         {/* Next 2 Teams */}
                         <section>
                             <h3 className="font-bold text-lg text-slate-700 mb-4 flex items-center gap-2">
@@ -362,22 +408,7 @@ const MusicMinistryApp: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Predicador</p>
-
-                                                    {/* We need to resolve Name from ID if possible, assuming stored as ID. 
-                                                        In TeamRoster it stores ID. Here we need to find user by ID in allMusicUsers or fetch all.
-                                                        Optimization: We fetched 'allMusicUsers' which are filtered by Role=MUSIC. 
-                                                        Preachers might not be in that list. We should fetch ALL users or just display the ID 
-                                                        if we can't find name. 
-                                                        Actually, TeamRoster stores the ID. 
-                                                        Let's assumme we only have music users loaded. We might see IDs.
-                                                        Fix: Fetch ALL users in useEffect.
-                                                     */}
-                                                    {/* Temporarily displaying raw value which might be ID or Name. 
-                                                         Ideally, we look up name from ID. 
-                                                         Using a simple lookup if user is in our loaded list. */}
-                                                    <p className="font-bold text-slate-800">
-                                                        {allMusicUsers.find(u => u.id === shift.members.preacher)?.name || shift.members.preacher}
-                                                    </p>
+                                                    <p className="font-bold text-slate-800">{resolveName(shift.members.preacher)}</p>
                                                 </div>
                                             </div>
                                         )}
@@ -388,9 +419,7 @@ const MusicMinistryApp: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Anciano de Turno</p>
-                                                    <p className="font-bold text-slate-800">
-                                                        {allMusicUsers.find(u => u.id === shift.members.elder)?.name || shift.members.elder}
-                                                    </p>
+                                                    <p className="font-bold text-slate-800">{resolveName(shift.members.elder)}</p>
                                                 </div>
                                             </div>
                                         )}
@@ -401,9 +430,7 @@ const MusicMinistryApp: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Director Música</p>
-                                                    <p className="font-bold text-slate-800">
-                                                        {allMusicUsers.find(u => u.id === shift.members.musicDirector)?.name || shift.members.musicDirector}
-                                                    </p>
+                                                    <p className="font-bold text-slate-800">{resolveName(shift.members.musicDirector)}</p>
                                                 </div>
                                             </div>
                                         )}
@@ -413,11 +440,12 @@ const MusicMinistryApp: React.FC = () => {
                         })}
                         {upcomingShifts.length === 0 && (
                             <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
-                                <p className="text-slate-400 font-medium">No hay turnos programados próximamente</p>
+                                <p className="text-slate-400 font-medium">No hay turnos próximos. Asegúrate de configurar los turnos en el Panel de Administración > Miembros > Turnos.</p>
                             </div>
                         )}
                     </div>
                 )}
+
 
                 {/* --- TAB 3: CALENDAR (ITINERARY) --- */}
                 {activeTab === 'calendar' && (
@@ -425,29 +453,32 @@ const MusicMinistryApp: React.FC = () => {
                         {calendarTeams.map((team) => {
                             const dateInfo = formatDate(team.date);
                             const teamMembers = allMusicUsers.filter(u => team.memberIds.includes(u.id));
-                            // Only show abbreviated info
+
                             return (
-                                <div key={team.id} className="bg-white rounded-2xl p-4 flex gap-4 items-center shadow-sm border border-slate-100">
-                                    <div className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center shrink-0 ${new Date(team.date).getDay() === 2 ? 'bg-indigo-50 text-indigo-500' : 'bg-pink-50 text-pink-500'
-                                        }`}>
-                                        <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
-                                        <span className="text-2xl font-black">{dateInfo.day}</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-slate-800 capitalize truncate">{dateInfo.weekday}</h4>
-                                        <p className="text-xs text-slate-400 mb-2">{teamMembers.length} integrantes</p>
-                                        <div className="flex -space-x-2">
-                                            {teamMembers.slice(0, 5).map((m, i) => (
-                                                <div key={i} className="w-6 h-6 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[8px] font-bold text-slate-600">
-                                                    {m.name.charAt(0)}
-                                                </div>
-                                            ))}
-                                            {teamMembers.length > 5 && (
-                                                <div className="w-6 h-6 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[8px] font-bold text-slate-500">
-                                                    +{teamMembers.length - 5}
-                                                </div>
-                                            )}
+                                <div key={team.id} className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-sm border border-slate-100">
+                                    <div className="flex items-center gap-4 border-b border-slate-50 pb-4">
+                                        <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${new Date(team.date).getDay() === 2 ? 'bg-indigo-50 text-indigo-500' : 'bg-pink-50 text-pink-500'
+                                            }`}>
+                                            <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
+                                            <span className="text-xl font-black">{dateInfo.day}</span>
                                         </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-bold text-slate-800 capitalize truncate text-lg">{dateInfo.weekday}</h4>
+                                            <p className="text-xs text-slate-400">{teamMembers.length} integrantes asignados</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Member Names List */}
+                                    <div className="flex flex-wrap gap-2">
+                                        {teamMembers.map((member, idx) => (
+                                            <div key={idx} className="bg-slate-50 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                                <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                                                    {member.name.charAt(0)}
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{member.name}</span>
+                                            </div>
+                                        ))}
+                                        {teamMembers.length === 0 && <span className="text-xs text-slate-400 italic"> - Sin asignaciones - </span>}
                                     </div>
                                 </div>
                             );
