@@ -86,7 +86,7 @@ const MusicMinistryApp: React.FC = () => {
 
                 const evs = allEvents.filter(e => {
                     // Loose check: true, "true", or just exists if specific logic needed
-                    return e.activeInBanner === true;
+                    return Boolean(e.activeInBanner);
                 });
                 setEvents(evs);
             });
