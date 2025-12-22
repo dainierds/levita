@@ -440,7 +440,7 @@ const MusicMinistryApp: React.FC = () => {
                         })}
                         {upcomingShifts.length === 0 && (
                             <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
-                                <p className="text-slate-400 font-medium">No hay turnos próximos. Asegúrate de configurar los turnos en el Panel de Administración > Miembros > Turnos.</p>
+                                <p className="text-slate-400 font-medium">No hay turnos próximos. Asegúrate de configurar los turnos en el Panel de Administración → Miembros → Turnos.</p>
                             </div>
                         )}
                     </div>
