@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ChurchTenant, MusicTeam, ShiftTeam, ChurchEvent } from '../types';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs, orderBy, onSnapshot, doc } from 'firebase/firestore';
-import { Music, Calendar, Mic2, User, Home, Users, Clock, MapPin } from 'lucide-react';
+import { Music, Calendar, Mic2, User, Home, Users, Clock, MapPin, LogOut } from 'lucide-react';
 import { MOCK_TENANTS } from '../constants';
 
 // Helper to get tenant
@@ -249,8 +249,16 @@ const MusicMinistryApp: React.FC = () => {
                             {tenant?.name}
                         </p>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">
-                        {user?.name?.charAt(0) || userName.charAt(0) || 'U'}
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">
+                            {user?.name?.charAt(0) || userName.charAt(0) || 'U'}
+                        </div>
+                        <button
+                            onClick={() => setIsAuthenticated(false)}
+                            className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100 transition-colors"
+                        >
+                            <LogOut size={18} />
+                        </button>
                     </div>
                 </div>
             </header>
