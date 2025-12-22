@@ -148,7 +148,8 @@ const MusicMinistryApp: React.FC = () => {
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        const validPin = tenant?.settings?.accessPin || '1234';
+        // Check verify specifically music pin, then member pin, then default
+        const validPin = tenant?.settings?.musicMinistryPin || tenant?.settings?.memberPin || '1234';
 
         if (pin === validPin) {
             setIsAuthenticated(true);
