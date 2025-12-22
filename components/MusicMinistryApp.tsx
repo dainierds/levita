@@ -99,9 +99,9 @@ const MusicMinistryApp: React.FC = () => {
                 setCalendarTeams(rollingCalendar);
             });
 
-            // 2. Fetch Users (for resolving names)
+            // 2. Fetch Users (Real-time)
             const usersQ = query(collection(db, 'users'), where('tenantId', '==', tenant.id));
-            getDocs(usersQ).then(snap => {
+            const unsubscribeUsers = onSnapshot(usersQ, (snap) => {
                 setAllMusicUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
             });
 
@@ -122,10 +122,12 @@ const MusicMinistryApp: React.FC = () => {
                 }
             });
 
-            // 4. Fetch Events (Banners)
-            const eventsQ = query(collection(db, 'tenants', tenant.id, 'events'), where('activeInBanner', '==', true));
+            // 4. Fetch Events (Banners) - Robust Fetch
+            const eventsQ = query(collection(db, 'tenants', tenant.id, 'events'));
             const unsubscribeEvents = onSnapshot(eventsQ, (snapshot) => {
-                const evs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ChurchEvent));
+                const evs = snapshot.docs
+                    .map(d => ({ id: d.id, ...d.data() } as ChurchEvent))
+                    .filter(e => e.activeInBanner === true); // Client-side filter for safety
                 setEvents(evs);
             });
 
@@ -133,6 +135,7 @@ const MusicMinistryApp: React.FC = () => {
                 unsubscribeMusic();
                 unsubscribeTenant();
                 unsubscribeEvents();
+                unsubscribeUsers(); // Cleanup users listener
             };
         }
     }, [isAuthenticated, tenant?.id]);
@@ -141,13 +144,14 @@ const MusicMinistryApp: React.FC = () => {
     const resolveNames = (ids: string[] | string | undefined) => {
         if (!ids) return [];
         const idArray = Array.isArray(ids) ? ids : [ids];
-        return idArray.map(id => allMusicUsers.find(u => u.id === id)?.name).filter(Boolean) as string[];
+        return idArray.map(id => allMusicUsers.find(u => u.id === id)?.name || id).filter(Boolean) as string[];
     };
 
-    // Helper to resolve single name safely
-    const resolveName = (id: string | undefined) => {
-        if (!id) return null;
-        return allMusicUsers.find(u => u.id === id)?.name || 'Sin Asignar';
+    // Helper to resolve single name safely (Handles both ID and direct Name)
+    const resolveName = (val: string | undefined) => {
+        if (!val) return 'Sin Asignar';
+        const userFound = allMusicUsers.find(u => u.id === val);
+        return userFound ? userFound.name : val; // If no user found by ID, assume 'val' is the name itself
     };
 
     const getGroupLabel = (count: number, service: number) => {
