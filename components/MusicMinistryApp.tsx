@@ -60,6 +60,7 @@ const MusicMinistryApp: React.FC = () => {
     const [pin, setPin] = useState('');
     const [userName, setUserName] = useState('');
     const [error, setError] = useState('');
+    const [debugEventsCount, setDebugEventsCount] = useState(0);
 
     useEffect(() => {
         if (user) {
@@ -76,6 +77,19 @@ const MusicMinistryApp: React.FC = () => {
                 collection(db, 'tenants', tenant.id, 'music_teams'),
                 orderBy('date', 'asc')
             );
+            // ... existing lines ...
+            // 4. Fetch Events (Banners) - Robust Fetch
+            const eventsQ = query(collection(db, 'tenants', tenant.id, 'events'));
+            const unsubscribeEvents = onSnapshot(eventsQ, (snapshot) => {
+                const allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ChurchEvent));
+                setDebugEventsCount(allEvents.length);
+
+                const evs = allEvents.filter(e => {
+                    // Loose check: true, "true", or just exists if specific logic needed
+                    return e.activeInBanner === true;
+                });
+                setEvents(evs);
+            });
 
             const unsubscribeMusic = onSnapshot(musicQ, (snapshot) => {
                 const allTeams = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as MusicTeam));
@@ -191,7 +205,15 @@ const MusicMinistryApp: React.FC = () => {
     if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <div className="bg-white w-full max-w-sm p-8 rounded-[2rem] shadow-xl text-center">
+                <div className="bg-white w-full max-w-sm p-8 rounded-[2rem] shadow-xl text-center relative">
+                    <button
+                        onClick={() => navigate('/')}
+                        className="absolute top-4 left-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors"
+                        title="Volver"
+                    >
+                        <LogOut className="rotate-180" size={20} />
+                    </button>
+
                     <div className="w-20 h-20 bg-pink-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-pink-200">
                         <Music className="text-white w-10 h-10" />
                     </div>
@@ -282,9 +304,9 @@ const MusicMinistryApp: React.FC = () => {
                         </div>
 
                         {/* Events Banners Carousel */}
-                        {events.length > 0 && (
-                            <section className="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide flex gap-4 snap-x">
-                                {events.map(event => (
+                        <section className="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide flex gap-4 snap-x relative min-h-[160px]">
+                            {events.length > 0 ? (
+                                events.map(event => (
                                     <div key={event.id} className={`snap-center shrink-0 w-72 h-40 rounded-[2rem] bg-gradient-to-r ${event.bannerGradient || 'from-blue-500 to-cyan-500'} p-6 text-white relative overflow-hidden shadow-lg`}>
                                         <div className="relative z-10">
                                             <span className="inline-block px-2 py-1 bg-white/20 backdrop-blur-md rounded-lg text-[10px] font-bold mb-2 uppercase tracking-wider">
@@ -298,9 +320,18 @@ const MusicMinistryApp: React.FC = () => {
                                         {/* Decorative Circle */}
                                         <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
                                     </div>
-                                ))}
-                            </section>
-                        )}
+                                ))
+                            ) : (
+                                /* Chismoso Debugger */
+                                <div className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-yellow-800 text-xs font-medium">
+                                    <p className="font-bold mb-1">🕵️ Chismoso (Debug):</p>
+                                    <p>No se ven banners.</p>
+                                    <p>Eventos encontrados en DB: {debugEventsCount}</p>
+                                    <p>Filtrados (activeInBanner=true): {events.length}</p>
+                                    <p className="opacity-70 mt-1">Revisa que 'activeInBanner' sea true en Firestore.</p>
+                                </div>
+                            )}
+                        </section>
 
 
                         {/* Next 2 Teams */}
