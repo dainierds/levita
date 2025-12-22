@@ -314,7 +314,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, onSaveSettings
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {ROLES_CONFIG.map(roleConfig => {
-                                    const roleUsers = users.filter(u => u.role === roleConfig.role);
+                                    const roleUsers = sortedUsers.filter(u => u.role === roleConfig.role);
                                     const currentValue = (selectedTeam.members as any)?.[roleConfig.key] || '';
                                     const isElder = role === 'ELDER';
                                     const canEdit = isAdmin || (isElder && roleConfig.key === 'elder');
