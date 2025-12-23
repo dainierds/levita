@@ -106,7 +106,7 @@ Translate to English: "${text}"
 
 // --- WebSocket Logic ---
 const clients = new Set();
-const DEEPGRAM_KEY = process.env.DEEPGRAM_API_KEY; // Re-declare to be safe inside scope availability check
+// DEEPGRAM_KEY already declared at top of file
 
 // --- Helper: Broadcast to all connected clients ---
 const broadcast = (data, isBinary = false) => {
