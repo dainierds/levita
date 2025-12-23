@@ -105,6 +105,17 @@ Translate to English: "${text}"
 
 
 // --- WebSocket Logic ---
+const admin = require('firebase-admin');
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+}
+
+const db = admin.firestore();
+
 // --- WebSocket Logic ---
 const listeners = new Set(); // Store visitor clients
 
@@ -122,6 +133,7 @@ wss.on('connection', (ws, req) => {
 
     // --- Role: BROADCASTER (Admin) ---
     let deepgramLive = null;
+    let segments = []; // Cache for history
 
     try {
         const deepgram = createClient(process.env.DEEPGRAM_API_KEY || '59db582db173b1a1731cfcc90057241287203203'); // Fallback for safety
@@ -139,9 +151,15 @@ wss.on('connection', (ws, req) => {
 
         deepgramLive.on(LiveTranscriptionEvents.Transcript, async (data) => {
             const transcript = data.channel.alternatives[0].transcript;
+
             if (transcript && data.is_final) {
                 // 1. Convert to Spanish -> English (Gemini)
-                const translatedText = await translateText(transcript, 'en');
+                let translatedText = "";
+                try {
+                    translatedText = await translateText(transcript, 'en');
+                } catch (trErr) {
+                    console.error("Translation Critical Failure:", trErr);
+                }
 
                 // 2. Broadcast Text to Listeners
                 const textMessage = JSON.stringify({
@@ -154,7 +172,23 @@ wss.on('connection', (ws, req) => {
                     if (client.readyState === 1) client.send(textMessage);
                 });
 
-                // 3. Generate Audio (Deepgram Aura TTS)
+                // 3. Sync to Firestore (For Projector/Legacy Clients)
+                try {
+                    // Maintain a small history
+                    segments.push({ original: transcript, translation: translatedText });
+                    if (segments.length > 10) segments.shift();
+
+                    await db.collection('tenants').doc('default').collection('live').doc('transcription').set({
+                        text: transcript,
+                        translation: translatedText,
+                        segments: segments,
+                        timestamp: admin.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch (fsErr) {
+                    console.error("Firestore Sync Error:", fsErr);
+                }
+
+                // 4. Generate Audio (Deepgram Aura TTS)
                 if (translatedText) {
                     try {
                         const ttsResponse = await deepgram.speak.request(
