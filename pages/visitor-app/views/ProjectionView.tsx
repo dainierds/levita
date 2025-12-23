@@ -32,22 +32,21 @@ const ProjectionView: React.FC = () => {
     }, [segments, translation]);
 
     return (
-        <div className="bg-black w-screen h-screen overflow-hidden flex flex-col justify-end p-[5%]">
-            {/* Container for scrolling text */}
+        <div className="bg-black w-screen h-screen overflow-hidden flex items-center justify-center p-[5%]">
+            {/* Container for centered text */}
             <div
-                ref={scrollRef}
-                className="overflow-y-auto no-scrollbar mask-fade-top flex flex-col gap-6"
-                style={{ scrollBehavior: 'smooth' }}
+                className="max-w-[90%] text-center flex flex-col gap-8"
             >
-                {segments.slice(-3).map((seg, i) => ( // Show last 3 segments for context
-                    <p key={i} className="text-4xl md:text-6xl font-bold text-white/50 leading-tight">
+                {/* Previous context (faded) */}
+                {segments.slice(-1).map((seg, i) => (
+                    <p key={i} className="text-4xl md:text-5xl font-bold text-white/30 leading-tight">
                         {seg.translation || seg.original}
                     </p>
                 ))}
 
-                {/* Latest Active Segment */}
+                {/* Latest Active Segment (Huge) */}
                 {translation && (
-                    <p className="text-5xl md:text-7xl font-black text-white leading-tight animate-fade-in-up">
+                    <p className="text-6xl md:text-8xl font-black text-white leading-tight animate-fade-in-up drop-shadow-2xl">
                         {translation}
                     </p>
                 )}
