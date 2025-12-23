@@ -21,20 +21,22 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
   const [segments, setSegments] = useState<any[]>([]); // History
   const [targetLang, setTargetLang] = useState(initialLanguage);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
 
   // Previous text to avoid re-translating same content
   const lastTranslatedTextRef = useRef('');
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (initialLanguage) setTargetLang(initialLanguage);
-  }, [initialLanguage]);
 
   // Audio Queue Management
   const audioQueueRef = useRef<ArrayBuffer[]>([]);
   const isPlayingRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
 
+  useEffect(() => {
+    if (initialLanguage) setTargetLang(initialLanguage);
+  }, [initialLanguage]);
+
+  // Main WebSocket Connection
   useEffect(() => {
     if (!tenantId || !isActive) return;
 
@@ -53,13 +55,12 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
           if (data.type === 'TRANSCRIPTION') {
             setTranscript(data.original);
             setTranslation(data.translation);
-            // Note: Audio comes as separate binary packets
           }
         } catch (e) { console.error("WS Parse Error", e); }
       }
       // 2. Binary Message (Audio Chunk)
       else if (event.data instanceof ArrayBuffer) {
-        if (!isAudioEnabled) return;
+        if (!isAudioEnabled) return; // Ignore if audio muted
         audioQueueRef.current.push(event.data);
         processQueue();
       }
@@ -99,6 +100,23 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
         processQueue();
       }
     }
+  };
+
+  // Auto-scroll
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [segments, translation]);
+
+
+  const toggleActive = () => {
+    setIsActive(!isActive);
+  };
+
+  // Clean manual speak function (optional usage)
+  const speakTranslation = () => {
+    console.log("Using stream audio instead.");
   };
 
   return (
