@@ -83,7 +83,7 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
 
     // Determine Server URL
     // Use the same Environment Variable or Fallback as TranslationMaster
-    const wsUrl = import.meta.env.VITE_WS_URL || 'wss://web-production-964e.up.railway.app';
+    const wsUrl = import.meta.env.VITE_WS_URL || 'wss://web-production-14c5c.up.railway.app';
 
     const ws = new WebSocket(wsUrl);
     ws.binaryType = 'arraybuffer';
