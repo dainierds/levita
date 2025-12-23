@@ -38,8 +38,8 @@ const ProjectionView: React.FC = () => {
                 className="max-w-[90%] text-center flex flex-col gap-8"
             >
                 {/* Previous context (faded) */}
-                {segments.slice(-1).map((seg, i) => (
-                    <p key={i} className="text-4xl md:text-5xl font-bold text-white/30 leading-tight">
+                {segments.slice(-5).map((seg, i) => (
+                    <p key={i} className={`text-4xl md:text-5xl font-bold leading-tight transition-all duration-500`} style={{ opacity: 0.2 + (i * 0.15), color: 'white' }}>
                         {seg.translation || seg.original}
                     </p>
                 ))}
