@@ -80,9 +80,9 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
     // For now assuming the 'server/index.js' runs on port 3000 locally or is routed.
     // Ideally, get this from env but hardcoding typical dev setup for now specific to this project context.
 
-    // In this specific user env, the server is likely separate or we are modifying the 'App' to connect to it.
-    // Let's assume port 3000 as per 'server/index.js' usually running there.
-    const wsUrl = `ws://localhost:3000`;
+    // Determine Server URL
+    // Use the same Environment Variable or Fallback as TranslationMaster
+    const wsUrl = import.meta.env.VITE_WS_URL || 'wss://web-production-964e.up.railway.app';
 
     const ws = new WebSocket(wsUrl);
     ws.binaryType = 'arraybuffer';

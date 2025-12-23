@@ -121,10 +121,10 @@ const TranslationMaster: React.FC = () => {
                 updateLevel();
 
                 // --- Setup Deepgram WebSocket ---
-                const wsUrl = import.meta.env.VITE_WS_URL || 'wss://web-production-14c5c.up.railway.app';
+                const wsUrl = import.meta.env.VITE_WS_URL || 'wss://web-production-964e.up.railway.app';
                 console.log("Connecting to Translation Server:", wsUrl);
 
-                const socket = new WebSocket(`${wsUrl}?role=broadcaster`);
+                const socket = new WebSocket(wsUrl);
                 wsRef.current = socket;
 
                 socket.onopen = () => {
