@@ -552,7 +552,7 @@ const MusicMinistryApp: React.FC = () => {
 
 
 
-                                    {/* Soloists Display */}
+
                                     {(resolveNames(team.soloist1).length > 0 || resolveNames(team.soloist2).length > 0) && (
                                         <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2 mb-3">
                                             {resolveNames(team.soloist1).length > 0 && (
