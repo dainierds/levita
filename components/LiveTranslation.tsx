@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Volume2, Globe, Radio } from 'lucide-react';
+import { Mic, MicOff, Volume2, Globe, Radio, Headphones } from 'lucide-react';
 import { translateText } from '../services/geminiService';
 import { db } from '../services/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -83,6 +83,20 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
   }, [segments, translation]);
 
 
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+
+  // Auto-speak when new translation arrives
+  useEffect(() => {
+    if (isAudioEnabled && translation && translation !== lastTranslatedTextRef.current) {
+      const utterance = new SpeechSynthesisUtterance(translation);
+      utterance.lang = targetLang === 'es' ? 'es-MX' : targetLang === 'en' ? 'en-US' : targetLang;
+      utterance.rate = 1.0;
+      window.speechSynthesis.cancel(); // Stop previous
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [translation, isAudioEnabled, targetLang]);
+
+
   const toggleActive = () => {
     setIsActive(!isActive);
   };
@@ -106,17 +120,27 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
             {isActive ? 'Recibiendo señal en vivo...' : 'Traducción en Pausa'}
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-slate-100 rounded-full px-4 py-2">
-          <span className="text-xs font-bold text-slate-500 hidden sm:inline">IDIOMA:</span>
-          <select
-            value={targetLang}
-            onChange={(e) => setTargetLang(e.target.value)}
-            className="bg-transparent text-sm font-bold text-indigo-600 outline-none uppercase"
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsAudioEnabled(!isAudioEnabled)}
+            className={`p-2 rounded-full transition-colors ${isAudioEnabled ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}
+            title="Escuchar Traducción"
           >
-            {LANGUAGES.map(l => (
-              <option key={l.code} value={l.code}>{l.label}</option>
-            ))}
-          </select>
+            <Headphones size={20} />
+          </button>
+
+          <div className="flex items-center gap-2 bg-slate-100 rounded-full px-4 py-2">
+            <span className="text-xs font-bold text-slate-500 hidden sm:inline">IDIOMA:</span>
+            <select
+              value={targetLang}
+              onChange={(e) => setTargetLang(e.target.value)}
+              className="bg-transparent text-sm font-bold text-indigo-600 outline-none uppercase"
+            >
+              {LANGUAGES.map(l => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
