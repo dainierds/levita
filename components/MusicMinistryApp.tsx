@@ -560,7 +560,7 @@ const MusicMinistryApp: React.FC = () => {
                                                     <Mic2 size={12} className="text-indigo-500 shrink-0" />
                                                     <p className="text-xs text-slate-700">
                                                         <span className="font-bold text-indigo-600 uppercase text-[10px] mr-2">
-                                                            {resolveNames(team.soloist1).length === 1 ? 'Solista' :
+                                                            Primer Servicio: {resolveNames(team.soloist1).length === 1 ? 'Solista' :
                                                                 resolveNames(team.soloist1).length === 2 ? 'Dúo' :
                                                                     resolveNames(team.soloist1).length === 3 ? 'Trío' : 'Cuarteto'}
                                                         </span>
@@ -573,7 +573,7 @@ const MusicMinistryApp: React.FC = () => {
                                                     <Mic2 size={12} className="text-purple-500 shrink-0" />
                                                     <p className="text-xs text-slate-700">
                                                         <span className="font-bold text-purple-600 uppercase text-[10px] mr-2">
-                                                            {resolveNames(team.soloist2).length === 1 ? 'Solista' :
+                                                            Segundo Servicio: {resolveNames(team.soloist2).length === 1 ? 'Solista' :
                                                                 resolveNames(team.soloist2).length === 2 ? 'Dúo' :
                                                                     resolveNames(team.soloist2).length === 3 ? 'Trío' : 'Cuarteto'}
                                                         </span>
