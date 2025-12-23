@@ -36,39 +36,6 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
     if (initialLanguage) setTargetLang(initialLanguage);
   }, [initialLanguage]);
 
-  // Main WebSocket Connection
-  useEffect(() => {
-    if (!tenantId || !isActive) return;
-
-    // Connect to WebSocket as Listener
-    const wsUrl = import.meta.env.VITE_WS_URL || 'wss://web-production-14c5c.up.railway.app';
-    const ws = new WebSocket(`${wsUrl}?role=listener`);
-    ws.binaryType = 'arraybuffer';
-
-    ws.onopen = () => console.log("Connected to Audio Stream");
-
-    ws.onmessage = async (event) => {
-      // 1. Text Message (JSON)
-      if (typeof event.data === 'string') {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'TRANSCRIPTION') {
-            setTranscript(data.original);
-            setTranslation(data.translation);
-          }
-        } catch (e) { console.error("WS Parse Error", e); }
-      }
-      // 2. Binary Message (Audio Chunk)
-      else if (event.data instanceof ArrayBuffer) {
-        if (!isAudioEnabled) return; // Ignore if audio muted
-        audioQueueRef.current.push(event.data);
-        processQueue();
-      }
-    };
-
-    return () => ws.close();
-  }, [tenantId, isActive, isAudioEnabled]);
-
   const processQueue = async () => {
     if (isPlayingRef.current || audioQueueRef.current.length === 0) return;
 
@@ -102,7 +69,40 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
     }
   };
 
-  // Auto-scroll
+  // Main WebSocket Connection
+  useEffect(() => {
+    if (!tenantId || !isActive) return;
+
+    // Connect to WebSocket as Listener
+    const wsUrl = import.meta.env.VITE_WS_URL || 'wss://web-production-14c5c.up.railway.app';
+    const ws = new WebSocket(`${wsUrl}?role=listener`);
+    ws.binaryType = 'arraybuffer';
+
+    ws.onopen = () => console.log("Connected to Audio Stream");
+
+    ws.onmessage = async (event) => {
+      // 1. Text Message (JSON)
+      if (typeof event.data === 'string') {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'TRANSCRIPTION') {
+            setTranscript(data.original);
+            setTranslation(data.translation);
+          }
+        } catch (e) { console.error("WS Parse Error", e); }
+      }
+      // 2. Binary Message (Audio Chunk)
+      else if (event.data instanceof ArrayBuffer) {
+        if (!isAudioEnabled) return; // Ignore if audio muted
+        audioQueueRef.current.push(event.data);
+        processQueue();
+      }
+    };
+
+    return () => ws.close();
+  }, [tenantId, isActive, isAudioEnabled]);
+
+  // Auto-scroll Effect
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
