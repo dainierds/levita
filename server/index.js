@@ -105,38 +105,66 @@ Translate to English: "${text}"
 
 
 // --- WebSocket Logic ---
-const admin = require('firebase-admin');
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+const clients = new Set();
+const DEEPGRAM_KEY = process.env.DEEPGRAM_API_KEY; // Re-declare to be safe inside scope availability check
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+// --- Helper: Broadcast to all connected clients ---
+const broadcast = (data, isBinary = false) => {
+    clients.forEach((client) => {
+        if (client.readyState === 1) { // OPEN
+            client.send(data, { binary: isBinary });
+        }
     });
-}
+};
 
-const db = admin.firestore();
+// --- Helper: Generate TTS via Deepgram Aura-2 ---
+const generateTTS = async (text) => {
+    if (!text) return null;
+    try {
+        const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
+        // Using REST API for "chunked" TTS (best for sentence-based translation)
+        const response = await deepgram.speak.request(
+            { text },
+            {
+                model: "aura-asteria-en", // Aura-2 English Voice
+                encoding: "linear16", // Raw PCM or mp3. linear16 is good for AudioContext
+                container: "wav",
+            }
+        );
+
+        const stream = await response.getStream();
+        if (stream) {
+            // Convert stream to buffer
+            const buffer = await streamToBuffer(stream);
+            return buffer;
+        }
+        return null;
+    } catch (e) {
+        console.error("TTS Generation Error:", e);
+        return null;
+    }
+};
+
+const streamToBuffer = async (stream) => {
+    const chunks = [];
+    for await (const chunk of stream) {
+        chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+};
+
 
 // --- WebSocket Logic ---
-const listeners = new Set(); // Store visitor clients
+wss.on('connection', (ws) => {
+    console.log('Client connected to Translation Server');
+    clients.add(ws);
 
-wss.on('connection', (ws, req) => {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const role = url.searchParams.get('role') || 'listener'; // Default to listener
-
-    console.log(`Client connected as: ${role}`);
-
-    if (role === 'listener') {
-        listeners.add(ws);
-        ws.on('close', () => listeners.delete(ws));
-        return;
-    }
-
-    // --- Role: BROADCASTER (Admin) ---
     let deepgramLive = null;
-    let segments = []; // Cache for history
+    let isSource = false; // Flag to identify if this is the Admin/Mic Source
 
+    // Initialize Deepgram Connection
     try {
-        const deepgram = createClient(process.env.DEEPGRAM_API_KEY || '59db582db173b1a1731cfcc90057241287203203'); // Fallback for safety
+        const deepgram = createClient(DEEPGRAM_KEY);
         deepgramLive = deepgram.listen.live({
             model: "nova-2",
             language: "es",
@@ -145,74 +173,45 @@ wss.on('connection', (ws, req) => {
             endpointing: 300,
         });
 
-        deepgramLive.on(LiveTranscriptionEvents.Open, () => console.log("Deepgram STT OPEN"));
-        deepgramLive.on(LiveTranscriptionEvents.Close, () => console.log("Deepgram STT CLOSED"));
-        deepgramLive.on(LiveTranscriptionEvents.Error, (e) => console.error("Deepgram Error:", e));
+        // Deepgram Events
+        deepgramLive.on(LiveTranscriptionEvents.Open, () => {
+            console.log("Deepgram Connection OPEN");
+        });
 
         deepgramLive.on(LiveTranscriptionEvents.Transcript, async (data) => {
             const transcript = data.channel.alternatives[0].transcript;
 
             if (transcript && data.is_final) {
-                // 1. Convert to Spanish -> English (Gemini)
-                let translatedText = "";
-                try {
-                    translatedText = await translateText(transcript, 'en');
-                } catch (trErr) {
-                    console.error("Translation Critical Failure:", trErr);
-                }
-
-                // 2. Broadcast Text to Listeners
-                const textMessage = JSON.stringify({
+                // 1. Send Original Transcript immediately (Broadcast Text)
+                const textMessage = {
                     type: 'TRANSCRIPTION',
                     original: transcript,
-                    translation: translatedText,
                     isFinal: true
-                });
-                listeners.forEach(client => {
-                    if (client.readyState === 1) client.send(textMessage);
-                });
+                };
 
-                // 3. Sync to Firestore (For Projector/Legacy Clients)
-                try {
-                    // Maintain a small history
-                    segments.push({ original: transcript, translation: translatedText });
-                    if (segments.length > 10) segments.shift();
+                // Translate
+                const translated = await translateText(transcript, 'en');
+                textMessage.translation = translated;
 
-                    await db.collection('tenants').doc('default').collection('live').doc('transcription').set({
-                        text: transcript,
-                        translation: translatedText,
-                        segments: segments,
-                        timestamp: admin.firestore.FieldValue.serverTimestamp()
-                    });
-                } catch (fsErr) {
-                    console.error("Firestore Sync Error:", fsErr);
-                }
+                // Broadcast JSON update to everyone (Admin + Visitors)
+                broadcast(JSON.stringify(textMessage));
 
-                // 4. Generate Audio (Deepgram Aura TTS)
-                if (translatedText) {
-                    try {
-                        const ttsResponse = await deepgram.speak.request(
-                            { text: translatedText },
-                            { model: "aura-asteria-en" }
-                        );
-                        const stream = await ttsResponse.getStream();
-
-                        if (stream) {
-                            const reader = stream.getReader();
-                            // Stream chunks to listeners
-                            while (true) {
-                                const { done, value } = await reader.read();
-                                if (done) break;
-                                listeners.forEach(client => {
-                                    if (client.readyState === 1) client.send(value); // Send binary audio chunk
-                                });
-                            }
-                        }
-                    } catch (ttsError) {
-                        console.error("TTS Error:", ttsError);
+                // 2. Generate Audio (TTS) -> Broadcast Binary
+                if (translated) {
+                    const audioBuffer = await generateTTS(translated);
+                    if (audioBuffer) {
+                        broadcast(audioBuffer, true);
                     }
                 }
             }
+        });
+
+        // ... Error handling ...
+        deepgramLive.on(LiveTranscriptionEvents.Error, (err) => {
+            console.error("Deepgram Error:", err);
+        });
+        deepgramLive.on(LiveTranscriptionEvents.Close, () => {
+            console.log("Deepgram Connection CLOSED");
         });
 
     } catch (err) {
@@ -221,19 +220,26 @@ wss.on('connection', (ws, req) => {
         return;
     }
 
+
     ws.on('message', (message) => {
+        // Assume only the "Source" (Admin) sends audio data
+        // Visitors just listen
         if (deepgramLive && deepgramLive.getReadyState() === 1) {
             deepgramLive.send(message);
+            isSource = true;
         }
     });
 
     ws.on('close', () => {
-        console.log('Broadcaster disconnected');
-        if (deepgramLive) {
-            deepgramLive.finish();
-            deepgramLive = null;
-        }
+        console.log('Client disconnected');
+        clients.delete(ws);
+        if (deepgramLive) deepgramLive.finish();
     });
+    if (deepgramLive) {
+        deepgramLive.finish();
+        deepgramLive = null;
+    }
+});
 });
 
 // Health Check for Railway
