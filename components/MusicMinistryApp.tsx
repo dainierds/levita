@@ -306,35 +306,60 @@ const MusicMinistryApp: React.FC = () => {
                 {/* --- TAB 1: HOME --- */}
                 {activeTab === 'home' && (
                     <>
-                        {/* Welcome Banner */}
-                        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-8 text-white shadow-xl shadow-indigo-200">
-                            <div className="relative z-10">
-                                <h2 className="text-3xl font-black mb-2">Hola, {user?.name?.split(' ')[0] || userName || 'Adorador'}</h2>
-                                <p className="opacity-90 font-medium">Aquí están los próximos servicios.</p>
+                        {/* Unified Banner Carousel */}
+                        <div className="relative overflow-hidden rounded-[2.5rem] shadow-xl shadow-indigo-200 mb-8 min-h-[220px] transition-all duration-500">
+                            {/* Dynamic Background */}
+                            <div className={`absolute inset-0 bg-gradient-to-r ${combinedBanners[currentBannerIndex]?.bannerGradient || 'from-indigo-600 via-purple-600 to-pink-500'} transition-all duration-1000`} />
+
+                            {/* Content */}
+                            <div className="relative z-10 h-full flex flex-col justify-center p-8 min-h-[220px]">
+                                {combinedBanners[currentBannerIndex]?.type === 'WELCOME' ? (
+                                    <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                        <div className="flex items-center gap-3 mb-2 opacity-80">
+                                            <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm"><Music size={16} className="text-white" /></div>
+                                            <span className="text-xs font-bold tracking-widest uppercase text-white">Bienvenida</span>
+                                        </div>
+                                        <h2 className="text-3xl font-black mb-2 text-white">Hola, {user?.name?.split(' ')[0] || userName || 'Adorador'}</h2>
+                                        <p className="opacity-90 font-medium text-indigo-50">Aquí están los próximos servicios y eventos.</p>
+                                    </div>
+                                ) : (
+                                    <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <span className="px-2 py-1 bg-white/20 backdrop-blur-md rounded-lg text-[10px] font-bold uppercase tracking-wider text-white">
+                                                {(combinedBanners[currentBannerIndex] as any).type === 'EVENT' ? 'Evento' : 'Noticia'}
+                                            </span>
+                                            {/* Date Badge */}
+                                            <div className="flex items-center gap-1 text-xs font-bold text-white/90 bg-black/10 px-2 py-1 rounded-lg backdrop-blur-sm">
+                                                <Calendar size={12} />
+                                                {typeof (combinedBanners[currentBannerIndex] as any).date === 'string' ? (combinedBanners[currentBannerIndex] as any).date : 'Fecha Pendiente'}
+                                            </div>
+                                        </div>
+                                        <h3 className="font-black text-2xl leading-tight mb-2 text-white">{(combinedBanners[currentBannerIndex] as any).title}</h3>
+                                        <p className="text-sm opacity-90 font-medium flex items-center gap-2 text-indigo-50">
+                                            <Clock size={14} /> {(combinedBanners[currentBannerIndex] as any).time}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
-                            <Music className="absolute -bottom-6 -right-6 w-32 h-32 opacity-20 rotate-12" />
+
+                            {/* Decorative */}
+                            <Music className="absolute -bottom-6 -right-6 w-40 h-40 opacity-10 rotate-12 text-white" />
+
+                            {/* Indicators */}
+                            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-20">
+                                {combinedBanners.map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setCurrentBannerIndex(idx)}
+                                        className={`h-1.5 rounded-full transition-all duration-300 ${currentBannerIndex === idx ? 'bg-white w-6' : 'bg-white/40 w-1.5 hover:bg-white/60'}`}
+                                    />
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Events Banners Carousel */}
-                        <section className="overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide flex gap-4 snap-x relative min-h-[160px]">
-                            {events.length > 0 ? (
-                                events.map(event => (
-                                    <div key={event.id} className={`snap-center shrink-0 w-72 h-40 rounded-[2rem] bg-gradient-to-r ${event.bannerGradient || 'from-blue-500 to-cyan-500'} p-6 text-white relative overflow-hidden shadow-lg`}>
-                                        <div className="relative z-10">
-                                            <span className="inline-block px-2 py-1 bg-white/20 backdrop-blur-md rounded-lg text-[10px] font-bold mb-2 uppercase tracking-wider">
-                                                {event.type}
-                                            </span>
-                                            <h3 className="font-black text-xl leading-tight mb-1">{event.title}</h3>
-                                            <p className="text-xs opacity-90 font-medium flex items-center gap-1">
-                                                <Clock size={12} /> {event.time}
-                                            </p>
-                                        </div>
-                                        {/* Decorative Circle */}
-                                        <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
-                                    </div>
-                                ))
-                            ) : (
-                                /* Chismoso Debugger */
+                        {/* Debug Info (Keep checking events) */}
+                        {events.length === 0 && debugEventsCount > 0 && (
+                            <div className="mb-8 px-4">
                                 <div className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-yellow-800 text-xs font-medium">
                                     <p className="font-bold mb-1">🕵️ Chismoso (Debug):</p>
                                     <p>No se ven banners.</p>
@@ -344,8 +369,8 @@ const MusicMinistryApp: React.FC = () => {
                                     <p>Filtrados (activeInBanner=true): {events.length}</p>
                                     <p className="opacity-70 mt-1">Revisa que 'activeInBanner' sea true en Firestore.</p>
                                 </div>
-                            )}
-                        </section>
+                            </div>
+                        )}
 
 
                         {/* Next 2 Teams */}
