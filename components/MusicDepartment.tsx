@@ -391,6 +391,39 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                                             );
                                         })}
                                     </div>
+
+                                    {/* Soloists Display */}
+                                    {(team.soloist1 || team.soloist2) && (
+                                        <div className="mt-4 pt-3 border-t border-slate-50 space-y-2">
+                                            {/* Service 1 */}
+                                            {(Array.isArray(team.soloist1) ? team.soloist1 : (team.soloist1 ? [team.soloist1] : [])).length > 0 && (
+                                                <div className="flex items-start gap-2">
+                                                    <span className="text-[10px] font-bold text-indigo-400 uppercase mt-1 w-12 flex-shrink-0">1er S.</span>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {(Array.isArray(team.soloist1) ? team.soloist1 : [team.soloist1]).map((sid: string) => (
+                                                            <span key={sid} className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold border border-indigo-100">
+                                                                {users.find(u => u.id === sid)?.name.split(' ')[0]}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Service 2 */}
+                                            {(Array.isArray(team.soloist2) ? team.soloist2 : (team.soloist2 ? [team.soloist2] : [])).length > 0 && (
+                                                <div className="flex items-start gap-2">
+                                                    <span className="text-[10px] font-bold text-purple-400 uppercase mt-1 w-12 flex-shrink-0">2do S.</span>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {(Array.isArray(team.soloist2) ? team.soloist2 : [team.soloist2]).map((sid: string) => (
+                                                            <span key={sid} className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-bold border border-purple-100">
+                                                                {users.find(u => u.id === sid)?.name.split(' ')[0]}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {team.note && (
