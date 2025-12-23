@@ -9,7 +9,7 @@ const TranslationMaster: React.FC = () => {
     const [isActive, setIsActive] = useState(false);
     const [inputDevice, setInputDevice] = useState('default');
     const [volume, setVolume] = useState(75);
-    const [languages, setLanguages] = useState({ es: true, en: true, pt: false, fr: false });
+    const [languages, setLanguages] = useState({ es: true, en: true });
 
     // Real Audio Levels
     const [level, setLevel] = useState(0);

@@ -7,11 +7,6 @@ import { doc, onSnapshot } from 'firebase/firestore';
 export const LANGUAGES = [
   { code: 'es', label: 'Español' },
   { code: 'en', label: 'English' },
-  { code: 'pt', label: 'Português' },
-  { code: 'fr', label: 'Français' },
-  { code: 'de', label: 'Deutsch' },
-  { code: 'ko', label: 'Korean' },
-  { code: 'zh', label: 'Chinese' },
 ];
 
 interface LiveTranslationProps {
