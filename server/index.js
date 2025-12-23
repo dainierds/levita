@@ -105,61 +105,80 @@ Translate to English: "${text}"
 
 
 // --- WebSocket Logic ---
-wss.on('connection', (ws) => {
-    console.log('Client connected to Translation Server');
+// --- WebSocket Logic ---
+const listeners = new Set(); // Store visitor clients
 
+wss.on('connection', (ws, req) => {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const role = url.searchParams.get('role') || 'listener'; // Default to listener
+
+    console.log(`Client connected as: ${role}`);
+
+    if (role === 'listener') {
+        listeners.add(ws);
+        ws.on('close', () => listeners.delete(ws));
+        return;
+    }
+
+    // --- Role: BROADCASTER (Admin) ---
     let deepgramLive = null;
 
-    // Initialize Deepgram Connection
     try {
-        const deepgram = createClient(DEEPGRAM_KEY);
+        const deepgram = createClient(process.env.DEEPGRAM_API_KEY || '59db582db173b1a1731cfcc90057241287203203'); // Fallback for safety
         deepgramLive = deepgram.listen.live({
             model: "nova-2",
-            language: "es", // Input Audio Language (Assumption: Pastor speaks Spanish)
+            language: "es",
             smart_format: true,
             interim_results: true,
-            endpointing: 300, // Wait 300ms silence to finalize
+            endpointing: 300,
         });
 
-        // Deepgram Events
-        deepgramLive.on(LiveTranscriptionEvents.Open, () => {
-            console.log("Deepgram Connection OPEN");
-        });
+        deepgramLive.on(LiveTranscriptionEvents.Open, () => console.log("Deepgram STT OPEN"));
+        deepgramLive.on(LiveTranscriptionEvents.Close, () => console.log("Deepgram STT CLOSED"));
+        deepgramLive.on(LiveTranscriptionEvents.Error, (e) => console.error("Deepgram Error:", e));
 
         deepgramLive.on(LiveTranscriptionEvents.Transcript, async (data) => {
             const transcript = data.channel.alternatives[0].transcript;
-
             if (transcript && data.is_final) {
-                // 1. Send Original Transcript immediately
-                // Note: In a real multi-client setup, we might broadcast. 
-                // Here 1-to-1 connection is assumed for the "Master" uploader.
+                // 1. Convert to Spanish -> English (Gemini)
+                const translatedText = await translateText(transcript, 'en');
 
-                // 2. Translate (Async)
-                // Defaulting to English (en) for now, but client could request other langs via control messages.
-                // For simplicity, we hardcode 'en' or support a simplified handshake.
-                // Let's translate to English by default for the demo.
-                const translated = await translateText(transcript, 'en');
-
-                const message = {
+                // 2. Broadcast Text to Listeners
+                const textMessage = JSON.stringify({
                     type: 'TRANSCRIPTION',
                     original: transcript,
-                    translation: translated,
+                    translation: translatedText,
                     isFinal: true
-                };
+                });
+                listeners.forEach(client => {
+                    if (client.readyState === 1) client.send(textMessage);
+                });
 
-                ws.send(JSON.stringify(message));
-            } else if (transcript) {
-                // Interim results (Optional: Send if you want live typing effect)
-                // ws.send(JSON.stringify({ type: 'INTERIM', original: transcript }));
+                // 3. Generate Audio (Deepgram Aura TTS)
+                if (translatedText) {
+                    try {
+                        const ttsResponse = await deepgram.speak.request(
+                            { text: translatedText },
+                            { model: "aura-asteria-en" }
+                        );
+                        const stream = await ttsResponse.getStream();
+
+                        if (stream) {
+                            const reader = stream.getReader();
+                            // Stream chunks to listeners
+                            while (true) {
+                                const { done, value } = await reader.read();
+                                if (done) break;
+                                listeners.forEach(client => {
+                                    if (client.readyState === 1) client.send(value); // Send binary audio chunk
+                                });
+                            }
+                        }
+                    } catch (ttsError) {
+                        console.error("TTS Error:", ttsError);
+                    }
+                }
             }
-        });
-
-        deepgramLive.on(LiveTranscriptionEvents.Error, (err) => {
-            console.error("Deepgram Error:", err);
-        });
-
-        deepgramLive.on(LiveTranscriptionEvents.Close, () => {
-            console.log("Deepgram Connection CLOSED");
         });
 
     } catch (err) {
@@ -168,16 +187,14 @@ wss.on('connection', (ws) => {
         return;
     }
 
-    // Handle Incoming Audio from Client
     ws.on('message', (message) => {
         if (deepgramLive && deepgramLive.getReadyState() === 1) {
-            // Send Buffer directly to Deepgram
             deepgramLive.send(message);
         }
     });
 
     ws.on('close', () => {
-        console.log('Client disconnected');
+        console.log('Broadcaster disconnected');
         if (deepgramLive) {
             deepgramLive.finish();
             deepgramLive = null;

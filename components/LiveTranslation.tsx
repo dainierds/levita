@@ -30,76 +30,75 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
     if (initialLanguage) setTargetLang(initialLanguage);
   }, [initialLanguage]);
 
+  // Audio Queue Management
+  const audioQueueRef = useRef<ArrayBuffer[]>([]);
+  const isPlayingRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
   useEffect(() => {
     if (!tenantId || !isActive) return;
 
-    // Subscribe to Firestore Transcription
-    const docRef = doc(db, 'tenants', tenantId, 'live', 'transcription');
-    const unsubscribe = onSnapshot(docRef, async (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        const text = data.text || '';
+    // Connect to WebSocket as Listener
+    const wsUrl = import.meta.env.VITE_WS_URL || 'wss://web-production-14c5c.up.railway.app';
+    const ws = new WebSocket(`${wsUrl}?role=listener`);
+    ws.binaryType = 'arraybuffer';
 
-        setTranscript(text);
-        setSegments(data.segments || []); // Update history
+    ws.onopen = () => console.log("Connected to Audio Stream");
 
-        // Translate if changed and not empty (For other languages)
-        if (text && text !== lastTranslatedTextRef.current) {
-          lastTranslatedTextRef.current = text;
-
-          if (targetLang === 'es') {
-            setTranslation(text);
-          } else if (targetLang === 'en') {
-            setTranslation(data.translation || "");
-          } else {
-            setIsTranslating(true);
-            try {
-              const translated = await translateText(text, targetLang);
-              setTranslation(translated);
-            } catch (e) {
-              console.error("Translation fail:", e);
-            } finally {
-              setIsTranslating(false);
-            }
+    ws.onmessage = async (event) => {
+      // 1. Text Message (JSON)
+      if (typeof event.data === 'string') {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'TRANSCRIPTION') {
+            setTranscript(data.original);
+            setTranslation(data.translation);
+            // Note: Audio comes as separate binary packets
           }
-        }
+        } catch (e) { console.error("WS Parse Error", e); }
       }
-    });
+      // 2. Binary Message (Audio Chunk)
+      else if (event.data instanceof ArrayBuffer) {
+        if (!isAudioEnabled) return;
+        audioQueueRef.current.push(event.data);
+        processQueue();
+      }
+    };
 
-    return () => unsubscribe();
-  }, [tenantId, isActive, targetLang]);
+    return () => ws.close();
+  }, [tenantId, isActive, isAudioEnabled]);
 
-  // Auto-scroll
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  const processQueue = async () => {
+    if (isPlayingRef.current || audioQueueRef.current.length === 0) return;
+
+    isPlayingRef.current = true;
+    const audioData = audioQueueRef.current.shift();
+
+    if (audioData) {
+      try {
+        if (!audioContextRef.current) audioContextRef.current = new window.AudioContext();
+        const ctx = audioContextRef.current;
+
+        // Resume if suspended (common browser policy)
+        if (ctx.state === 'suspended') await ctx.resume();
+
+        const buffer = await ctx.decodeAudioData(audioData);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+
+        source.onended = () => {
+          isPlayingRef.current = false;
+          processQueue(); // Play next chunk
+        };
+
+        source.start(0);
+      } catch (err) {
+        console.error("Audio Decode Error:", err);
+        isPlayingRef.current = false;
+        processQueue();
+      }
     }
-  }, [segments, translation]);
-
-
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
-
-  // Auto-speak when new translation arrives
-  useEffect(() => {
-    if (isAudioEnabled && translation && translation !== lastTranslatedTextRef.current) {
-      const utterance = new SpeechSynthesisUtterance(translation);
-      utterance.lang = targetLang === 'es' ? 'es-MX' : targetLang === 'en' ? 'en-US' : targetLang;
-      utterance.rate = 1.0;
-      window.speechSynthesis.cancel(); // Stop previous
-      window.speechSynthesis.speak(utterance);
-    }
-  }, [translation, isAudioEnabled, targetLang]);
-
-
-  const toggleActive = () => {
-    setIsActive(!isActive);
-  };
-
-  const speakTranslation = () => {
-    if (!translation) return;
-    const utterance = new SpeechSynthesisUtterance(translation);
-    utterance.lang = targetLang;
-    window.speechSynthesis.speak(utterance);
   };
 
   return (
