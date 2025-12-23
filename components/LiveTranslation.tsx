@@ -21,6 +21,7 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
   const [segments, setSegments] = useState<any[]>([]); // History
   const [targetLang, setTargetLang] = useState(initialLanguage);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
 
   // Previous text to avoid re-translating same content
   const lastTranslatedTextRef = useRef('');
@@ -176,7 +177,7 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
   }, [segments, translation]);
 
 
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+
 
 
   const toggleActive = () => {

@@ -233,13 +233,12 @@ wss.on('connection', (ws) => {
     ws.on('close', () => {
         console.log('Client disconnected');
         clients.delete(ws);
-        if (deepgramLive) deepgramLive.finish();
+        if (deepgramLive) {
+            deepgramLive.finish();
+            deepgramLive = null;
+        }
     });
-    if (deepgramLive) {
-        deepgramLive.finish();
-        deepgramLive = null;
-    }
-});
+
 });
 
 // Health Check for Railway
