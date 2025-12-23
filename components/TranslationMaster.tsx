@@ -332,13 +332,13 @@ const TranslationMaster: React.FC = () => {
                             </button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            {Object.entries(languages).map(([lang, enabled]) => (
+                            {Object.entries(languages).filter(([lang]) => lang !== 'es').map(([lang, enabled]) => (
                                 <button
                                     key={lang}
                                     onClick={() => setLanguages(prev => ({ ...prev, [lang]: !enabled }))}
                                     className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm font-bold transition-all ${enabled
                                         ? 'bg-indigo-600 border-indigo-500 text-white'
-                                        : 'bg-slate-800 border-slate-700 text-slate-500'
+                                        : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-600'
                                         }`}
                                 >
                                     <span className="uppercase">{lang}</span>

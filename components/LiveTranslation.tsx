@@ -5,7 +5,6 @@ import { db } from '../services/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 export const LANGUAGES = [
-  { code: 'es', label: 'Español' },
   { code: 'en', label: 'English' },
 ];
 
