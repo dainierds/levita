@@ -124,7 +124,7 @@ const TranslationMaster: React.FC = () => {
                 const wsUrl = import.meta.env.VITE_WS_URL || 'wss://web-production-14c5c.up.railway.app';
                 console.log("Connecting to Translation Server:", wsUrl);
 
-                const socket = new WebSocket(wsUrl);
+                const socket = new WebSocket(`${wsUrl}?role=broadcaster`);
                 wsRef.current = socket;
 
                 socket.onopen = () => {
