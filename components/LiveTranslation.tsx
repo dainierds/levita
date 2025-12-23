@@ -238,15 +238,9 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
 
         {/* Translation Area (Teleprompter) */}
         <div className="p-6 bg-indigo-50 rounded-3xl h-[400px] relative border border-indigo-100 transition-all flex flex-col">
-          <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
             <span className="text-[10px] font-bold uppercase text-indigo-400">
               {targetLang === 'es' ? 'Texto en Vivo' : `Traducción (${LANGUAGES.find(l => l.code === targetLang)?.label})`}
             </span>
-            {translation && (
-              <button onClick={speakTranslation} className="text-indigo-500 hover:text-indigo-700 bg-white p-2 rounded-full shadow-sm">
-                <Volume2 size={16} />
-              </button>
-            )}
           </div>
 
           <div
@@ -283,12 +277,14 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
         </button>
       </div>
 
-      {isActive && (
-        <p className="text-center text-xs font-bold text-slate-400 mt-4 animate-pulse">
-          Conectado al Audio Principal
-        </p>
-      )}
-    </div>
+      {
+    isActive && (
+      <p className="text-center text-xs font-bold text-slate-400 mt-4 animate-pulse">
+        Conectado al Audio Principal
+      </p>
+    )
+  }
+    </div >
   );
 };
 

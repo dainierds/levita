@@ -19,9 +19,7 @@ interface RosterViewProps {
 const ROLES_CONFIG = [
     { key: 'elder', roleType: 'ELDER' as Role, label: 'Ancianos', icon: UserIcon, color: 'bg-blue-50 text-blue-600', border: 'border-blue-100' },
     { key: 'preacher', roleType: 'PREACHER' as Role, label: 'Predicadores', icon: Mic2, color: 'bg-violet-50 text-violet-600', border: 'border-violet-100' },
-    { key: 'musicDirector', roleType: 'MUSIC' as Role, label: 'Música', icon: Music, color: 'bg-pink-50 text-pink-600', border: 'border-pink-100' },
     { key: 'audioOperator', roleType: 'AUDIO' as Role, label: 'Audio', icon: Mic, color: 'bg-orange-50 text-orange-600', border: 'border-orange-100' },
-    { key: 'teams', roleType: 'TEAM' as any, label: 'Equipos', icon: Users, color: 'bg-indigo-50 text-indigo-600', border: 'border-indigo-100' },
 ];
 
 const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, users, onSaveSettings }) => {
