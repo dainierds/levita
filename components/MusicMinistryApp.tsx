@@ -550,37 +550,7 @@ const MusicMinistryApp: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Soloists Display */}
-                                    {(resolveNames(team.soloist1).length > 0 || resolveNames(team.soloist2).length > 0) && (
-                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2">
-                                            {resolveNames(team.soloist1).length > 0 && (
-                                                <div className="flex items-center gap-2">
-                                                    <Mic2 size={12} className="text-indigo-500" />
-                                                    <p className="text-xs text-slate-700">
-                                                        <span className="font-bold text-indigo-600 uppercase text-[10px] mr-2">
-                                                            {resolveNames(team.soloist1).length === 1 ? 'Solista' :
-                                                                resolveNames(team.soloist1).length === 2 ? 'Dúo' :
-                                                                    resolveNames(team.soloist1).length === 3 ? 'Trío' : 'Cuarteto'}
-                                                        </span>
-                                                        {resolveNames(team.soloist1).join(', ')}
-                                                    </p>
-                                                </div>
-                                            )}
-                                            {resolveNames(team.soloist2).length > 0 && (
-                                                <div className="flex items-center gap-2">
-                                                    <Mic2 size={12} className="text-purple-500" />
-                                                    <p className="text-xs text-slate-700">
-                                                        <span className="font-bold text-purple-600 uppercase text-[10px] mr-2">
-                                                            {resolveNames(team.soloist2).length === 1 ? 'Solista' :
-                                                                resolveNames(team.soloist2).length === 2 ? 'Dúo' :
-                                                                    resolveNames(team.soloist2).length === 3 ? 'Trío' : 'Cuarteto'}
-                                                        </span>
-                                                        {resolveNames(team.soloist2).join(', ')}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+
 
                                     {/* Soloists Display */}
                                     {(resolveNames(team.soloist1).length > 0 || resolveNames(team.soloist2).length > 0) && (
