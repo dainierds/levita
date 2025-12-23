@@ -155,6 +155,14 @@ service cloud.firestore {
       allow read, update, delete: if belongsToTenant(resource.data.tenantId);
     }
 
+    // 6. Notifications (Used by Visitor App too)
+    match /notifications/{notificationId} {
+        allow read: if true; // Public retrieval
+        allow create: if belongsToTenant(request.resource.data.tenantId);
+        allow update: if true; // Allow visitors to mark as read (arrayUnion)
+        allow delete: if belongsToTenant(resource.data.tenantId);
+    }
+
     // Regla por defecto: Bloquear todo lo demás por seguridad
     match /{document=**} {
       allow read, write: if false;
