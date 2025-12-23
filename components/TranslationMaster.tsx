@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, Mic2, Activity, Globe, Power, Settings, Volume2, AlertTriangle } from 'lucide-react';
+import { Mic, Mic2, Activity, Globe, Power, Settings, Volume2, AlertTriangle, Monitor } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
 import { doc, setDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
@@ -321,7 +321,16 @@ const TranslationMaster: React.FC = () => {
                 {/* Output Control */}
                 <div className="space-y-4">
                     <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Idiomas Activos</label>
+                        <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Idiomas Activos</h4>
+                            <button
+                                onClick={() => window.open(`/projection/${user?.tenantId}`, '_blank', 'width=1920,height=1080')}
+                                className="text-xs flex items-center gap-1 text-slate-500 hover:text-white transition-colors"
+                                title="Proyectar Traducción (HDMI)"
+                            >
+                                <Monitor size={14} /> Proyectar
+                            </button>
+                        </div>
                         <div className="grid grid-cols-2 gap-2">
                             {Object.entries(languages).map(([lang, enabled]) => (
                                 <button

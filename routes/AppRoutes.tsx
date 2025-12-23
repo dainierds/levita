@@ -9,6 +9,7 @@ import StaffPortal from '../pages/StaffPortal';
 import JoinPage from '../pages/JoinPage';
 import DbSeeder from '../components/DbSeeder';
 import ProtectedApp from '../components/ProtectedApp';
+import ProjectionView from '../pages/visitor-app/views/ProjectionView';
 
 const AppRoutes = () => {
     const { user, isLoading } = useAuth();
@@ -37,6 +38,9 @@ const AppRoutes = () => {
 
             {/* Invitation Join Route */}
             <Route path="/join" element={<JoinPage />} />
+
+            {/* Projection Route (HDMI Output) */}
+            <Route path="/projection/:tenantId" element={<ProjectionView />} />
 
             {/* Database Seeder (Remove in Production) */}
             <Route path="/seed" element={<DbSeeder />} />
