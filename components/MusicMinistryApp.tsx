@@ -61,6 +61,7 @@ const MusicMinistryApp: React.FC = () => {
     const [userName, setUserName] = useState('');
     const [error, setError] = useState('');
     const [debugEventsCount, setDebugEventsCount] = useState(0);
+    const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
     useEffect(() => {
         if (user) {
@@ -148,6 +149,21 @@ const MusicMinistryApp: React.FC = () => {
                 unsubscribeUsers(); // Cleanup users listener
             };
         }
+        // Unified Banners
+        const combinedBanners = [
+            { id: 'welcome', type: 'WELCOME' },
+            ...events.map(e => ({ ...e, type: 'EVENT' })) // Ensure 'type' doesn't conflict if event has one
+        ];
+
+        // Carousel Rotation
+        useEffect(() => {
+            if (combinedBanners.length <= 1) return;
+            const timer = setInterval(() => {
+                setCurrentBannerIndex(prev => (prev + 1) % combinedBanners.length);
+            }, 5000);
+            return () => clearInterval(timer);
+        }, [combinedBanners.length]);
+
     }, [isAuthenticated, tenant?.id]);
 
     // Helpers
@@ -508,6 +524,70 @@ const MusicMinistryApp: React.FC = () => {
                                             <p className="text-xs text-slate-400">{teamMembers.length} integrantes asignados</p>
                                         </div>
                                     </div>
+
+                                    {/* Soloists Display */}
+                                    {(resolveNames(team.soloist1).length > 0 || resolveNames(team.soloist2).length > 0) && (
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2">
+                                            {resolveNames(team.soloist1).length > 0 && (
+                                                <div className="flex items-center gap-2">
+                                                    <Mic2 size={12} className="text-indigo-500" />
+                                                    <p className="text-xs text-slate-700">
+                                                        <span className="font-bold text-indigo-600 uppercase text-[10px] mr-2">
+                                                            {resolveNames(team.soloist1).length === 1 ? 'Solista' :
+                                                                resolveNames(team.soloist1).length === 2 ? 'Dúo' :
+                                                                    resolveNames(team.soloist1).length === 3 ? 'Trío' : 'Cuarteto'}
+                                                        </span>
+                                                        {resolveNames(team.soloist1).join(', ')}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {resolveNames(team.soloist2).length > 0 && (
+                                                <div className="flex items-center gap-2">
+                                                    <Mic2 size={12} className="text-purple-500" />
+                                                    <p className="text-xs text-slate-700">
+                                                        <span className="font-bold text-purple-600 uppercase text-[10px] mr-2">
+                                                            {resolveNames(team.soloist2).length === 1 ? 'Solista' :
+                                                                resolveNames(team.soloist2).length === 2 ? 'Dúo' :
+                                                                    resolveNames(team.soloist2).length === 3 ? 'Trío' : 'Cuarteto'}
+                                                        </span>
+                                                        {resolveNames(team.soloist2).join(', ')}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Soloists Display */}
+                                    {(resolveNames(team.soloist1).length > 0 || resolveNames(team.soloist2).length > 0) && (
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2 mb-3">
+                                            {resolveNames(team.soloist1).length > 0 && (
+                                                <div className="flex items-center gap-2">
+                                                    <Mic2 size={12} className="text-indigo-500 shrink-0" />
+                                                    <p className="text-xs text-slate-700">
+                                                        <span className="font-bold text-indigo-600 uppercase text-[10px] mr-2">
+                                                            {resolveNames(team.soloist1).length === 1 ? 'Solista' :
+                                                                resolveNames(team.soloist1).length === 2 ? 'Dúo' :
+                                                                    resolveNames(team.soloist1).length === 3 ? 'Trío' : 'Cuarteto'}
+                                                        </span>
+                                                        {resolveNames(team.soloist1).join(', ')}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {resolveNames(team.soloist2).length > 0 && (
+                                                <div className="flex items-center gap-2">
+                                                    <Mic2 size={12} className="text-purple-500 shrink-0" />
+                                                    <p className="text-xs text-slate-700">
+                                                        <span className="font-bold text-purple-600 uppercase text-[10px] mr-2">
+                                                            {resolveNames(team.soloist2).length === 1 ? 'Solista' :
+                                                                resolveNames(team.soloist2).length === 2 ? 'Dúo' :
+                                                                    resolveNames(team.soloist2).length === 3 ? 'Trío' : 'Cuarteto'}
+                                                        </span>
+                                                        {resolveNames(team.soloist2).join(', ')}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Member Names List */}
                                     <div className="flex flex-wrap gap-2">

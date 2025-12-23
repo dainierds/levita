@@ -64,6 +64,17 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
         }
     };
 
+    const getGroupLabel = (count: number, service: number) => {
+        let type = '';
+        if (count === 1) type = 'Solista';
+        else if (count === 2) type = 'Dúo';
+        else if (count === 3) type = 'Trío';
+        else if (count === 4) type = 'Cuarteto';
+        else type = 'Grupo';
+
+        return `${type} ${service}er Servicio`;
+    };
+
     const handleCreateTeam = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user?.tenantId) return;
