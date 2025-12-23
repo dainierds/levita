@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ChurchSettings, User } from '../types';
-import { Users, Save, X, User as UserIcon, Mic2, Music, Mic, Check, Calendar, Trash2 } from 'lucide-react';
+import { ChurchSettings, ServicePlan, User, DayOfWeek } from '../types';
+import { Users, X, Calendar, User as UserIcon, Mic2, Music, Mic, ChevronRight, Edit2, CheckCircle2 } from 'lucide-react';
 
 interface TeamManagerProps {
     settings: ChurchSettings;
     users: User[];
+    plans: ServicePlan[];
+    savePlan: (plan: ServicePlan) => Promise<any>;
     onSave: (settings: ChurchSettings) => Promise<void>;
     onClose: () => void;
 }
@@ -16,53 +18,86 @@ const ROLES = [
     { key: 'audioOperator', label: 'Audio', icon: Mic, role: 'AUDIO' },
 ];
 
-const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, onSave, onClose }) => {
-    // Local state for Day Pools: { "Martes": { "elder": ["id1", "id2"] } }
-    const [dayPools, setDayPools] = useState<Record<string, Record<string, string[]>>>(settings.dayPools || {});
+const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, plans, savePlan, onSave, onClose }) => {
+    // We strictly follow the rule: One team/card per Meeting Day
+    const [upcomingPlans, setUpcomingPlans] = useState<{ dayName: string; date: Date; plan: ServicePlan | null }[]>([]);
     const [loading, setLoading] = useState(false);
 
-    // Ensure we have entries for all configured meeting days
+    // Calculate dates on mount
     useEffect(() => {
-        const initialPools = { ...(settings.dayPools || {}) };
-        settings.meetingDays.forEach(day => {
-            if (!initialPools[day]) {
-                initialPools[day] = {};
-            }
-        });
-        setDayPools(initialPools);
-    }, [settings.meetingDays, settings.dayPools]);
+        calculateUpcomingDates();
+    }, [settings.meetingDays, plans]);
 
-
-    const handleToggleUser = (day: string, roleKey: string, userId: string) => {
-        setDayPools(prev => {
-            const currentDay = prev[day] || {};
-            const currentRoleList = currentDay[roleKey] || [];
-
-            let newList;
-            if (currentRoleList.includes(userId)) {
-                newList = currentRoleList.filter(id => id !== userId);
-            } else {
-                newList = [...currentRoleList, userId];
-            }
-
+    const calculateUpcomingDates = () => {
+        const calculated = settings.meetingDays.map(dayName => {
+            const date = getNextDayOfWeek(dayName);
+            const localDateStr = date.toLocaleDateString('en-CA');
+            const foundPlan = plans.find(p => p.date === localDateStr); // Match exact date
             return {
-                ...prev,
-                [day]: {
-                    ...currentDay,
-                    [roleKey]: newList
-                }
+                dayName,
+                date,
+                plan: foundPlan || null
             };
         });
+        setUpcomingPlans(calculated);
     };
 
-    const handleSave = async () => {
+    const getNextDayOfWeek = (dayName: string) => {
+        const daysMap: { [key: string]: number } = {
+            'Domingo': 0, 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5, 'Sábado': 6
+        };
+        const targetDay = daysMap[dayName];
+        const date = new Date();
+        const currentDay = date.getDay();
+
+        let daysUntil = targetDay - currentDay;
+        if (daysUntil <= 0) { // If today is the day, assume NEXT week? Or Today? 
+            // Usually "Upcoming" includes today if service hasn't happened.
+            // Let's assume if daysUntil < 0 (past in week), add 7. If 0 (today), keep 0.
+            if (daysUntil < 0) daysUntil += 7;
+        }
+        date.setDate(date.getDate() + daysUntil);
+        return date;
+    };
+
+    const handleAssignmentChange = async (plan: ServicePlan | null, date: Date, roleKey: string, userName: string) => {
         setLoading(true);
         try {
-            await onSave({ ...settings, dayPools });
-            onClose();
+            const localDateStr = date.toLocaleDateString('en-CA');
+
+            // If plan exists, update it. If not, CREATE it.
+            let planToSave: ServicePlan;
+
+            if (plan) {
+                planToSave = {
+                    ...plan,
+                    team: {
+                        ...plan.team,
+                        [roleKey]: userName
+                    }
+                };
+            } else {
+                // Create skeleton plan
+                planToSave = {
+                    id: `auto-team-${Math.random().toString(36).substr(2, 9)}`,
+                    title: `Servicio ${localDateStr}`,
+                    date: localDateStr,
+                    startTime: settings.meetingTimes[date.toLocaleDateString('es-ES', { weekday: 'long' }) as DayOfWeek] || '10:00',
+                    isActive: false,
+                    items: [],
+                    tenantId: users[0]?.tenantId || '', // Fallback tenant
+                    team: {
+                        elder: '', preacher: '', musicDirector: '', audioOperator: '',
+                        [roleKey]: userName
+                    },
+                    isRosterDraft: true
+                };
+            }
+
+            await savePlan(planToSave);
+            // Refresh local state handled by parent re-render (plans prop update)
         } catch (error) {
-            console.error(error);
-            alert('Error al guardar equipos');
+            console.error("Failed to update plan", error);
         } finally {
             setLoading(false);
         }
@@ -70,103 +105,88 @@ const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, onSave, onCl
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2rem] w-full max-w-6xl p-8 shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-5xl p-8 shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-hidden flex flex-col border border-white/20">
 
-                <div className="flex justify-between items-center mb-6 flex-shrink-0">
+                <div className="flex justify-between items-center mb-8 flex-shrink-0">
                     <div>
-                        <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                            <Users className="text-indigo-500" /> Gestión de Voluntarios por Día
+                        <h3 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                            <Users className="text-indigo-600" size={32} />
+                            Gestión de Equipos
                         </h3>
-                        <p className="text-slate-500 text-sm">Define quiénes pueden servir en cada día de reunión para la auto-asignación.</p>
+                        <p className="text-slate-500 mt-1 ml-11">
+                            Crea los equipos de la semana. El más cercano será el activo por defecto.
+                        </p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600">
+                    <button onClick={onClose} className="p-3 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600">
                         <X size={24} />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar">
-                    <div className="flex gap-6 h-full min-w-max">
-                        {settings.meetingDays.map((day) => (
-                            <div key={day} className="w-80 flex flex-col h-full bg-slate-50 rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
-                                {/* Column Header */}
-                                <div className="p-5 bg-white border-b border-slate-100 flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                                        <Calendar size={20} />
+                <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                        {upcomingPlans.map(({ dayName, date, plan }) => (
+                            <div key={dayName} className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden flex flex-col group hover:border-indigo-100 transition-colors">
+                                {/* Header Card */}
+                                <div className="p-6 bg-slate-50/50 border-b border-slate-100 flex justify-between items-start">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-100 flex flex-col items-center justify-center text-indigo-600">
+                                            <span className="text-2xl font-bold">{date.getDate()}</span>
+                                            <span className="text-[10px] font-bold uppercase text-slate-400">{date.toLocaleString('es-ES', { month: 'short' }).replace('.', '')}</span>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-2xl font-bold text-slate-800 capitalize">{dayName}</h4>
+                                                {plan?.isActive && (
+                                                    <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                                                        <CheckCircle2 size={10} /> ACTIVO
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-400 font-bold uppercase mt-1 tracking-wider">
+                                                Próximo Servicio
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold text-lg text-slate-800 capitalize">{day}s</h4>
-                                        <p className="text-xs text-slate-400">Poceta de Voluntarios</p>
-                                    </div>
+                                    {plan && (
+                                        <button className="p-2 text-slate-300 hover:text-indigo-500 transition-colors">
+                                            <Edit2 size={18} />
+                                        </button>
+                                    )}
                                 </div>
 
-                                {/* Roles List */}
-                                <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                                {/* Form Grid */}
+                                <div className="p-8 grid grid-cols-1 gap-6">
                                     {ROLES.map(role => {
-                                        const assignedIds = dayPools[day]?.[role.key] || [];
+                                        const assignedName = plan ? (plan.team as any)[role.key] : '';
                                         const roleUsers = users.filter(u => u.role === role.role);
 
                                         return (
-                                            <div key={role.key} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-                                                <div className="flex items-center gap-2 mb-3 text-slate-500">
-                                                    <role.icon size={14} />
-                                                    <span className="text-xs font-bold uppercase tracking-wider">{role.label}s</span>
-                                                    <span className="ml-auto bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                                        {assignedIds.length}
-                                                    </span>
-                                                </div>
-
-                                                <div className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar pr-1">
-                                                    {roleUsers.length > 0 ? (
-                                                        roleUsers.map(user => {
-                                                            const isSelected = assignedIds.includes(user.id);
-                                                            return (
-                                                                <button
-                                                                    key={user.id}
-                                                                    onClick={() => handleToggleUser(day, role.key, user.id)}
-                                                                    className={`w-full flex items-center gap-2 p-2 rounded-xl text-sm transition-all ${isSelected
-                                                                            ? 'bg-indigo-50 text-indigo-700 font-bold ring-1 ring-indigo-500/20'
-                                                                            : 'hover:bg-slate-50 text-slate-600'
-                                                                        }`}
-                                                                >
-                                                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-500 border-indigo-500' : 'border-slate-300'
-                                                                        }`}>
-                                                                        {isSelected && <Check size={10} className="text-white" />}
-                                                                    </div>
-                                                                    <span className="truncate">{user.name}</span>
-                                                                </button>
-                                                            )
-                                                        })
-                                                    ) : (
-                                                        <p className="text-xs text-slate-300 italic p-2 text-center">No hay usuarios con este rol.</p>
-                                                    )}
+                                            <div key={role.key} className="space-y-2">
+                                                <label className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                                    <role.icon size={12} className="text-indigo-400" />
+                                                    {role.label}
+                                                </label>
+                                                <div className="relative">
+                                                    <select
+                                                        value={assignedName || ''}
+                                                        onChange={(e) => handleAssignmentChange(plan, date, role.key, e.target.value)}
+                                                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer hover:bg-white transition-colors"
+                                                        disabled={loading}
+                                                    >
+                                                        <option value="">-- Sin Asignar --</option>
+                                                        {roleUsers.map(u => (
+                                                            <option key={u.id} value={u.name}>{u.name}</option>
+                                                        ))}
+                                                    </select>
+                                                    <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 rotate-90 pointer-events-none" size={16} />
                                                 </div>
                                             </div>
-                                        )
+                                        );
                                     })}
                                 </div>
                             </div>
                         ))}
-                        {settings.meetingDays.length === 0 && (
-                            <div className="w-full flex flex-col items-center justify-center text-slate-400 p-12">
-                                <p>No hay días de reunión configurados.</p>
-                                <p className="text-sm">Ve a Configuración para agregar días.</p>
-                            </div>
-                        )}
                     </div>
-                </div>
-
-                <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-slate-100 flex-shrink-0">
-                    <button onClick={onClose} className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={loading}
-                        className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center gap-2 disabled:opacity-70"
-                    >
-                        {loading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> : <Save size={18} />}
-                        Guardar Configuración
-                    </button>
                 </div>
 
             </div>
