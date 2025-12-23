@@ -227,13 +227,23 @@ const TranslationMaster: React.FC = () => {
                         <p className="text-xs text-slate-400">Motor de IA en Tiempo Real</p>
                     </div>
                 </div>
-                <button
-                    onClick={() => setIsActive(!isActive)}
-                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${isActive ? 'bg-green-500 text-white shadow-green-900/50' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'
-                        }`}
-                >
-                    <Power size={20} />
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => window.open(`/projection/${user?.tenantId}`, '_blank', 'width=1920,height=1080')}
+                        className="w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-900/50"
+                        title="Proyectar Traducción (HDMI)"
+                    >
+                        <Monitor size={20} />
+                    </button>
+                    <button
+                        onClick={() => setIsActive(!isActive)}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${isActive ? 'bg-green-500 text-white shadow-green-900/50' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'
+                            }`}
+                        title={isActive ? "Detener Transmisión" : "Iniciar Transmisión"}
+                    >
+                        <Power size={20} />
+                    </button>
+                </div>
             </div>
 
             {permissionError && (
@@ -323,13 +333,6 @@ const TranslationMaster: React.FC = () => {
                     <div>
                         <div className="flex justify-between items-center mb-4">
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Idiomas Activos</h4>
-                            <button
-                                onClick={() => window.open(`/projection/${user?.tenantId}`, '_blank', 'width=1920,height=1080')}
-                                className="text-xs flex items-center gap-1 text-slate-500 hover:text-white transition-colors"
-                                title="Proyectar Traducción (HDMI)"
-                            >
-                                <Monitor size={14} /> Proyectar
-                            </button>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             {Object.entries(languages).filter(([lang]) => lang !== 'es').map(([lang, enabled]) => (
