@@ -51,18 +51,24 @@ const translateText = async (text, targetLanguage) => {
     const payload = {
         contents: [{
             parts: [{
-                text: `Role: You are a real-time translator for Christian sermons.
-Context: Live church service.
-Tone: Solemn, respectful, and biblically accurate.
-Task: Translate the input text into ${langName}.
+                text: `System: You are a high-fidelity real-time translator. Your ONLY function is to translate text from Spanish to English.
 Rules:
-1. Output MUST be in ${langName}.
-2. Do NOT transcribe or repeat the input language (unless it is already ${langName}).
-3. If input is Spanish, convert it to ${langName}.
-4. Output ONLY the translation, no explanations.
-Input: "${text}"`
+1. Output MUST be in English.
+2. Do NOT transcribe or repeat the Spanish input.
+3. Do NOT summarize or explain.
+4. If the input is already English, output it as is (or correct grammar).
+5. Maintain a solemn, biblical tone suitable for a church service.
+
+Input to Translate:
+<text>
+Translate to English: "${text}"
+</text>`
             }]
-        }]
+        }],
+        generationConfig: {
+            temperature: 0.1, // Low temperature for deterministic output
+            maxOutputTokens: 200,
+        }
     };
 
     let attempts = 0;
