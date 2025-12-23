@@ -53,10 +53,14 @@ const translateText = async (text, targetLanguage) => {
             parts: [{
                 text: `Role: You are a real-time translator for Christian sermons.
 Context: Live church service.
-Tone: Solemn, respectful, and biblically accurate. 
-Task: Translate the following text to ${langName}.
-Input: "${text}"
-Output: ONLY the translation, no explanations.`
+Tone: Solemn, respectful, and biblically accurate.
+Task: Translate the input text into ${langName}.
+Rules:
+1. Output MUST be in ${langName}.
+2. Do NOT transcribe or repeat the input language (unless it is already ${langName}).
+3. If input is Spanish, convert it to ${langName}.
+4. Output ONLY the translation, no explanations.
+Input: "${text}"`
             }]
         }]
     };
