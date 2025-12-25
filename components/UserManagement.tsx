@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Role, SubscriptionTier, TIER_LIMITS } from '../types';
-import { UserPlus, Link, Shield, CheckCircle, Copy, Check, Trash2, AlertTriangle, Clock, X, User as UserIcon } from 'lucide-react'; // Added Clock, X
+import { UserPlus, Link, Shield, CheckCircle, Copy, Check, Trash2, AlertTriangle, Clock, X, User as UserIcon, BookOpen } from 'lucide-react'; // Added Clock, X, BookOpen
 import { createInvitation, getPendingInvitations, deleteInvitation } from '../services/invitationService'; // Added imports
 import { useNotification } from './NotificationSystem';
 import { db } from '../services/firebase';
@@ -283,7 +283,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
               { key: 'PREACHER', label: 'Predicadores', icon: UserIcon, color: 'text-purple-600', bg: 'bg-purple-100' },
               { key: 'MUSIC', label: 'Músicos & Vocales', icon: UserIcon, color: 'text-pink-600', bg: 'bg-pink-100' },
               { key: 'AUDIO', label: 'Operadores de Audio', icon: UserIcon, color: 'text-orange-600', bg: 'bg-orange-100' },
-              { key: 'MEMBER', label: 'Miembros', icon: UserIcon, color: 'text-slate-600', bg: 'bg-slate-100' },
+              { key: 'TEACHER', label: 'Maestros ES', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-100' },
             ];
 
             // Filter users into groups
