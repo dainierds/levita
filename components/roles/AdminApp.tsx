@@ -97,8 +97,8 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                                 }
                             }}
                             className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs transition-all shadow-sm border ${settings?.isLive
-                                    ? 'bg-red-500 text-white border-red-600 animate-pulse shadow-red-500/50'
-                                    : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'
+                                ? 'bg-red-500 text-white border-red-600 animate-pulse shadow-red-500/50'
+                                : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'
                                 }`}
                         >
                             <div className={`w-2 h-2 rounded-full ${settings?.isLive ? 'bg-white' : 'bg-slate-300'}`} />
@@ -212,6 +212,8 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                         <TeamRoster
                             users={users}
                             settings={settings}
+                            plans={plans}
+                            savePlan={savePlan}
                             onSaveSettings={handleSaveSettings}
                         />
                     )}
