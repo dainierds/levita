@@ -4,7 +4,60 @@ export type EventType = 'SERVICE' | 'MEETING' | 'WORKSHOP' | 'OTHER';
 
 export interface ChurchEvent {
   id: string;
-// ... (omitted lines)
+  title: string;
+  date: string;
+  endDate?: string;
+  time: string;
+  type: EventType;
+  location: string;
+  activeInBanner: boolean;
+  targetAudience: 'PUBLIC' | 'MEMBERS_ONLY' | 'STAFF_ONLY' | 'ELDERS_ONLY';
+  bannerGradient?: string;
+  description: string;
+  address?: string;
+  placeName?: string;
+}
+
+export interface PrayerRequest {
+  id: string;
+  author: string;
+  content: string;
+  date: string;
+  status: 'PENDING' | 'READ' | 'ARCHIVED';
+  tenantId: string;
+}
+
+export type LiturgyItemType = 'WORSHIP' | 'PREACHING' | 'GENERAL';
+
+export interface Attachment {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+}
+
+export interface LinkItem {
+  url: string;
+  label: string;
+}
+
+export interface LiturgyItem {
+  id: string;
+  type: LiturgyItemType;
+  title: string;
+  durationMinutes: number;
+  notes?: string;
+  attachments?: Attachment[];
+  // Worship specific
+  key?: string;
+  youtubeLink?: string;
+  youtubeLinks?: string[];
+  links?: LinkItem[];
+  // Preaching specific
+  preacher?: string;
+  scripture?: string;
+}
+
 export interface ServiceTeam {
   elder: string;
   preacher: string;
