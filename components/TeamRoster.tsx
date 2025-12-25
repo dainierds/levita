@@ -115,41 +115,134 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
     if (!currentService) return <div className="p-8 text-center text-gray-400">Cargando...</div>;
 
     return (
-                                return (
-        <div key={role.key} className={`p-5 rounded-3xl border transition-all hover:shadow-md ${role.border} bg-white group`}>
-            <div className="flex items-center gap-3 mb-4">
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${role.color}`}>
-                    <role.icon size={20} />
-                </div>
-                <span className="font-bold text-slate-700">{role.label}</span>
+        <div className="p-4 md:p-8 max-w-full mx-auto space-y-8">
+
+            {/* Header */}
+            <div>
+                <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                    <UserCheck className="text-indigo-600" size={32} />
+                    Equipo de Turno
+                </h2>
+                <p className="text-slate-500">Gestión de roles para los próximos servicios.</p>
             </div>
 
-            <div className="relative">
-                <select
-                    value={assignedName || ''}
-                    onChange={(e) => handleAssignmentChange(activeDayIdx, role.key, e.target.value)}
-                    {/* Roles Grid */}
-                        <div className="p-8 grid grid-cols-2 gap-6">x-4 py-3.5 font-bold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/20 cursor-pointer hover:bg-slate-100 transition-colors appearance-none"
-                >
-                    <option value="">-- Seleccionar --</option>
-                    {roleUsers.map(u => (
-                        <option key={u.id} value={u.name}>{u.name}</option>
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+
+                {/* LEFT: Service Selector (Tabs) */}
+                <div className="w-full lg:w-80 flex flex-col gap-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-2">Próximos Servicios</h3>
+                    {upcomingServices.map((service, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => setActiveDayIdx(idx)}
+                            className={`flex items-center gap-4 p-4 rounded-[2rem] text-left transition-all group relative overflow-hidden ${activeDayIdx === idx
+                                ? 'bg-white shadow-xl shadow-indigo-100 ring-2 ring-indigo-500'
+                                : 'bg-slate-50 hover:bg-white hover:shadow-md text-slate-500'
+                                }`}
+                        >
+                            <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center border transition-colors ${activeDayIdx === idx
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white text-slate-400 border-slate-200 group-hover:border-indigo-200'
+                                }`}>
+                                <span className="text-xl font-bold">{service.date.getDate()}</span>
+                                <span className="text-[9px] font-bold uppercase">{service.date.toLocaleString('es-ES', { month: 'short' }).replace('.', '')}</span>
+                            </div>
+
+                            <div className="flex-1">
+                                <h4 className={`font-bold text-lg capitalize ${activeDayIdx === idx ? 'text-indigo-900' : 'text-slate-600'}`}>
+                                    {service.dayName}
+                                </h4>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-xs font-medium ${activeDayIdx === idx ? 'text-indigo-500' : 'text-slate-400'}`}>
+                                        {service.plan ? 'Programado' : 'Sin asignar'}
+                                    </span>
+                                    {service.plan?.isActive && (
+                                        <span className="flex items-center gap-1 text-[9px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                                            <CheckCircle2 size={8} /> LIVE
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {activeDayIdx === idx && (
+                                <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-indigo-500" />
+                            )}
+                        </button>
                     ))}
-                </select>
-                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 rotate-90 pointer-events-none" size={16} />
+                </div>
+
+                {/* RIGHT: Team Editor Card */}
+                <div className="flex-1 w-full">
+                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden min-h-[500px] flex flex-col">
+
+                        {/* Card Header */}
+                        <div className="p-8 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-2xl font-bold text-slate-800 capitalize flex items-center gap-2">
+                                    Equipo del {currentService.dayName}
+                                    {currentService.plan?.isActive && (
+                                        <span className="bg-green-500 text-white text-[10px] px-2 py-1 rounded-full font-bold shadow-lg shadow-green-200">
+                                            EN VIVO
+                                        </span>
+                                    )}
+                                </h3>
+                                <p className="text-slate-400 font-medium">
+                                    {currentService.date.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Roles Grid */}
+                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {ROLES_CONFIG.map(role => {
+                                const assignedName = currentService.plan ? (currentService.plan.team as any)[role.key] : '';
+                                const roleUsers = users.filter(u => u.role === role.role);
+                                // Sort A-Z
+                                roleUsers.sort((a, b) => a.name.localeCompare(b.name));
+
+                                return (
+                                    <div key={role.key} className={`p-5 rounded-3xl border transition-all hover:shadow-md ${role.border} bg-white group`}>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${role.color}`}>
+                                                <role.icon size={20} />
+                                            </div>
+                                            <span className="font-bold text-slate-700">{role.label}</span>
+                                        </div>
+
+                                        <div className="relative">
+                                            <select
+                                                value={assignedName || ''}
+                                                onChange={(e) => handleAssignmentChange(activeDayIdx, role.key, e.target.value)}
+                                                disabled={loading}
+                                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 font-bold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/20 cursor-pointer hover:bg-slate-100 transition-colors appearance-none"
+                                            >
+                                                <option value="">-- Seleccionar --</option>
+                                                {roleUsers.map(u => (
+                                                    <option key={u.id} value={u.name}>{u.name}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 rotate-90 pointer-events-none" size={16} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {!currentService.plan && (
+                            <div className="px-8 pb-8 text-center">
+                                <p className="text-xs text-slate-300 italic">
+                                    Al seleccionar un miembro, se creará automáticamente el itinerario para este día.
+                                </p>
+                            </div>
+                        )}
+
+                    </div>
+                </div>
+
             </div>
         </div>
     );
-})}
-                        </div >
-
-    {!currentService.plan && (
-        <div className="px-8 pb-8 text-center">
-            <p className="text-xs text-slate-300 italic">
-                Al seleccionar un miembro, se creará automáticamente el itinerario para este día.
-            </p>
-        </div>
-    )}
+};
 
                     </div >
                 </div >
