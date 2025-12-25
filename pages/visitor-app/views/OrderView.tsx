@@ -52,7 +52,7 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
 
   // LOGIC: Use Service Plan Team directly
   const activePreacher = servicePlan?.team?.preacher || '---';
-  const activeMusic = servicePlan?.team?.musicDirector || '---';
+  const activeTeacher = servicePlan?.team?.sabbathSchoolTeacher || '---';
   const activeElder = servicePlan?.team?.elder || '---';
   const activeAudio = servicePlan?.team?.audioOperator || '---';
 
@@ -95,14 +95,14 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
               </div>
             </div>
 
-            {/* 3. Music */}
+            {/* 3. Teacher */}
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/20 flex items-center justify-center text-pink-500 shadow-sm">
-                <Music size={20} />
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-500 shadow-sm">
+                <BookOpen size={20} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Director de Música</p>
-                <p className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[140px]">{activeMusic}</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Maestro de ES</p>
+                <p className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[140px]">{activeTeacher}</p>
               </div>
             </div>
 
