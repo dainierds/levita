@@ -24,7 +24,7 @@ const ROLES_TO_CREATE = [
 ];
 
 const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, currentUser }) => {
-  const [formData, setFormData] = useState({ name: '', role: 'MEMBER' as Role });
+  const [formData, setFormData] = useState({ name: '', role: 'ELDER' as Role });
   const [isLoading, setIsLoading] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const [copied, setCopied] = useState(false);
@@ -186,16 +186,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                       {r.label}
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: 'MEMBER' })}
-                    className={`px-2 py-2 text-xs font-bold rounded-lg transition-colors ${formData.role === 'MEMBER'
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                      }`}
-                  >
-                    Miembro
-                  </button>
+
                 </div>
               </div>
 
