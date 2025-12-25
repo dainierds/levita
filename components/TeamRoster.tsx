@@ -244,12 +244,6 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
     );
 };
 
-                    </div >
-                </div >
 
-            </div >
-        </div >
-    );
-};
 
 export default TeamRoster;
