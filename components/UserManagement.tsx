@@ -20,6 +20,7 @@ const ROLES_TO_CREATE = [
   { key: 'PREACHER', label: 'Predicadores' },
   { key: 'MUSIC', label: 'Música' },
   { key: 'AUDIO', label: 'Audio' },
+  { key: 'TEACHER', label: 'Maestro de ES' },
 ];
 
 const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, currentUser }) => {
@@ -298,6 +299,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
             const groupedUsers = ROLE_SECTIONS.map(section => ({
               ...section,
               users: users.filter(u => u.role === section.key)
+                .sort((a, b) => a.name.localeCompare(b.name))
             })).filter(group => group.users.length > 0);
 
             if (groupedUsers.length === 0) {

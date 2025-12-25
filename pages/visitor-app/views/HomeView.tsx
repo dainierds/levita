@@ -77,13 +77,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, events = [], nex
 
   // Preacher rendering
   let preacherName = 'Pastor Principal';
-  if (settings?.activeTeamId && settings.teams) {
-    const activeTeam = settings.teams.find(t => t.id === settings.activeTeamId);
-    if (activeTeam?.members?.preacher) {
-      preacherName = activeTeam.members.preacher;
-    }
-  } else if (nextPlan?.team?.preacher) {
+
+  if (nextPlan?.team?.preacher) {
     preacherName = nextPlan.team.preacher;
+  } else if (settings?.pastorName) {
+    preacherName = settings.pastorName;
   } else if (settings?.pastorName) {
     preacherName = settings.pastorName;
   }

@@ -123,81 +123,111 @@ const MusicMinistryApp: React.FC = () => {
                 setAllMusicUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
             });
 
-            // 3. Sync Settings/Roster Realtime
-            const tenantRef = doc(db, 'tenants', tenant.id);
-            const unsubscribeTenant = onSnapshot(tenantRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.settings?.teams) {
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        const teams = (data.settings.teams as ShiftTeam[])
-                            .filter(t => t.date && new Date(t.date + 'T12:00:00') >= today)
-                            .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime())
-                            .slice(0, 2); // Only take next 2
-                        setUpcomingShifts(teams);
-                    }
-                }
+            // 3. Fetch Service Plans (Roster) - Real-time
+            const plansQ = query(
+                collection(db, 'servicePlans'),
+                where('tenantId', '==', tenant.id)
+            );
+
+            const unsubscribePlans = onSnapshot(plansQ, (snapshot) => {
+                const plans = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any)); // Type as any temporarily to map to view
+                const todayStr = new Date().toLocaleDateString('en-CA');
+
+                const upcoming = plans
+                    .filter((p: any) => !p.isActive && p.date >= todayStr)
+                    .sort((a: any, b: any) => a.date.localeCompare(b.date))
+                    .slice(0, 2);
+
+                // Map ServicePlan to structure expected by view (or update view)
+                // View expects: date, members: { preacher, elder, musicDirector }
+                // ServicePlan has: date, team: { preacher, elder, musicDirector }
+                const mappedShifts = upcoming.map((p: any) => ({
+                    id: p.id,
+                    date: p.date,
+                    members: p.team
+                }));
+
+                setUpcomingShifts(mappedShifts);
             });
 
 
             return () => {
                 unsubscribeMusic();
-                unsubscribeTenant();
+                // unsubscribeTenant(); // Tenant listener removed if only used for teams
                 unsubscribeEvents();
-                unsubscribeUsers(); // Cleanup users listener
+                unsubscribeUsers();
+                unsubscribePlans();
             };
         }
     }, [isAuthenticated, tenant?.id]);
 
     // Unified Banners (Derived State)
-    const combinedBanners = [
-        { id: 'welcome', type: 'WELCOME' },
-        ...events.map(e => ({ ...e, type: 'EVENT' }))
-    ];
+    // ... (rest of component) ...
 
-    // Carousel Rotation
-    useEffect(() => {
-        if (combinedBanners.length <= 1) return;
-        const timer = setInterval(() => {
-            setCurrentBannerIndex(prev => (prev + 1) % combinedBanners.length);
-        }, 5000);
-        return () => clearInterval(timer);
-    }, [combinedBanners.length]);
+    {/* --- TAB 2: ROSTER --- */ }
+    {
+        activeTab === 'roster' && (
+            <div className="space-y-4">
+                {upcomingShifts.map((shift) => {
+                    const dateInfo = formatDate(shift.date || '');
+                    return (
+                        <div key={shift.id} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                            <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-50">
+                                <div>
+                                    <h3 className="font-black text-slate-800 capitalize text-lg">{dateInfo.weekday}</h3>
+                                    <p className="text-xs font-bold text-purple-500">{dateInfo.full}</p>
+                                </div>
+                                <div className="bg-purple-50 text-purple-600 px-3 py-1 rounded-full text-xs font-bold">
+                                    Turno
+                                </div>
+                            </div>
 
-
-    // Helpers
-    const resolveNames = (ids: string[] | string | undefined) => {
-        if (!ids) return [];
-        const idArray = Array.isArray(ids) ? ids : [ids];
-        return idArray.map(id => allMusicUsers.find(u => u.id === id)?.name || id).filter(Boolean) as string[];
-    };
-
-    // Helper to resolve single name safely (Handles both ID and direct Name)
-    const resolveName = (val: string | undefined) => {
-        if (!val) return 'Sin Asignar';
-        const userFound = allMusicUsers.find(u => u.id === val);
-        return userFound ? userFound.name : val; // If no user found by ID, assume 'val' is the name itself
-    };
-
-    const getGroupLabel = (count: number, service: number) => {
-        const srv = service === 1 ? '1er' : '2do';
-        if (count === 1) return `Solista ${srv} Servicio`;
-        if (count === 2) return `Dúo ${srv} Servicio`;
-        if (count === 3) return `Trío ${srv} Servicio`;
-        if (count === 4) return `Cuarteto ${srv} Servicio`;
-        return `Grupo ${srv} Servicio`;
-    };
-
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr + 'T12:00:00');
-        return {
-            day: date.getDate(),
-            month: date.toLocaleDateString('es-ES', { month: 'short' }).toUpperCase(),
-            weekday: date.toLocaleDateString('es-ES', { weekday: 'long' }),
-            full: date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
-        };
-    };
+                            <div className="space-y-4">
+                                {shift.members?.preacher && (
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                                            <Mic2 size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Predicador</p>
+                                            <p className="font-bold text-slate-800">{resolveName(shift.members.preacher)}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {shift.members?.elder && (
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                            <User size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Anciano de Turno</p>
+                                            <p className="font-bold text-slate-800">{resolveName(shift.members.elder)}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {shift.members?.musicDirector && (
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
+                                            <Music size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Director Música</p>
+                                            <p className="font-bold text-slate-800">{resolveName(shift.members.musicDirector)}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )
+                })}
+                {upcomingShifts.length === 0 && (
+                    <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
+                        <p className="text-slate-400 font-medium">No hay turnos próximos. Asegúrate de configurar los turnos en el Panel de Administración → Miembros → Turnos.</p>
+                    </div>
+                )}
+            </div>
+        )
+    }
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();

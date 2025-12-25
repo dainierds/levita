@@ -50,22 +50,11 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
   const items = calculateItems();
   const dateStr = servicePlan ? new Date(servicePlan.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Próximo Servicio';
 
-  // LOGIC: Determine Active Team (Prioritize Global Settings > Plan Settings)
-  // LOGIC: Determine Active Team (Prioritize Global Settings > Plan Settings)
-  let activePreacher = servicePlan?.team?.preacher || '---';
-  let activeMusic = servicePlan?.team?.musicDirector || '---';
-  let activeElder = servicePlan?.team?.elder || '---';
-  let activeAudio = servicePlan?.team?.audioOperator || '---';
-
-  if (settings?.activeTeamId && settings.teams) {
-    const globalActive = settings.teams.find(t => t.id === settings.activeTeamId);
-    if (globalActive) {
-      if (globalActive.members.preacher) activePreacher = globalActive.members.preacher;
-      if (globalActive.members.musicDirector) activeMusic = globalActive.members.musicDirector;
-      if (globalActive.members.elder) activeElder = globalActive.members.elder;
-      if (globalActive.members.audioOperator) activeAudio = globalActive.members.audioOperator;
-    }
-  }
+  // LOGIC: Use Service Plan Team directly
+  const activePreacher = servicePlan?.team?.preacher || '---';
+  const activeMusic = servicePlan?.team?.musicDirector || '---';
+  const activeElder = servicePlan?.team?.elder || '---';
+  const activeAudio = servicePlan?.team?.audioOperator || '---';
 
   return (
     <div className="max-w-3xl mx-auto py-4">

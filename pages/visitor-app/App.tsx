@@ -108,11 +108,11 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
         } else {
           // 2. Find NEXT upcoming plan
           const today = new Date();
-          today.setHours(0, 0, 0, 0);
+          const todayStr = today.toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
 
           const upcoming = loadedPlans
-            .filter(p => !p.isActive && new Date(p.date) >= today)
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+            .filter(p => !p.isActive && p.date >= todayStr)
+            .sort((a, b) => a.date.localeCompare(b.date))[0];
 
           setNextPlan(upcoming || null);
         }

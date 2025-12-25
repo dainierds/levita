@@ -18,21 +18,23 @@ const ElderDashboard: React.FC<ElderDashboardProps> = ({ setCurrentView, user, s
     const { plans } = usePlans();
 
     // 1. Next Event Logic
+    const todayStr = new Date().toLocaleDateString('en-CA');
+
     const nextEvent = events
-        .filter(e => new Date(e.date) >= new Date())
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+        .filter(e => e.date >= todayStr)
+        .sort((a, b) => a.date.localeCompare(b.date))[0];
 
     // 2. Next Turns Logic (Fetch top 2)
     const nextPlans = plans
-        .filter(p => !p.isActive && new Date(p.date) >= new Date())
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .filter(p => !p.isActive && p.date >= todayStr)
+        .sort((a, b) => a.date.localeCompare(b.date))
         .slice(0, 2);
 
     // 3. Next Preaching Logic
     const nextPreaching = plans
-        .filter(p => !p.isActive && new Date(p.date) >= new Date())
+        .filter(p => !p.isActive && p.date >= todayStr)
         .filter(p => p.team.preacher === user.name)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+        .sort((a, b) => a.date.localeCompare(b.date))[0];
 
     // 4. Resources Count (Mock)
     const resourcesCount = 2;
