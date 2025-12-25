@@ -78,7 +78,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
 
       // Special handling for roles without interface (PREACHER)
       // These roles don't need an invitation link, they are just created directly for rostering.
-      if (['PREACHER'].includes(formData.role)) {
+      if (['PREACHER', 'TEACHER'].includes(formData.role)) {
         const newUserId = `local-${Math.random().toString(36).substr(2, 9)}`;
         const newUser: User = {
           id: newUserId,
@@ -196,7 +196,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                 className="w-full py-3 mt-4 bg-slate-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isLoading ? 'Procesando...' :
-                  ['PREACHER'].includes(formData.role) ? 'Agregar al Equipo' : 'Generar Link'}
+                  ['PREACHER', 'TEACHER'].includes(formData.role) ? 'Agregar al Equipo' : 'Generar Link'}
               </button>
             </form>
           ) : (
