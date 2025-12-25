@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ServicePlan, ChurchSettings, DayOfWeek, User, Role, ShiftTeam, MusicTeam } from '../types';
-import { User as UserIcon, Mic2, Music, Mic, Sparkles, ChevronLeft, ChevronRight, GripVertical, Users, Settings, Plus } from 'lucide-react';
+import { User as UserIcon, Mic2, Music, Mic, Sparkles, ChevronLeft, ChevronRight, GripVertical, Users, Settings, Plus, BookOpen } from 'lucide-react';
 import { useNotification } from './NotificationSystem';
 import TeamManager from './TeamManager';
 import { db } from '../services/firebase';
@@ -18,6 +18,7 @@ interface RosterViewProps {
 
 const ROLES_CONFIG = [
     { key: 'elder', roleType: 'ELDER' as Role, label: 'Ancianos', icon: UserIcon, color: 'bg-blue-50 text-blue-600', border: 'border-blue-100' },
+    { key: 'sabbathSchoolTeacher', roleType: 'TEACHER' as Role, label: 'Maestros ES', icon: BookOpen, color: 'bg-emerald-50 text-emerald-600', border: 'border-emerald-100' },
     { key: 'preacher', roleType: 'PREACHER' as Role, label: 'Predicadores', icon: Mic2, color: 'bg-violet-50 text-violet-600', border: 'border-violet-100' },
     { key: 'audioOperator', roleType: 'AUDIO' as Role, label: 'Audio', icon: Mic, color: 'bg-orange-50 text-orange-600', border: 'border-orange-100' },
 ];
@@ -235,6 +236,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             preacher: team.members.preacher || '',
             musicDirector: team.members.musicDirector || '',
             audioOperator: team.members.audioOperator || '',
+            sabbathSchoolTeacher: team.members.sabbathSchoolTeacher || '',
             teamName: team.name
         };
 
@@ -756,7 +758,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                                             </div>
                                                             <span className="font-bold text-slate-700">{getAssignment(date, 'teamName')}</span>
                                                             <div className="flex gap-1 justify-center mt-1">
-                                                                {['elder', 'preacher', 'musicDirector', 'audioOperator'].map(r => {
+                                                                {['elder', 'sabbathSchoolTeacher', 'preacher', 'musicDirector', 'audioOperator'].map(r => {
                                                                     const val = getAssignment(date, r);
                                                                     return val ? (
                                                                         <div key={r} className="w-1.5 h-1.5 rounded-full bg-indigo-300" title={`${r}: ${val}`} />
@@ -769,7 +771,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                                             <p className="text-xs text-slate-400 mb-2">Arrastra un equipo para asignar todos los roles.</p>
                                                             {/* Preview current assignments */}
                                                             <div className="flex gap-1 justify-center">
-                                                                {['elder', 'preacher', 'musicDirector', 'audioOperator'].map(r => {
+                                                                {['elder', 'sabbathSchoolTeacher', 'preacher', 'musicDirector', 'audioOperator'].map(r => {
                                                                     const val = getAssignment(date, r);
                                                                     return val ? (
                                                                         <div key={r} className="w-2 h-2 rounded-full bg-slate-300" title={`${r}: ${val}`} />
