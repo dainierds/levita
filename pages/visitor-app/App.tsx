@@ -98,22 +98,26 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
         const loadedPlans = plansSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
 
         // Logic to determine active vs next plan
-        const active = loadedPlans.find(p => p.isActive);
+        // 1. Find RELEVANT active plan (ignore stale active plans older than 2 days)
+        const today = new Date();
+        const twoDaysAgo = new Date();
+        twoDaysAgo.setDate(today.getDate() - 2);
+        const staleCutoff = twoDaysAgo.toLocaleDateString('en-CA');
+        const todayStr = today.toLocaleDateString('en-CA');
+
+        const active = loadedPlans.find(p => p.isActive && p.date >= staleCutoff);
 
         if (active) {
-          setNextPlan(active); // Treat active plan as the "Next/Current" one to display
-          if (activeView === ViewState.HOME) {
-            // Optional: auto-switch to LIVE view if configured, or just show "LIVE" badge in HomeView
-          }
+          setNextPlan(active);
         } else {
           // 2. Find NEXT upcoming plan
-          const today = new Date();
-          const todayStr = today.toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
-
+          // Filter for future dates OR today
           const upcoming = loadedPlans
             .filter(p => !p.isActive && p.date >= todayStr)
             .sort((a, b) => a.date.localeCompare(b.date))[0];
 
+          // Fallback: If no upcoming, maybe show the most recent past one?
+          // For now, just show upcoming or null
           setNextPlan(upcoming || null);
         }
 
