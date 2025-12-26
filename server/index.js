@@ -263,6 +263,8 @@ wss.on('connection', (ws) => {
             const transcript = data.channel.alternatives[0].transcript;
 
             if (transcript && data.is_final) {
+                console.log("🎤 Transcript Received:", transcript); // DEBUG
+
                 // 1. Send Original Transcript immediately (Broadcast Text)
                 const textMessage = {
                     type: 'TRANSCRIPTION',
@@ -271,11 +273,18 @@ wss.on('connection', (ws) => {
                 };
 
                 // Translate
+                console.log("🔄 Translator called for:", transcript.substring(0, 20) + "..."); // DEBUG
                 const translated = await translateText(transcript, 'en');
+                console.log("✅ Translation Result:", translated); // DEBUG
+
                 textMessage.translation = translated;
 
                 // Broadcast JSON update to everyone (Admin + Visitors)
-                broadcast(JSON.stringify(textMessage));
+                if (translated) {
+                    broadcast(JSON.stringify(textMessage));
+                } else {
+                    console.warn("⚠️ No translation generated (Filtered or Failed)");
+                }
 
                 // 2. Generate Audio (TTS) -> Broadcast Binary
                 if (translated) {
