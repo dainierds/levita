@@ -143,10 +143,22 @@ const TranslationMaster: React.FC = () => {
                     mediaRecorder.start(250); // Send every 250ms
                 };
 
-                socket.onmessage = (event) => {
+                socket.onmessage = async (event) => {
+                    const data = event.data;
+
+                    // 1. Safety Guard: Ignore Blobs (Audio chunks broadcasted back)
+                    if (data instanceof Blob) {
+                        return;
+                    }
+
+                    // 2. Safety Guard: Ignore accidents
+                    if (typeof data === 'string' && data.startsWith('[object Blob]')) {
+                        return;
+                    }
+
                     try {
-                        const data = JSON.parse(event.data);
-                        if (data.type === 'TRANSCRIPTION' && data.isFinal) {
+                        const parsed = JSON.parse(data);
+                        if (parsed.type === 'TRANSCRIPTION' && parsed.isFinal) {
                             // Save to Firestore
                             // Save to Firestore with History (Teleprompter Mode)
                             if (user?.tenantId && data.original) {

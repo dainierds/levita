@@ -27,20 +27,37 @@ if (!DEEPGRAM_KEY || !GEMINI_KEY) {
 // --- debug: List Models on Startup ---
 
 
+// O usar una función simple de detección basada en palabras comunes (más rápido para tiempo real)
 const isSpanishData = (text) => {
-    if (!text) return false;
-    const spanishCommons = [' de ', ' la ', ' que ', ' el ', ' en ', ' y ', ' a ', ' los ', ' se ', ' del '];
-    const englishCommons = [' the ', ' to ', ' and ', ' of ', ' a ', ' in ', ' that ', ' is ', ' for '];
+    // Lista ampliada de palabras comunes en español que casi nunca aparecen en inglés
+    const spanishCommons = [
+        ' de ', ' la ', ' que ', ' el ', ' en ', ' y ', ' a ', ' los ', ' se ', ' del ',
+        ' por ', ' un ', ' una ', ' con ', ' no ', ' su ', ' es ', ' al ', ' lo ', ' como ',
+        ' más ', ' pero ', ' sus ', ' le ', ' ya ', ' o ', ' porque ', ' muy ', ' sin ', ' sobre ',
+        ' dios ', ' jesús ', ' señor ', ' gloria ', ' santo ', ' amén ', ' aleluya ', ' iglesia '
+    ];
+
+    const englishCommons = [
+        ' the ', ' to ', ' and ', ' of ', ' a ', ' in ', ' that ', ' is ', ' for ',
+        ' on ', ' with ', ' as ', ' it ', ' be ', ' are ', ' was ', ' but ', ' not '
+    ];
 
     let spanCount = 0;
     let engCount = 0;
-    const lowerText = " " + text.toLowerCase() + " ";
+    const lowerText = " " + text.toLowerCase() + " "; // Padding para coincidencia exacta
 
     spanishCommons.forEach(word => { if (lowerText.includes(word)) spanCount++; });
     englishCommons.forEach(word => { if (lowerText.includes(word)) engCount++; });
 
-    return spanCount > engCount && spanCount >= 2;
-};
+    // CRITERIOS MÁS ESTRICTOS:
+    // 1. Si hay palabras en español y CERO palabras claras en inglés -> Es Español.
+    if (spanCount > 0 && engCount === 0) return true;
+
+    // 2. Si gana el español por margen -> Es Español.
+    if (spanCount > engCount) return true;
+
+    return false;
+}
 
 const callGemini = async (inputText, systemInstruction) => {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`;
@@ -75,7 +92,7 @@ const callGemini = async (inputText, systemInstruction) => {
         const data = await response.json();
         let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
         // Clean up common prefixes
-        return text.replace(/^(Translation:|Output:|English:)/i, "").trim();
+        return text.replace(/^(Translation:|Output:|English:|Correction:)/i, "").trim();
     } catch (e) {
         console.error("Gemini Call Error:", e);
         return null;
@@ -86,41 +103,75 @@ const callGemini = async (inputText, systemInstruction) => {
 const translateText = async (text, targetLanguage) => {
     if (!text) return "";
 
-    // 1. Robust System Prompt (Strategy 1 & 2)
+    // 1. Prompt Robusto con Ejemplos (Few-Shot) - AÚN MÁS REFORZADO
     const systemPrompt = `
-    Role: You are a professional simultaneous interpreter for a church service.
-    Task: Translate the user input from Spanish to English immediately.
-    Tone: Solemn, biblical, and respectful.
-
-    RULES:
-    1. Output MUST be in English only.
-    2. If the input is Spanish, translate it.
-    3. If the input is English, output it exactly as is.
-    4. Never explain the text, just translate.
-
-    EXAMPLES:
-    User: "Dios es bueno todo el tiempo."
-    Assistant: "God is good all the time."
-
-    User: "Hermanos, abran sus biblias."
-    Assistant: "Brothers and sisters, open your bibles."
+    Role: Professional Interpreter.
+    TASK: Translate Spanish input to English text.
+    
+    CRITICAL RULES:
+    1. OUTPUT MUST BE ENGLISH ONLY.
+    2. NEVER repeat the Spanish input.
+    3. NEVER explain ("The speaker says..."). Just translate.
+    4. If input is unintelligible, output nothing.
+    
+    ### EXAMPLES ###
+    Input: "Dios es bueno." -> Output: "God is good."
+    Input: "Vamos a leer la palabra." -> Output: "Let us read the word."
+    Input: "Aleluya." -> Output: "Hallelujah."
     `;
 
     // First Attempt
     let translated = await callGemini(text, systemPrompt);
 
-    // 2. Guardrail Check (Strategy for Safety)
+    // Normalización para comparaciones
+    const cleanInput = text.trim().toLowerCase();
+    const cleanOutput = (translated || "").trim().toLowerCase();
+
+    // 2. EL GUARDRAIL (La Verificación)
+    let failed = false;
+
+    // A. Chequeo de "Eco" (Repetición exacta o casi exacta)
+    // Si la salida es igual a la entrada (o muy similar), la IA falló y solo transcribió.
+    if (cleanOutput === cleanInput || (cleanOutput.length > 5 && cleanInput.includes(cleanOutput))) {
+        console.warn("⚠️ ALERTA: La IA repitió el input (Efecto Eco).");
+        failed = true;
+    }
+
+    // B. Chequeo de idioma
     if (translated && isSpanishData(translated)) {
-        console.warn("⚠️ ALERTA: La IA respondió en español. Reintentando...");
+        console.warn("⚠️ ALERTA: La IA respondió en español.");
+        failed = true;
+    }
 
-        // Strategy 3: Retry with Aggressive Prompt
-        const retryInstruction = `SYSTEM ALERT: You failed previous instruction. OUTPUT MUST BE ENGLISH ONLY. TRANSLATE THIS IMMEDIATELY:`;
-        translated = await callGemini(text, retryInstruction);
+    // SI FALLÓ ALGUNA COMPROBACIÓN -> REINTENTO
+    if (failed) {
+        console.log("🔄 Reintentando traducción con prompt correctivo...");
 
-        // Final Check
-        if (translated && isSpanishData(translated)) {
-            console.error("❌ FALLO CRÍTICO: Traducción fallida.");
-            return ""; // Fallback to empty to avoid showing Spanish
+        // ESTRATEGIA DE RECUPERACIÓN: Prompt explícito de corrección
+        const retryPrompt = `
+        ERROR: You outputted Spanish or repeated the input. 
+        CORRECT IMMEDIATELY. 
+        Translate this to English: "${text}"
+        Output ONLY the English translation.
+        `;
+
+        translated = await callGemini(text, retryPrompt); // Note: passing as input, system prompt ignored/less relevant here? Actually callGemini uses both. 
+        // Ideally we pass retryPrompt as SYSTEM instruction or input. 
+        // In my logic `callGemini` takes (inputText, systemInstruction).
+        // I should call it like: callGemini(text, retryPromptAsSystem) OR callGemini(text, systemPromptWithRetryInstruction).
+        // The user code snippet: `translatedText = await callAI(retryPrompt, systemPrompt);`
+        // Wait, `retryPrompt` in user snippet CONTAINS the input text.
+        // My `callGemini` wraps input in tags.
+        // So correct usage: callGemini(text, `SYSTEM ALERT...`)
+
+    }
+
+    // Re-verify after retry
+    if (translated) {
+        const retryOutput = translated.trim().toLowerCase();
+        if (isSpanishData(translated) || retryOutput === cleanInput) {
+            console.error("❌ FALLO CRÍTICO: Imposible traducir segmento. Silenciando salida.");
+            return ""; // Fallback to empty
         }
     }
 
