@@ -27,80 +27,104 @@ if (!DEEPGRAM_KEY || !GEMINI_KEY) {
 // --- debug: List Models on Startup ---
 
 
-// --- Translation Logic (Same as Frontend Service) ---
-const getLanguageName = (code) => {
-    const map = {
-        'es': 'Spanish',
-        'en': 'English',
-        'pt': 'Portuguese',
-        'fr': 'French',
-        'de': 'German',
-        'ko': 'Korean',
-        'zh': 'Chinese'
-    };
-    return map[code] || code;
+const isSpanishData = (text) => {
+    if (!text) return false;
+    const spanishCommons = [' de ', ' la ', ' que ', ' el ', ' en ', ' y ', ' a ', ' los ', ' se ', ' del '];
+    const englishCommons = [' the ', ' to ', ' and ', ' of ', ' a ', ' in ', ' that ', ' is ', ' for '];
+
+    let spanCount = 0;
+    let engCount = 0;
+    const lowerText = " " + text.toLowerCase() + " ";
+
+    spanishCommons.forEach(word => { if (lowerText.includes(word)) spanCount++; });
+    englishCommons.forEach(word => { if (lowerText.includes(word)) engCount++; });
+
+    return spanCount > engCount && spanCount >= 2;
 };
+
+const callGemini = async (inputText, systemInstruction) => {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`;
+
+    // Construct Prompt with Examples (Few-Shot) and Delimiters
+    const finalPrompt = `
+    ${systemInstruction}
+    
+    <text_to_translate>
+    ${inputText}
+    </text_to_translate>
+    `;
+
+    const payload = {
+        contents: [{ parts: [{ text: finalPrompt }] }],
+        generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 200,
+            frequencyPenalty: 0.5, // Strategies 4: Penalize repetition
+        }
+    };
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        // Clean up common prefixes
+        return text.replace(/^(Translation:|Output:|English:)/i, "").trim();
+    } catch (e) {
+        console.error("Gemini Call Error:", e);
+        return null;
+    }
+};
+
 
 const translateText = async (text, targetLanguage) => {
     if (!text) return "";
-    const langName = getLanguageName(targetLanguage);
 
-    // Switch to Gemini 2.0 Flash (Experimental) as it appears in the available models list
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    // 1. Robust System Prompt (Strategy 1 & 2)
+    const systemPrompt = `
+    Role: You are a professional simultaneous interpreter for a church service.
+    Task: Translate the user input from Spanish to English immediately.
+    Tone: Solemn, biblical, and respectful.
 
-    const payload = {
-        contents: [{
-            parts: [{
-                text: `System: You are a high-fidelity real-time translator. Your ONLY function is to translate text from Spanish to English.
-Rules:
-1. Output MUST be in English.
-2. Do NOT transcribe or repeat the Spanish input.
-3. Do NOT summarize or explain.
-4. If the input is already English, output it as is (or correct grammar).
-5. Maintain a solemn, biblical tone suitable for a church service.
+    RULES:
+    1. Output MUST be in English only.
+    2. If the input is Spanish, translate it.
+    3. If the input is English, output it exactly as is.
+    4. Never explain the text, just translate.
 
-Input to Translate:
-<text>
-Translate to English: "${text}"
-</text>`
-            }]
-        }],
-        generationConfig: {
-            temperature: 0.1, // Low temperature for deterministic output
-            maxOutputTokens: 200,
-        }
-    };
+    EXAMPLES:
+    User: "Dios es bueno todo el tiempo."
+    Assistant: "God is good all the time."
 
-    let attempts = 0;
-    const maxRetries = 3;
+    User: "Hermanos, abran sus biblias."
+    Assistant: "Brothers and sisters, open your bibles."
+    `;
 
-    while (attempts < maxRetries) {
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+    // First Attempt
+    let translated = await callGemini(text, systemPrompt);
 
-            if (!response.ok) {
-                const errText = await response.text();
-                // console.error(`Gemini API Error (Attempt ${attempts + 1}):`, errText); // Optional: uncomment for debug
-                attempts++;
-                if (attempts < maxRetries) await new Promise(r => setTimeout(r, 500));
-                continue;
-            }
+    // 2. Guardrail Check (Strategy for Safety)
+    if (translated && isSpanishData(translated)) {
+        console.warn("⚠️ ALERTA: La IA respondió en español. Reintentando...");
 
-            const data = await response.json();
-            const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            return translatedText ? translatedText.trim() : "";
-        } catch (error) {
-            console.error(`Translation Network Error (Attempt ${attempts + 1}):`, error);
-            attempts++;
-            if (attempts < maxRetries) await new Promise(r => setTimeout(r, 500));
+        // Strategy 3: Retry with Aggressive Prompt
+        const retryInstruction = `SYSTEM ALERT: You failed previous instruction. OUTPUT MUST BE ENGLISH ONLY. TRANSLATE THIS IMMEDIATELY:`;
+        translated = await callGemini(text, retryInstruction);
+
+        // Final Check
+        if (translated && isSpanishData(translated)) {
+            console.error("❌ FALLO CRÍTICO: Traducción fallida.");
+            return ""; // Fallback to empty to avoid showing Spanish
         }
     }
 
-    return ""; // Failed after retries
+    return translated || "";
 };
 
 
