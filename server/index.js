@@ -246,8 +246,36 @@ app.get('/', (req, res) => {
     res.send('Levita Audio Server is Running (Deepgram + Gemini)');
 });
 
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server listening on port ${PORT}`);
+// --- YouTube API: Get Live Video ID ---
+app.get('/api/youtube/status', async (req, res) => {
+    const { channelId } = req.query;
+    if (!channelId) return res.status(400).json({ error: 'Missing channelId' });
 
+    const API_KEY = process.env.YOUTUBE_API_KEY;
+    if (!API_KEY) {
+        console.error("Missing YOUTUBE_API_KEY in .env");
+        return res.status(500).json({ error: 'Server configuration error' });
+    }
+
+    try {
+        const url = `https://www.googleapis.com/youtube/v3/search?part=id&channelId=${channelId}&eventType=live&type=video&key=${API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.items && data.items.length > 0) {
+            const videoId = data.items[0].id.videoId;
+            return res.json({ status: 'live', videoId });
+        } else {
+            return res.json({ status: 'offline' });
+        }
+    } catch (error) {
+        console.error("YouTube API Error:", error);
+        res.status(500).json({ error: 'Failed to fetch YouTube status' });
+    }
+});
+
+const PORT = 3001;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log('Gemini AI: Enabled');
 });
