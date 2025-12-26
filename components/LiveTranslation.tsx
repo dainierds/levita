@@ -90,21 +90,44 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
 
     ws.onopen = () => console.log("Connected to Translation Stream");
 
-    ws.onmessage = (event) => {
-      if (typeof event.data === 'string') {
+    ws.onmessage = async (event) => {
+      let data = event.data;
+
+      // Handle Blob explicitly (sometimes binaryType isn't respected or defaults vary)
+      if (data instanceof Blob) {
+        if (isAudioEnabled) {
+          // Convert Blob to ArrayBuffer for AudioContext
+          const buffer = await data.arrayBuffer();
+          enqueueAudio(buffer);
+        }
+        return;
+      }
+
+      if (typeof data === 'string') {
+        // Guard against "stringified" Blobs
+        if (data.startsWith('[object Blob]')) {
+          console.warn("Received [object Blob] as string. Ignoring.");
+          return;
+        }
+
         // Text Message (JSON)
         try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'TRANSCRIPTION' && data.translation) {
-            setTranslation(data.translation);
-            // Add to history segments... (simplified for this update)
-            setSegments(prev => [...prev, { original: data.original, translation: data.translation }]);
+          const parsed = JSON.parse(data);
+          if (parsed.type === 'TRANSCRIPTION' && parsed.translation) {
+            setTranslation(parsed.translation);
+            setSegments(prev => {
+              // Keep last 5 segments to avoid huge DOM
+              const newSegments = [...prev, { original: parsed.original, translation: parsed.translation }];
+              return newSegments.slice(-5);
+            });
           }
-        } catch (e) { console.error("JSON Parse Error", e); }
-      } else if (event.data instanceof ArrayBuffer) {
+        } catch (e) {
+          console.error("JSON Parse Error:", e, "Raw Data:", data);
+        }
+      } else if (data instanceof ArrayBuffer) {
         // Binary Message (Audio)
         if (isAudioEnabled) {
-          enqueueAudio(event.data);
+          enqueueAudio(data);
         }
       }
     };

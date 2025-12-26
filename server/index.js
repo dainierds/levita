@@ -110,6 +110,12 @@ const clients = new Set();
 
 // --- Helper: Broadcast to all connected clients ---
 const broadcast = (data, isBinary = false) => {
+    // Safety Check: Don't send Objects as strings (e.g. [object Blob])
+    if (typeof data === 'object' && !Buffer.isBuffer(data) && !isBinary) {
+        console.warn("Attempted to broadcast non-Buffer object as text:", data);
+        return;
+    }
+
     clients.forEach((client) => {
         if (client.readyState === 1) { // OPEN
             client.send(data, { binary: isBinary });
