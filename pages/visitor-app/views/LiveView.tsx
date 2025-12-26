@@ -89,7 +89,7 @@ export const LiveView: React.FC<LiveViewProps> = ({ tenantId }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-140px)] min-h-[600px] p-1">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-180px)] min-h-[400px] p-1">
 
       {/* LEFT: Video & Info */}
       <div className="lg:col-span-2 flex flex-col gap-4 h-full overflow-y-auto lg:overflow-visible">

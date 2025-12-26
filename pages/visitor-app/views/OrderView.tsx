@@ -122,54 +122,63 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
       )}
 
       <div className="relative">
-        {/* The Track (Pressed Line) */}
-        <div className="absolute left-8 md:left-1/2 top-0 bottom-0 w-2 md:-ml-1 bg-neu-base dark:bg-neu-base-dark shadow-neu-pressed dark:shadow-neu-dark-pressed rounded-full" />
+        {/* The Track (Pressed Line) - Only show if items exist */}
+        {items.length > 0 && (
+          <div className="absolute left-8 md:left-1/2 top-0 bottom-0 w-2 md:-ml-1 bg-neu-base dark:bg-neu-base-dark shadow-neu-pressed dark:shadow-neu-dark-pressed rounded-full" />
+        )}
 
-        <div className="space-y-12">
-          {items.map((item, index) => {
-            // For desktop alternate left/right
-            const isRight = index % 2 === 0;
-            const isActive = index === 3; // Mock active state
+        {items.length === 0 ? (
+          <div className="text-center py-12 px-4 rounded-[2rem] bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark mx-auto max-w-lg mt-8">
+            <p className="text-gray-400 font-bold">No hay orden del culto definido aún.</p>
+            <p className="text-xs text-gray-400 mt-2">El equipo pastoral está preparando el programa.</p>
+          </div>
+        ) : (
+          <div className="space-y-12">
+            {items.map((item, index) => {
+              // For desktop alternate left/right
+              const isRight = index % 2 === 0;
+              const isActive = index === 3; // Mock active state
 
-            return (
-              <div key={index} className={`flex md:justify-between items-center w-full ${isRight ? 'flex-row-reverse' : ''}`}>
+              return (
+                <div key={index} className={`flex md:justify-between items-center w-full ${isRight ? 'flex-row-reverse' : ''}`}>
 
-                {/* Empty space for desktop layout balance */}
-                <div className="hidden md:block w-5/12" />
+                  {/* Empty space for desktop layout balance */}
+                  <div className="hidden md:block w-5/12" />
 
-                {/* The Node (Circle on track) */}
-                <div className="absolute left-8 md:left-1/2 md:-ml-3 w-6 h-6 rounded-full border-4 border-neu-base dark:border-neu-base-dark shadow-neu dark:shadow-neu-dark bg-brand-500 z-10 flex items-center justify-center">
-                  {isActive && <div className="w-full h-full rounded-full bg-white animate-ping opacity-75"></div>}
-                </div>
+                  {/* The Node (Circle on track) */}
+                  <div className="absolute left-8 md:left-1/2 md:-ml-3 w-6 h-6 rounded-full border-4 border-neu-base dark:border-neu-base-dark shadow-neu dark:shadow-neu-dark bg-brand-500 z-10 flex items-center justify-center">
+                    {isActive && <div className="w-full h-full rounded-full bg-white animate-ping opacity-75"></div>}
+                  </div>
 
-                {/* Content Card */}
-                <div className="w-full pl-20 md:pl-0 md:w-5/12">
-                  <div className={`
+                  {/* Content Card */}
+                  <div className="w-full pl-20 md:pl-0 md:w-5/12">
+                    <div className={`
                             p-6 rounded-[2rem] transition-all duration-300
                             ${isActive
-                      ? 'bg-brand-500 text-white shadow-[8px_8px_16px_rgba(109,93,252,0.4),-8px_-8px_16px_rgba(255,255,255,0.5)]'
-                      : 'bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark hover:-translate-y-1'
-                    }
+                        ? 'bg-brand-500 text-white shadow-[8px_8px_16px_rgba(109,93,252,0.4),-8px_-8px_16px_rgba(255,255,255,0.5)]'
+                        : 'bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark hover:-translate-y-1'
+                      }
                         `}>
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className={`font-bold text-lg ${isActive ? 'text-white' : 'text-gray-900 dark:text-gray-200'}`}>
-                        {item.title}
-                      </h3>
-                      <span className={`text-xs font-bold px-2 py-1 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-black dark:bg-gray-700 dark:text-gray-300'}`}>
-                        {item.time}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 opacity-80">
-                      {item.icon}
-                      <span className="text-sm font-medium capitalize tracking-wide">{item.type}</span>
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className={`font-bold text-lg ${isActive ? 'text-white' : 'text-gray-900 dark:text-gray-200'}`}>
+                          {item.title}
+                        </h3>
+                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-black dark:bg-gray-700 dark:text-gray-300'}`}>
+                          {item.time}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2 opacity-80">
+                        {item.icon}
+                        <span className="text-sm font-medium capitalize tracking-wide">{item.type}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-              </div>
-            );
-          })}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
