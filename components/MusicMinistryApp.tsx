@@ -403,275 +403,266 @@ const MusicMinistryApp: React.FC = () => {
                         <section>
                             <h3 className="font-bold text-lg text-slate-700 mb-4 flex items-center gap-2">
                                 <Calendar size={18} className="text-pink-500" />
-                                Próximos Servicios
-                            </h3>
+                                {/* Next 2 Service Teams (Replicating Elder App Logic) */}
+                                <section>
+                                    <h3 className="font-bold text-lg text-slate-700 mb-4 flex items-center gap-2">
+                                        <Users size={18} className="text-pink-500" />
+                                        Equipos de Turno
+                                    </h3>
 
-                            <div className="space-y-6">
-                                {upcomingTeams.length > 0 ? upcomingTeams.map(team => {
-                                    const dateInfo = formatDate(team.date);
-                                    const teamMembers = allMusicUsers.filter(u => team.memberIds.includes(u.id));
-                                    const s1Names = resolveNames(team.soloist1);
-                                    const s2Names = resolveNames(team.soloist2);
+                                    <div className="space-y-6">
+                                        {upcomingShifts.length > 0 ? upcomingShifts.map((shift, idx) => {
+                                            const dateInfo = formatDate(shift.date || '');
+                                            const isNext = idx === 0;
+                                            const themeBg = isNext ? 'bg-[#3b82f6] shadow-blue-200' : 'bg-[#6366f1] shadow-indigo-200';
+                                            const label = `Equipo del ${dateInfo.weekday}`;
 
-                                    return (
-                                        <div key={team.id} className="bg-white rounded-[2rem] p-6 shadow-lg shadow-pink-50 border border-pink-50/50">
-                                            {/* Date Header */}
-                                            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-50">
-                                                <div className="bg-pink-50 text-pink-500 w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-inner">
-                                                    <span className="text-xs font-bold uppercase">{dateInfo.month}</span>
-                                                    <span className="text-2xl font-black">{dateInfo.day}</span>
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-xl font-black text-slate-800 capitalize leading-none mb-1">
-                                                        {dateInfo.weekday}
-                                                    </h4>
-                                                    <p className="text-slate-400 text-xs font-medium">Servicio General</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Note */}
-                                            {team.note && (
-                                                <div className="mb-6 bg-amber-50 text-amber-800 text-xs font-medium p-3 rounded-xl border border-amber-100 flex items-start gap-2">
-                                                    <span>💡</span>
-                                                    <span>{team.note}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Soloists */}
-                                            {(s1Names.length > 0 || s2Names.length > 0) && (
-                                                <div className="mb-6 grid grid-cols-1 gap-3">
-                                                    {s1Names.length > 0 && (
-                                                        <div className="bg-indigo-50 p-3 rounded-xl flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0">
-                                                                <Mic2 size={14} />
-                                                            </div>
-                                                            <div className="overflow-hidden">
-                                                                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">{getGroupLabel(s1Names.length, 1)}</p>
-                                                                <p className="font-bold text-indigo-900 text-sm truncate">{s1Names.join(', ')}</p>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {s2Names.length > 0 && (
-                                                        <div className="bg-purple-50 p-3 rounded-xl flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center shrink-0">
-                                                                <Mic2 size={14} />
-                                                            </div>
-                                                            <div className="overflow-hidden">
-                                                                <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">{getGroupLabel(s2Names.length, 2)}</p>
-                                                                <p className="font-bold text-purple-900 text-sm truncate">{s2Names.join(', ')}</p>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {/* Team Members */}
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {teamMembers.map((member, idx) => (
-                                                    <div key={member.id || idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl">
-                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0">
-                                                            {member.name ? member.name.charAt(0) : '?'}
-                                                        </div>
-                                                        <p className="font-bold text-xs text-slate-700 truncate">{member.name}</p>
+                                            return (
+                                                <div key={shift.id} className={`${themeBg} rounded-[2rem] p-6 shadow-lg border border-white relative overflow-hidden text-white`}>
+                                                    {/* Badge */}
+                                                    <div className="absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider bg-black/20 text-white backdrop-blur-sm">
+                                                        {label}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                }) : (
-                                    <div className="text-center p-8 bg-white rounded-3xl border border-dashed border-slate-200">
-                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
-                                            <Calendar size={24} />
-                                        </div>
-                                        <p className="text-sm text-slate-400 font-medium">No hay servicios próximos asignados</p>
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-                    </>
-                )}
 
-                {/* --- TAB 2: ROSTER --- */}
-                {activeTab === 'roster' && (
-                    <div className="space-y-6">
-                        {upcomingShifts.map((shift, idx) => {
-                            const dateInfo = formatDate(shift.date || '');
-                            const isNext = idx === 0;
-                            // Match colors with Home Tab / Elder App
-                            const themeBg = isNext ? 'bg-[#3b82f6] shadow-blue-200' : 'bg-[#6366f1] shadow-indigo-200';
-                            const label = `Equipo del ${dateInfo.weekday}`;
-
-                            return (
-                                <div key={shift.id} className={`${themeBg} rounded-[2rem] p-6 shadow-lg border border-white relative overflow-hidden text-white`}>
-                                    {/* Badge */}
-                                    <div className="absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider bg-black/20 text-white backdrop-blur-sm">
-                                        {label}
-                                    </div>
-
-                                    {/* Date & Title */}
-                                    <div className="flex items-start gap-4 mb-6">
-                                        <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm bg-white/20 text-white backdrop-blur-md">
-                                            <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
-                                            <span className="text-xl font-black">{dateInfo.day}</span>
-                                        </div>
-                                        <div>
-                                            <h2 className="text-xl font-bold leading-tight drop-shadow-sm capitalize">
-                                                {dateInfo.weekday} {dateInfo.full.split('de')[0]}
-                                            </h2>
-                                            <div className="flex items-center gap-2 text-white/80 text-xs font-bold mt-1">
-                                                <Clock size={12} /> 10:00 AM
-                                                <span className="w-1 h-1 bg-white/50 rounded-full"></span>
-                                                <MapPin size={12} /> {tenant?.name || 'Iglesia'}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Service Team Grid */}
-                                    <div className="bg-white/10 rounded-2xl p-4 gap-4 grid grid-cols-2 backdrop-blur-sm">
-                                        {(() => {
-                                            const members = shift.members || {};
-                                            const roleMap = [
-                                                { key: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
-                                                { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-indigo-500' },
-                                                { key: 'esMaster', label: 'Maestro de ES', icon: Users, color: 'text-green-500' },
-                                                { key: 'audioOperator', label: 'Audio', icon: Mic, color: 'text-orange-500' },
-                                            ];
-
-                                            return roleMap.map(role => {
-                                                // IMPORTANT: servicePlans store NAMES directly, not IDs. Do not use resolveName.
-                                                const name = (members as any)[role.key];
-                                                return (
-                                                    <div key={role.key} className="flex items-center gap-3">
-                                                        <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${role.color}`}>
-                                                            <role.icon size={14} />
+                                                    {/* Date & Title */}
+                                                    <div className="flex items-start gap-4 mb-6">
+                                                        <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm bg-white/20 text-white backdrop-blur-md">
+                                                            <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
+                                                            <span className="text-xl font-black">{dateInfo.day}</span>
                                                         </div>
-                                                        <div className="overflow-hidden">
-                                                            <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider ">{role.label}</p>
-                                                            <p className="font-bold text-white text-xs truncate drop-shadow-sm">{name || '---'}</p>
+                                                        <div>
+                                                            <h2 className="text-xl font-bold leading-tight drop-shadow-sm capitalize">
+                                                                {dateInfo.weekday} {dateInfo.full.split('de')[0]}
+                                                            </h2>
+                                                            <div className="flex items-center gap-2 text-white/80 text-xs font-bold mt-1">
+                                                                <Clock size={12} /> 10:00 AM
+                                                                <span className="w-1 h-1 bg-white/50 rounded-full"></span>
+                                                                <MapPin size={12} /> {tenant?.name || 'Iglesia'}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                );
-                                            });
-                                        })()}
+
+                                                    {/* Service Team Grid */}
+                                                    <div className="bg-white/10 rounded-2xl p-4 gap-4 grid grid-cols-2 backdrop-blur-sm">
+                                                        {(() => {
+                                                            const members = shift.members || {};
+                                                            const roleMap = [
+                                                                { key: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
+                                                                { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-indigo-500' },
+                                                                { key: 'esMaster', label: 'Maestro de ES', icon: Users, color: 'text-green-500' },
+                                                                { key: 'audioOperator', label: 'Audio', icon: Mic, color: 'text-orange-500' },
+                                                            ];
+
+                                                            return roleMap.map(role => {
+                                                                const name = (members as any)[role.key];
+                                                                return (
+                                                                    <div key={role.key} className="flex items-center gap-3">
+                                                                        <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${role.color}`}>
+                                                                            <role.icon size={14} />
+                                                                        </div>
+                                                                        <div className="overflow-hidden">
+                                                                            <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider ">{role.label}</p>
+                                                                            <p className="font-bold text-white text-xs truncate drop-shadow-sm">{name || '---'}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            });
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            );
+                                        }) : (
+                                            <div className="bg-white rounded-3xl p-8 text-center border border-slate-100">
+                                                <p className="text-slate-400 font-bold mb-2">No hay servicios programados</p>
+                                                <p className="text-xs text-slate-300">Consulta con tu líder</p>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            );
-                        })}
-                        {upcomingShifts.length === 0 && (
-                            <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
-                                <p className="text-slate-400 font-medium">No hay turnos próximos. Asegúrate de configurar los turnos en el Panel de Administración → Miembros → Turnos.</p>
-                            </div>
-                        )}
-                    </div>
+                                </section>
+                            </>
                 )}
 
+                            {/* --- TAB 2: ROSTER --- */}
+                            {activeTab === 'roster' && (
+                                <div className="space-y-6">
+                                    {upcomingShifts.map((shift, idx) => {
+                                        const dateInfo = formatDate(shift.date || '');
+                                        const isNext = idx === 0;
+                                        // Match colors with Home Tab / Elder App
+                                        const themeBg = isNext ? 'bg-[#3b82f6] shadow-blue-200' : 'bg-[#6366f1] shadow-indigo-200';
+                                        const label = `Equipo del ${dateInfo.weekday}`;
 
-                {/* --- TAB 3: CALENDAR (ITINERARY) --- */}
-                {activeTab === 'calendar' && (
-                    <div className="space-y-4">
-                        {calendarTeams.map((team) => {
-                            const dateInfo = formatDate(team.date);
-                            const teamMembers = allMusicUsers.filter(u => team.memberIds.includes(u.id));
-
-                            return (
-                                <div key={team.id} className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-sm border border-slate-100">
-                                    <div className="flex items-center gap-4 border-b border-slate-50 pb-4">
-                                        <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${new Date(team.date).getDay() === 2 ? 'bg-indigo-50 text-indigo-500' : 'bg-pink-50 text-pink-500'
-                                            }`}>
-                                            <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
-                                            <span className="text-xl font-black">{dateInfo.day}</span>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-bold text-slate-800 capitalize truncate text-lg">{dateInfo.weekday}</h4>
-                                            <p className="text-xs text-slate-400">{teamMembers.length} integrantes asignados</p>
-                                        </div>
-                                    </div>
-
-
-
-
-                                    {(resolveNames(team.soloist1).length > 0 || resolveNames(team.soloist2).length > 0) && (
-                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2 mb-3">
-                                            {resolveNames(team.soloist1).length > 0 && (
-                                                <div className="flex items-center gap-2">
-                                                    <Mic2 size={12} className="text-indigo-500 shrink-0" />
-                                                    <p className="text-xs text-slate-700">
-                                                        <span className="font-bold text-indigo-600 uppercase text-[10px] mr-2">
-                                                            Primer Servicio: {resolveNames(team.soloist1).length === 1 ? 'Solista' :
-                                                                resolveNames(team.soloist1).length === 2 ? 'Dúo' :
-                                                                    resolveNames(team.soloist1).length === 3 ? 'Trío' : 'Cuarteto'}
-                                                        </span>
-                                                        {resolveNames(team.soloist1).join(', ')}
-                                                    </p>
+                                        return (
+                                            <div key={shift.id} className={`${themeBg} rounded-[2rem] p-6 shadow-lg border border-white relative overflow-hidden text-white`}>
+                                                {/* Badge */}
+                                                <div className="absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider bg-black/20 text-white backdrop-blur-sm">
+                                                    {label}
                                                 </div>
-                                            )}
-                                            {resolveNames(team.soloist2).length > 0 && (
-                                                <div className="flex items-center gap-2">
-                                                    <Mic2 size={12} className="text-purple-500 shrink-0" />
-                                                    <p className="text-xs text-slate-700">
-                                                        <span className="font-bold text-purple-600 uppercase text-[10px] mr-2">
-                                                            Segundo Servicio: {resolveNames(team.soloist2).length === 1 ? 'Solista' :
-                                                                resolveNames(team.soloist2).length === 2 ? 'Dúo' :
-                                                                    resolveNames(team.soloist2).length === 3 ? 'Trío' : 'Cuarteto'}
-                                                        </span>
-                                                        {resolveNames(team.soloist2).join(', ')}
-                                                    </p>
+
+                                                {/* Date & Title */}
+                                                <div className="flex items-start gap-4 mb-6">
+                                                    <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm bg-white/20 text-white backdrop-blur-md">
+                                                        <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
+                                                        <span className="text-xl font-black">{dateInfo.day}</span>
+                                                    </div>
+                                                    <div>
+                                                        <h2 className="text-xl font-bold leading-tight drop-shadow-sm capitalize">
+                                                            {dateInfo.weekday} {dateInfo.full.split('de')[0]}
+                                                        </h2>
+                                                        <div className="flex items-center gap-2 text-white/80 text-xs font-bold mt-1">
+                                                            <Clock size={12} /> 10:00 AM
+                                                            <span className="w-1 h-1 bg-white/50 rounded-full"></span>
+                                                            <MapPin size={12} /> {tenant?.name || 'Iglesia'}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            )}
+
+                                                {/* Service Team Grid */}
+                                                <div className="bg-white/10 rounded-2xl p-4 gap-4 grid grid-cols-2 backdrop-blur-sm">
+                                                    {(() => {
+                                                        const members = shift.members || {};
+                                                        const roleMap = [
+                                                            { key: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
+                                                            { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-indigo-500' },
+                                                            { key: 'esMaster', label: 'Maestro de ES', icon: Users, color: 'text-green-500' },
+                                                            { key: 'audioOperator', label: 'Audio', icon: Mic, color: 'text-orange-500' },
+                                                        ];
+
+                                                        return roleMap.map(role => {
+                                                            // IMPORTANT: servicePlans store NAMES directly, not IDs. Do not use resolveName.
+                                                            const name = (members as any)[role.key];
+                                                            return (
+                                                                <div key={role.key} className="flex items-center gap-3">
+                                                                    <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${role.color}`}>
+                                                                        <role.icon size={14} />
+                                                                    </div>
+                                                                    <div className="overflow-hidden">
+                                                                        <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider ">{role.label}</p>
+                                                                        <p className="font-bold text-white text-xs truncate drop-shadow-sm">{name || '---'}</p>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        });
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {upcomingShifts.length === 0 && (
+                                        <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
+                                            <p className="text-slate-400 font-medium">No hay turnos próximos. Asegúrate de configurar los turnos en el Panel de Administración → Miembros → Turnos.</p>
                                         </div>
                                     )}
-
-                                    {/* Member Names List */}
-                                    <div className="flex flex-wrap gap-2">
-                                        {teamMembers.map((member, idx) => (
-                                            <div key={idx} className="bg-slate-50 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                                                <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">
-                                                    {member.name.charAt(0)}
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{member.name}</span>
-                                            </div>
-                                        ))}
-                                        {teamMembers.length === 0 && <span className="text-xs text-slate-400 italic"> - Sin asignaciones - </span>}
-                                    </div>
                                 </div>
-                            );
-                        })}
-                        {calendarTeams.length === 0 && (
-                            <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
-                                <p className="text-slate-400 font-medium">No hay itinerario disponible</p>
-                            </div>
-                        )}
+                            )}
+
+
+                            {/* --- TAB 3: CALENDAR (ITINERARY) --- */}
+                            {activeTab === 'calendar' && (
+                                <div className="space-y-4">
+                                    {calendarTeams.map((team) => {
+                                        const dateInfo = formatDate(team.date);
+                                        const teamMembers = allMusicUsers.filter(u => team.memberIds.includes(u.id));
+
+                                        return (
+                                            <div key={team.id} className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-sm border border-slate-100">
+                                                <div className="flex items-center gap-4 border-b border-slate-50 pb-4">
+                                                    <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${new Date(team.date).getDay() === 2 ? 'bg-indigo-50 text-indigo-500' : 'bg-pink-50 text-pink-500'
+                                                        }`}>
+                                                        <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
+                                                        <span className="text-xl font-black">{dateInfo.day}</span>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="font-bold text-slate-800 capitalize truncate text-lg">{dateInfo.weekday}</h4>
+                                                        <p className="text-xs text-slate-400">{teamMembers.length} integrantes asignados</p>
+                                                    </div>
+                                                </div>
+
+
+
+
+                                                {(resolveNames(team.soloist1).length > 0 || resolveNames(team.soloist2).length > 0) && (
+                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2 mb-3">
+                                                        {resolveNames(team.soloist1).length > 0 && (
+                                                            <div className="flex items-center gap-2">
+                                                                <Mic2 size={12} className="text-indigo-500 shrink-0" />
+                                                                <p className="text-xs text-slate-700">
+                                                                    <span className="font-bold text-indigo-600 uppercase text-[10px] mr-2">
+                                                                        Primer Servicio: {resolveNames(team.soloist1).length === 1 ? 'Solista' :
+                                                                            resolveNames(team.soloist1).length === 2 ? 'Dúo' :
+                                                                                resolveNames(team.soloist1).length === 3 ? 'Trío' : 'Cuarteto'}
+                                                                    </span>
+                                                                    {resolveNames(team.soloist1).join(', ')}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        {resolveNames(team.soloist2).length > 0 && (
+                                                            <div className="flex items-center gap-2">
+                                                                <Mic2 size={12} className="text-purple-500 shrink-0" />
+                                                                <p className="text-xs text-slate-700">
+                                                                    <span className="font-bold text-purple-600 uppercase text-[10px] mr-2">
+                                                                        Segundo Servicio: {resolveNames(team.soloist2).length === 1 ? 'Solista' :
+                                                                            resolveNames(team.soloist2).length === 2 ? 'Dúo' :
+                                                                                resolveNames(team.soloist2).length === 3 ? 'Trío' : 'Cuarteto'}
+                                                                    </span>
+                                                                    {resolveNames(team.soloist2).join(', ')}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Member Names List */}
+                                                <div className="flex flex-wrap gap-2">
+                                                    {teamMembers.map((member, idx) => (
+                                                        <div key={idx} className="bg-slate-50 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                                            <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                                                                {member.name.charAt(0)}
+                                                            </div>
+                                                            <span className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{member.name}</span>
+                                                        </div>
+                                                    ))}
+                                                    {teamMembers.length === 0 && <span className="text-xs text-slate-400 italic"> - Sin asignaciones - </span>}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {calendarTeams.length === 0 && (
+                                        <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
+                                            <p className="text-slate-400 font-medium">No hay itinerario disponible</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                        </main>
+
+                        {/* Bottom Navigation */}
+                        <nav className="fixed bottom-0 left-0 right-0 h-20 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 flex items-center justify-around pb-2">
+                            <button
+                                onClick={() => setActiveTab('home')}
+                                className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'home' ? 'text-pink-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
+                            >
+                                <Home size={24} strokeWidth={activeTab === 'home' ? 2.5 : 2} fill={activeTab === 'home' ? 'currentColor' : 'none'} className={activeTab === 'home' ? 'bg-pink-50 rounded-xl box-content p-2' : ''} />
+                                {activeTab !== 'home' && <span className="text-[10px] font-bold">Inicio</span>}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('roster')}
+                                className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'roster' ? 'text-purple-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
+                            >
+                                <Users size={24} strokeWidth={activeTab === 'roster' ? 2.5 : 2} fill={activeTab === 'roster' ? 'currentColor' : 'none'} className={activeTab === 'roster' ? 'bg-purple-50 rounded-xl box-content p-2' : ''} />
+                                {activeTab !== 'roster' && <span className="text-[10px] font-bold">Turnos</span>}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('calendar')}
+                                className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'calendar' ? 'text-indigo-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
+                            >
+                                <Calendar size={24} strokeWidth={activeTab === 'calendar' ? 2.5 : 2} fill={activeTab === 'calendar' ? 'currentColor' : 'none'} className={activeTab === 'calendar' ? 'bg-indigo-50 rounded-xl box-content p-2' : ''} />
+                                {activeTab !== 'calendar' && <span className="text-[10px] font-bold">Itinerario</span>}
+                            </button>
+                        </nav>
                     </div>
-                )}
-
-            </main>
-
-            {/* Bottom Navigation */}
-            <nav className="fixed bottom-0 left-0 right-0 h-20 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 flex items-center justify-around pb-2">
-                <button
-                    onClick={() => setActiveTab('home')}
-                    className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'home' ? 'text-pink-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
-                >
-                    <Home size={24} strokeWidth={activeTab === 'home' ? 2.5 : 2} fill={activeTab === 'home' ? 'currentColor' : 'none'} className={activeTab === 'home' ? 'bg-pink-50 rounded-xl box-content p-2' : ''} />
-                    {activeTab !== 'home' && <span className="text-[10px] font-bold">Inicio</span>}
-                </button>
-                <button
-                    onClick={() => setActiveTab('roster')}
-                    className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'roster' ? 'text-purple-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
-                >
-                    <Users size={24} strokeWidth={activeTab === 'roster' ? 2.5 : 2} fill={activeTab === 'roster' ? 'currentColor' : 'none'} className={activeTab === 'roster' ? 'bg-purple-50 rounded-xl box-content p-2' : ''} />
-                    {activeTab !== 'roster' && <span className="text-[10px] font-bold">Turnos</span>}
-                </button>
-                <button
-                    onClick={() => setActiveTab('calendar')}
-                    className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'calendar' ? 'text-indigo-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
-                >
-                    <Calendar size={24} strokeWidth={activeTab === 'calendar' ? 2.5 : 2} fill={activeTab === 'calendar' ? 'currentColor' : 'none'} className={activeTab === 'calendar' ? 'bg-indigo-50 rounded-xl box-content p-2' : ''} />
-                    {activeTab !== 'calendar' && <span className="text-[10px] font-bold">Itinerario</span>}
-                </button>
-            </nav>
-        </div>
-    );
+                );
 };
 
-export default MusicMinistryApp;
+                export default MusicMinistryApp;

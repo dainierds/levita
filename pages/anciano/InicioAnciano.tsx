@@ -159,7 +159,7 @@ const InicioAnciano: React.FC = () => {
                                         const roleMap = [
                                             { key: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
                                             { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-indigo-500' },
-                                            { key: 'musicDirector', label: 'Dir. Música', icon: Music, color: 'text-pink-500' },
+                                            { key: 'esMaster', label: 'Maestro de ES', icon: Users, color: 'text-green-500' },
                                             { key: 'audioOperator', label: 'Audio', icon: Mic, color: 'text-orange-500' },
                                         ];
 
