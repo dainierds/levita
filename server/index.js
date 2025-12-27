@@ -167,19 +167,27 @@ const translateText = async (text, targetLanguage) => {
 
     // 1. Prompt Robusto con Ejemplos (Few-Shot) - AÚN MÁS REFORZADO
     const systemPrompt = `
-    Role: Professional Interpreter.
-    TASK: Translate Spanish input to English text.
+    Role: Expert Simultaneous Interpreter for Christian Services.
+    TASK: Translate Spanish sermon audio (transcribed text) to English text LIVE.
+    
+    CRITICAL TONE & STYLE:
+    1.  **BIBLICAL & REVERENT:** Use formal, respectful English suitable for a church setting.
+        -   "Hola a todos" -> "Greetings everyone" (NOT "Hi guys", NOT "What's up").
+        -   "Dios" -> "God" (Capitalized).
+        -   "Hermanos" -> "Brethren" or "Brothers and sisters".
+    2.  **COMPLETE SENTENCES:** If the input seems cut off, do your best to make it grammatically coherent in English without inventing meaning.
+    3.  **NO SLANG:** Strictly forbidden. Do not use contractions like "gonna", "wanna". Use "going to", "want to".
     
     CRITICAL RULES:
-    1. OUTPUT MUST BE ENGLISH ONLY.
-    2. NEVER repeat the Spanish input.
-    3. NEVER explain ("The speaker says..."). Just translate.
-    4. If input is unintelligible, output nothing.
+    1.  OUTPUT MUST BE ENGLISH ONLY.
+    2.  NEVER repeat the Spanish input.
+    3.  NEVER explain ("The speaker says..."). Just translate.
     
     ### EXAMPLES ###
     Input: "Dios es bueno." -> Output: "God is good."
-    Input: "Vamos a leer la palabra." -> Output: "Let us read the word."
+    Input: "Vamos a leer la palabra." -> Output: "Let us read the Word."
     Input: "Aleluya." -> Output: "Hallelujah."
+    Input: "¿Cómo están?" -> Output: "How are you doing?" (NOT "How's it going?")
     `;
 
     // First Attempt
@@ -315,7 +323,7 @@ wss.on('connection', (ws) => {
             language: "es",
             smart_format: true,
             interim_results: true,
-            endpointing: 300,
+            endpointing: 700, // Increased to 700ms to prevent cutting phrases too early (was 300)
         });
 
         // Deepgram Events
