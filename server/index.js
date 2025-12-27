@@ -26,7 +26,8 @@ if (!DEEPGRAM_KEY || !GEMINI_KEY) {
 // DIAGNOSTIC STARTUP TEST
 (async () => {
     console.log("🔍 Testing Gemini API Key & Model Availability...");
-    const models = ["gemini-1.5-flash", "gemini-2.0-flash-exp"];
+    // Strict Test: Only gemini-2.5-flash
+    const models = ["gemini-2.5-flash"];
     const genAI = new GoogleGenerativeAI(GEMINI_KEY);
 
     for (const m of models) {
@@ -77,14 +78,10 @@ const isSpanishData = (text) => {
 }
 
 const callGemini = async (inputText, systemInstruction) => {
-    // List of models to try in order of preference (Optimized v1.9.2 - 2.5 Flash Priority)
-    // User requested specific usage of gemini-2.5-flash
+    // List of models to try in order of preference (Strict Mode v1.9.4)
+    // ONLY uses gemini-2.5-flash as requested
     const models = [
-        "gemini-2.5-flash",       // 🚀 Priority 1 (User Requested)
-        "gemini-2.0-flash",       // Fallback 1
-        "gemini-1.5-flash-latest", // Fallback 2
-        "gemini-flash-latest",    // Alias
-        "gemini-pro",             // Legacy
+        "gemini-2.5-flash"
     ];
 
     for (const model of models) {
@@ -406,8 +403,8 @@ wss.on('connection', (ws) => {
 
 // Health Check for Railway
 app.get('/', (req, res) => {
-    console.log("🚀 Server v1.9.3 (Gemini 2.5 Config Fix) Starting...");
-    res.send('Levita Audio Server v1.9.3 - Params Fixed');
+    console.log("🚀 Server v1.9.4 (Strict Gemini 2.5) Starting...");
+    res.send('Levita Audio Server v1.9.4 - Gemini 2.5 Flash ONLY');
 });
 
 // --- YouTube API: Get Live Video ID ---
