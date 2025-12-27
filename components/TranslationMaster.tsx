@@ -157,6 +157,11 @@ const TranslationMaster: React.FC = () => {
                     }
 
                     try {
+                        // Update Debug Log
+                        if (typeof data === 'string' && data.includes('TRANSCRIPTION')) {
+                            setLastLog(data);
+                        }
+
                         const parsed = JSON.parse(data);
                         if (parsed.type === 'TRANSCRIPTION' && parsed.isFinal) {
                             // Save to Firestore
@@ -398,6 +403,14 @@ const TranslationMaster: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* DEBUG PANEL - Hidden in Production but useful now */}
+            <div className="mt-4 p-4 bg-black/40 rounded-xl border border-dashed border-slate-700">
+                <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">WebSocket Debugger</p>
+                <div className="font-mono text-[10px] text-green-400 break-all bg-black/50 p-2 rounded">
+                    {lastLog || "Esperando datos del servidor..."}
+                </div>
+            </div>
         </div>
     );
 };
