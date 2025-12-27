@@ -163,34 +163,7 @@ const callGemini = async (inputText, systemInstruction) => {
     };
 */
 
-try {
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
 
-    if (!response.ok) {
-        const errText = await response.text();
-        console.error(`❌ Gemini API Error (${response.status}):`, errText);
-        return null;
-    }
-
-    const data = await response.json();
-    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    // Log Safety Ratings if blocked
-    if (!text && data.promptFeedback) {
-        console.warn("⚠️ Gemini Safety Block:", data.promptFeedback);
-    }
-
-    // Clean up common prefixes
-    return text.replace(/^(Translation:|Output:|English:|Correction:)/i, "").trim();
-} catch (e) {
-    console.error("Gemini Network Error:", e);
-    return null;
-}
-};
 
 
 const translateText = async (text, targetLanguage) => {
@@ -434,8 +407,8 @@ wss.on('connection', (ws) => {
 
 // Health Check for Railway
 app.get('/', (req, res) => {
-    console.log("🚀 Server v1.9 (Optimized Model List) Starting...");
-    res.send('Levita Audio Server v1.9 - Gemini 2.0/2.5 Flash Active');
+    console.log("🚀 Server v1.9.1 (Syntax Fix) Starting...");
+    res.send('Levita Audio Server v1.9.1 - Syntax Fix Applied');
 });
 
 // --- YouTube API: Get Live Video ID ---
