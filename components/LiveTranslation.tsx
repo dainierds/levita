@@ -275,7 +275,9 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
             {segments.map((seg, i) => (
               <div key={i} className={`transition-all duration-500 ${i === segments.length - 1 ? 'opacity-100 scale-100' : 'opacity-60 scale-95 origin-left'}`}>
                 <p className={`text-lg md:text-xl font-bold leading-relaxed ${i === segments.length - 1 ? 'text-indigo-900' : 'text-indigo-900/60'}`}>
-                  {targetLang === 'es' ? seg.original : (targetLang === 'en' ? (seg.translation || seg.original) : (i === segments.length - 1 ? translation : (seg.translation || seg.original)))}
+                  {targetLang === 'es'
+                    ? seg.original
+                    : (seg.translation || <span className="opacity-0">...</span>)}
                 </p>
               </div>
             ))}

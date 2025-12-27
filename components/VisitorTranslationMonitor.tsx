@@ -83,7 +83,7 @@ const VisitorTranslationMonitor: React.FC<VisitorTranslationMonitorProps> = ({ t
                             >
                                 {segments.length > 0 ? segments.map((seg, i) => (
                                     <div key={i} className={`leading-relaxed transition-all duration-500 ${i === segments.length - 1 ? 'text-lg font-bold opacity-100 scale-100' : 'text-sm opacity-60 scale-95 origin-left'}`}>
-                                        {seg.translation || seg.original}
+                                        {seg.translation || <span className="opacity-0">...</span>}
                                     </div>
                                 )) : (
                                     <div className="h-full flex items-center justify-center opacity-50 italic text-sm">
