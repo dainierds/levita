@@ -41,7 +41,7 @@ const InicioAnciano: React.FC = () => {
 
     // Next Preaching
     const nextPreaching = plans
-        .filter(p => !p.isActive && new Date(p.date) >= today)
+        .filter(p => !p.isActive && p.date >= todayStr)
         .filter(p => p.team.preacher === user?.name)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
