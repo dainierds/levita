@@ -407,10 +407,21 @@ const TranslationMaster: React.FC = () => {
 
             {/* DEBUG PANEL - Hidden in Production but useful now */}
             <div className="mt-4 p-4 bg-black/40 rounded-xl border border-dashed border-slate-700">
-                <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">WebSocket Debugger</p>
-                <div className="font-mono text-[10px] text-green-400 break-all bg-black/50 p-2 rounded">
+                <p className="text-[10px] font-bold text-slate-500 uppercase mb-2 flex justify-between">
+                    <span>WebSocket Debugger</span>
+                    <span className={user?.tenantId ? 'text-green-400' : 'text-red-500'}>
+                        TenantID: {user?.tenantId || "MISSING"}
+                    </span>
+                </p>
+                <div className="font-mono text-[10px] text-green-400 break-all bg-black/50 p-2 rounded mb-2">
                     {lastLog || "Esperando datos del servidor..."}
                 </div>
+                {/* Visual confirmation of parsing */}
+                {lastLog && lastLog.includes('translation') && (
+                    <div className="text-[10px] text-indigo-300">
+                        Parsed Translation: {(() => { try { return JSON.parse(lastLog).translation || "EMPTY USERKEY"; } catch (e) { return "PARSE ERROR"; } })()}
+                    </div>
+                )}
             </div>
         </div>
     );
