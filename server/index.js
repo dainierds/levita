@@ -369,8 +369,8 @@ wss.on('connection', (ws) => {
 
 // Health Check for Railway
 app.get('/', (req, res) => {
-    console.log("🚀 Server v1.6 (Auto-Model Fallback) Starting...");
-    res.send('Levita Audio Server is Running (Deepgram + Multi-Model Gemini) v1.6');
+    console.log("🚀 Server v1.7 (FORCE RESTART) Starting...");
+    res.send('Levita Audio Server v1.7 - Force Restart');
 });
 
 // --- YouTube API: Get Live Video ID ---
