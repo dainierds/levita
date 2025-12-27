@@ -488,58 +488,69 @@ const MusicMinistryApp: React.FC = () => {
 
                 {/* --- TAB 2: ROSTER --- */}
                 {activeTab === 'roster' && (
-                    <div className="space-y-4">
-                        {upcomingShifts.map((shift) => {
+                    <div className="space-y-6">
+                        {upcomingShifts.map((shift, idx) => {
                             const dateInfo = formatDate(shift.date || '');
+                            const isNext = idx === 0;
+                            // Match colors with Home Tab / Elder App
+                            const themeBg = isNext ? 'bg-[#3b82f6] shadow-blue-200' : 'bg-[#6366f1] shadow-indigo-200';
+                            const label = `Equipo del ${dateInfo.weekday}`;
+
                             return (
-                                <div key={shift.id} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                                    <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-50">
-                                        <div>
-                                            <h3 className="font-black text-slate-800 capitalize text-lg">{dateInfo.weekday}</h3>
-                                            <p className="text-xs font-bold text-purple-500">{dateInfo.full}</p>
+                                <div key={shift.id} className={`${themeBg} rounded-[2rem] p-6 shadow-lg border border-white relative overflow-hidden text-white`}>
+                                    {/* Badge */}
+                                    <div className="absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider bg-black/20 text-white backdrop-blur-sm">
+                                        {label}
+                                    </div>
+
+                                    {/* Date & Title */}
+                                    <div className="flex items-start gap-4 mb-6">
+                                        <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm bg-white/20 text-white backdrop-blur-md">
+                                            <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
+                                            <span className="text-xl font-black">{dateInfo.day}</span>
                                         </div>
-                                        <div className="bg-purple-50 text-purple-600 px-3 py-1 rounded-full text-xs font-bold">
-                                            Turno
+                                        <div>
+                                            <h2 className="text-xl font-bold leading-tight drop-shadow-sm capitalize">
+                                                {dateInfo.weekday} {dateInfo.full.split('de')[0]}
+                                            </h2>
+                                            <div className="flex items-center gap-2 text-white/80 text-xs font-bold mt-1">
+                                                <Clock size={12} /> 10:00 AM
+                                                <span className="w-1 h-1 bg-white/50 rounded-full"></span>
+                                                <MapPin size={12} /> {tenant?.name || 'Iglesia'}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-4">
-                                        {shift.members?.preacher && (
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                                                    <Mic2 size={18} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Predicador</p>
-                                                    <p className="font-bold text-slate-800">{resolveName(shift.members.preacher)}</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {shift.members?.elder && (
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                                    <User size={18} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Anciano de Turno</p>
-                                                    <p className="font-bold text-slate-800">{resolveName(shift.members.elder)}</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {shift.members?.musicDirector && (
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
-                                                    <Music size={18} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Director Música</p>
-                                                    <p className="font-bold text-slate-800">{resolveName(shift.members.musicDirector)}</p>
-                                                </div>
-                                            </div>
-                                        )}
+                                    {/* Service Team Grid */}
+                                    <div className="bg-white/10 rounded-2xl p-4 gap-4 grid grid-cols-2 backdrop-blur-sm">
+                                        {(() => {
+                                            const members = shift.members || {};
+                                            const roleMap = [
+                                                { key: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
+                                                { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-indigo-500' },
+                                                { key: 'musicDirector', label: 'Dir. Música', icon: Music, color: 'text-pink-500' },
+                                                { key: 'audioOperator', label: 'Audio', icon: Mic, color: 'text-orange-500' },
+                                            ];
+
+                                            return roleMap.map(role => {
+                                                // IMPORTANT: servicePlans store NAMES directly, not IDs. Do not use resolveName.
+                                                const name = (members as any)[role.key];
+                                                return (
+                                                    <div key={role.key} className="flex items-center gap-3">
+                                                        <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${role.color}`}>
+                                                            <role.icon size={14} />
+                                                        </div>
+                                                        <div className="overflow-hidden">
+                                                            <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider ">{role.label}</p>
+                                                            <p className="font-bold text-white text-xs truncate drop-shadow-sm">{name || '---'}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            });
+                                        })()}
                                     </div>
                                 </div>
-                            )
+                            );
                         })}
                         {upcomingShifts.length === 0 && (
                             <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
