@@ -167,18 +167,19 @@ const TranslationMaster: React.FC = () => {
                         if (parsed.type === 'TRANSCRIPTION' && parsed.isFinal) {
                             // Save to Firestore
                             // Save to Firestore with History (Teleprompter Mode)
-                            if (user?.tenantId && data.original) {
+                            // Save to Firestore with History (Teleprompter Mode)
+                            if (user?.tenantId && parsed.original) {
                                 const docRef = doc(db, 'tenants', user.tenantId, 'live', 'transcription');
 
                                 const newSegment = {
-                                    original: data.original,
-                                    translation: data.translation || "",
+                                    original: parsed.original,
+                                    translation: parsed.translation || "",
                                     timestamp: Date.now()
                                 };
 
                                 setDoc(docRef, {
-                                    text: data.original,
-                                    translation: data.translation || "",
+                                    text: parsed.original,
+                                    translation: parsed.translation || "",
                                     timestamp: serverTimestamp(),
                                     isFinal: true,
                                     sourceLang: 'es',
