@@ -13,16 +13,33 @@ const wss = new WebSocketServer({ server });
 
 // Environment Check
 const DEEPGRAM_KEY = process.env.DEEPGRAM_API_KEY;
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
+// Fix: Allow reading VITE_ prefixed key (common in shared .env files)
+const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 
 if (!DEEPGRAM_KEY || !GEMINI_KEY) {
-    console.error("CRITICAL: Missing API Keys. Check .env");
+    console.error("CRITICAL: Missing API Keys. Check .env (Need GEMINI_API_KEY or VITE_GEMINI_API_KEY)");
 }
 
 // Initialize Gemini
-// Initialize Gemini
 // const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-// const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+// DIAGNOSTIC STARTUP TEST
+(async () => {
+    console.log("🔍 Testing Gemini API Key & Model Availability...");
+    const models = ["gemini-1.5-flash", "gemini-2.0-flash-exp"];
+    const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+
+    for (const m of models) {
+        try {
+            const model = genAI.getGenerativeModel({ model: m });
+            const result = await model.generateContent("Say 'OK'");
+            const response = await result.response;
+            console.log(`✅ Model ${m}: WORKING (Response: ${response.text().trim()})`);
+        } catch (e) {
+            console.error(`❌ Model ${m}: FAILED. Reason: ${e.message}`);
+        }
+    }
+})();
 
 // --- debug: List Models on Startup ---
 
