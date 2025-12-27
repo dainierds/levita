@@ -476,186 +476,188 @@ const MusicMinistryApp: React.FC = () => {
                                 )}
                             </div>
                         </section>
+                    </>
+                )}
 
-                        {/* --- TAB 2: ROSTER --- */}
-                        {activeTab === 'roster' && (
-                            <div className="space-y-6">
-                                {upcomingShifts.map((shift, idx) => {
-                                    const dateInfo = formatDate(shift.date || '');
-                                    const isNext = idx === 0;
-                                    // Match colors with Home Tab / Elder App
-                                    const themeBg = isNext ? 'bg-[#3b82f6] shadow-blue-200' : 'bg-[#6366f1] shadow-indigo-200';
-                                    const label = `Equipo del ${dateInfo.weekday}`;
+                {/* --- TAB 2: ROSTER --- */}
+                {activeTab === 'roster' && (
+                    <div className="space-y-6">
+                        {upcomingShifts.map((shift, idx) => {
+                            const dateInfo = formatDate(shift.date || '');
+                            const isNext = idx === 0;
+                            // Match colors with Home Tab / Elder App
+                            const themeBg = isNext ? 'bg-[#3b82f6] shadow-blue-200' : 'bg-[#6366f1] shadow-indigo-200';
+                            const label = `Equipo del ${dateInfo.weekday}`;
 
-                                    return (
-                                        <div key={shift.id} className={`${themeBg} rounded-[2rem] p-6 shadow-lg border border-white relative overflow-hidden text-white`}>
-                                            {/* Badge */}
-                                            <div className="absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider bg-black/20 text-white backdrop-blur-sm">
-                                                {label}
-                                            </div>
+                            return (
+                                <div key={shift.id} className={`${themeBg} rounded-[2rem] p-6 shadow-lg border border-white relative overflow-hidden text-white`}>
+                                    {/* Badge */}
+                                    <div className="absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider bg-black/20 text-white backdrop-blur-sm">
+                                        {label}
+                                    </div>
 
-                                            {/* Date & Title */}
-                                            <div className="flex items-start gap-4 mb-6">
-                                                <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm bg-white/20 text-white backdrop-blur-md">
-                                                    <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
-                                                    <span className="text-xl font-black">{dateInfo.day}</span>
-                                                </div>
-                                                <div>
-                                                    <h2 className="text-xl font-bold leading-tight drop-shadow-sm capitalize">
-                                                        {dateInfo.weekday} {dateInfo.full.split('de')[0]}
-                                                    </h2>
-                                                    <div className="flex items-center gap-2 text-white/80 text-xs font-bold mt-1">
-                                                        <Clock size={12} /> 10:00 AM
-                                                        <span className="w-1 h-1 bg-white/50 rounded-full"></span>
-                                                        <MapPin size={12} /> {tenant?.name || 'Iglesia'}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Service Team Grid */}
-                                            <div className="bg-white/10 rounded-2xl p-4 gap-4 grid grid-cols-2 backdrop-blur-sm">
-                                                {(() => {
-                                                    const members = shift.members || {};
-                                                    const roleMap = [
-                                                        { key: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
-                                                        { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-indigo-500' },
-                                                        { key: 'esMaster', label: 'Maestro de ES', icon: Users, color: 'text-green-500' },
-                                                        { key: 'audioOperator', label: 'Audio', icon: Mic, color: 'text-orange-500' },
-                                                    ];
-
-                                                    return roleMap.map(role => {
-                                                        // IMPORTANT: servicePlans store NAMES directly, not IDs. Do not use resolveName.
-                                                        const name = (members as any)[role.key];
-                                                        return (
-                                                            <div key={role.key} className="flex items-center gap-3">
-                                                                <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${role.color}`}>
-                                                                    <role.icon size={14} />
-                                                                </div>
-                                                                <div className="overflow-hidden">
-                                                                    <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider ">{role.label}</p>
-                                                                    <p className="font-bold text-white text-xs truncate drop-shadow-sm">{name || '---'}</p>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    });
-                                                })()}
+                                    {/* Date & Title */}
+                                    <div className="flex items-start gap-4 mb-6">
+                                        <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm bg-white/20 text-white backdrop-blur-md">
+                                            <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
+                                            <span className="text-xl font-black">{dateInfo.day}</span>
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-bold leading-tight drop-shadow-sm capitalize">
+                                                {dateInfo.weekday} {dateInfo.full.split('de')[0]}
+                                            </h2>
+                                            <div className="flex items-center gap-2 text-white/80 text-xs font-bold mt-1">
+                                                <Clock size={12} /> 10:00 AM
+                                                <span className="w-1 h-1 bg-white/50 rounded-full"></span>
+                                                <MapPin size={12} /> {tenant?.name || 'Iglesia'}
                                             </div>
                                         </div>
-                                    );
-                                })}
-                                {upcomingShifts.length === 0 && (
-                                    <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
-                                        <p className="text-slate-400 font-medium">No hay turnos próximos. Asegúrate de configurar los turnos en el Panel de Administración → Miembros → Turnos.</p>
                                     </div>
-                                )}
+
+                                    {/* Service Team Grid */}
+                                    <div className="bg-white/10 rounded-2xl p-4 gap-4 grid grid-cols-2 backdrop-blur-sm">
+                                        {(() => {
+                                            const members = shift.members || {};
+                                            const roleMap = [
+                                                { key: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
+                                                { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-indigo-500' },
+                                                { key: 'esMaster', label: 'Maestro de ES', icon: Users, color: 'text-green-500' },
+                                                { key: 'audioOperator', label: 'Audio', icon: Mic, color: 'text-orange-500' },
+                                            ];
+
+                                            return roleMap.map(role => {
+                                                // IMPORTANT: servicePlans store NAMES directly, not IDs. Do not use resolveName.
+                                                const name = (members as any)[role.key];
+                                                return (
+                                                    <div key={role.key} className="flex items-center gap-3">
+                                                        <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm ${role.color}`}>
+                                                            <role.icon size={14} />
+                                                        </div>
+                                                        <div className="overflow-hidden">
+                                                            <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider ">{role.label}</p>
+                                                            <p className="font-bold text-white text-xs truncate drop-shadow-sm">{name || '---'}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            });
+                                        })()}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {upcomingShifts.length === 0 && (
+                            <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
+                                <p className="text-slate-400 font-medium">No hay turnos próximos. Asegúrate de configurar los turnos en el Panel de Administración → Miembros → Turnos.</p>
                             </div>
                         )}
+                    </div>
+                )}
 
 
-                        {/* --- TAB 3: CALENDAR (ITINERARY) --- */}
-                        {activeTab === 'calendar' && (
-                            <div className="space-y-4">
-                                {calendarTeams.map((team) => {
-                                    const dateInfo = formatDate(team.date);
-                                    const teamMembers = allMusicUsers.filter(u => team.memberIds.includes(u.id));
+                {/* --- TAB 3: CALENDAR (ITINERARY) --- */}
+                {activeTab === 'calendar' && (
+                    <div className="space-y-4">
+                        {calendarTeams.map((team) => {
+                            const dateInfo = formatDate(team.date);
+                            const teamMembers = allMusicUsers.filter(u => team.memberIds.includes(u.id));
 
-                                    return (
-                                        <div key={team.id} className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-sm border border-slate-100">
-                                            <div className="flex items-center gap-4 border-b border-slate-50 pb-4">
-                                                <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${new Date(team.date).getDay() === 2 ? 'bg-indigo-50 text-indigo-500' : 'bg-pink-50 text-pink-500'
-                                                    }`}>
-                                                    <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
-                                                    <span className="text-xl font-black">{dateInfo.day}</span>
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="font-bold text-slate-800 capitalize truncate text-lg">{dateInfo.weekday}</h4>
-                                                    <p className="text-xs text-slate-400">{teamMembers.length} integrantes asignados</p>
-                                                </div>
-                                            </div>
-
-
+                            return (
+                                <div key={team.id} className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-sm border border-slate-100">
+                                    <div className="flex items-center gap-4 border-b border-slate-50 pb-4">
+                                        <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${new Date(team.date).getDay() === 2 ? 'bg-indigo-50 text-indigo-500' : 'bg-pink-50 text-pink-500'
+                                            }`}>
+                                            <span className="text-[10px] font-bold uppercase">{dateInfo.month}</span>
+                                            <span className="text-xl font-black">{dateInfo.day}</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-bold text-slate-800 capitalize truncate text-lg">{dateInfo.weekday}</h4>
+                                            <p className="text-xs text-slate-400">{teamMembers.length} integrantes asignados</p>
+                                        </div>
+                                    </div>
 
 
-                                            {(resolveNames(team.soloist1).length > 0 || resolveNames(team.soloist2).length > 0) && (
-                                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2 mb-3">
-                                                    {resolveNames(team.soloist1).length > 0 && (
-                                                        <div className="flex items-center gap-2">
-                                                            <Mic2 size={12} className="text-indigo-500 shrink-0" />
-                                                            <p className="text-xs text-slate-700">
-                                                                <span className="font-bold text-indigo-600 uppercase text-[10px] mr-2">
-                                                                    Primer Servicio: {resolveNames(team.soloist1).length === 1 ? 'Solista' :
-                                                                        resolveNames(team.soloist1).length === 2 ? 'Dúo' :
-                                                                            resolveNames(team.soloist1).length === 3 ? 'Trío' : 'Cuarteto'}
-                                                                </span>
-                                                                {resolveNames(team.soloist1).join(', ')}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    {resolveNames(team.soloist2).length > 0 && (
-                                                        <div className="flex items-center gap-2">
-                                                            <Mic2 size={12} className="text-purple-500 shrink-0" />
-                                                            <p className="text-xs text-slate-700">
-                                                                <span className="font-bold text-purple-600 uppercase text-[10px] mr-2">
-                                                                    Segundo Servicio: {resolveNames(team.soloist2).length === 1 ? 'Solista' :
-                                                                        resolveNames(team.soloist2).length === 2 ? 'Dúo' :
-                                                                            resolveNames(team.soloist2).length === 3 ? 'Trío' : 'Cuarteto'}
-                                                                </span>
-                                                                {resolveNames(team.soloist2).join(', ')}
-                                                            </p>
-                                                        </div>
-                                                    )}
+
+
+                                    {(resolveNames(team.soloist1).length > 0 || resolveNames(team.soloist2).length > 0) && (
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2 mb-3">
+                                            {resolveNames(team.soloist1).length > 0 && (
+                                                <div className="flex items-center gap-2">
+                                                    <Mic2 size={12} className="text-indigo-500 shrink-0" />
+                                                    <p className="text-xs text-slate-700">
+                                                        <span className="font-bold text-indigo-600 uppercase text-[10px] mr-2">
+                                                            Primer Servicio: {resolveNames(team.soloist1).length === 1 ? 'Solista' :
+                                                                resolveNames(team.soloist1).length === 2 ? 'Dúo' :
+                                                                    resolveNames(team.soloist1).length === 3 ? 'Trío' : 'Cuarteto'}
+                                                        </span>
+                                                        {resolveNames(team.soloist1).join(', ')}
+                                                    </p>
                                                 </div>
                                             )}
-
-                                            {/* Member Names List */}
-                                            <div className="flex flex-wrap gap-2">
-                                                {teamMembers.map((member, idx) => (
-                                                    <div key={idx} className="bg-slate-50 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                                                        <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">
-                                                            {member.name.charAt(0)}
-                                                        </div>
-                                                        <span className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{member.name}</span>
-                                                    </div>
-                                                ))}
-                                                {teamMembers.length === 0 && <span className="text-xs text-slate-400 italic"> - Sin asignaciones - </span>}
-                                            </div>
+                                            {resolveNames(team.soloist2).length > 0 && (
+                                                <div className="flex items-center gap-2">
+                                                    <Mic2 size={12} className="text-purple-500 shrink-0" />
+                                                    <p className="text-xs text-slate-700">
+                                                        <span className="font-bold text-purple-600 uppercase text-[10px] mr-2">
+                                                            Segundo Servicio: {resolveNames(team.soloist2).length === 1 ? 'Solista' :
+                                                                resolveNames(team.soloist2).length === 2 ? 'Dúo' :
+                                                                    resolveNames(team.soloist2).length === 3 ? 'Trío' : 'Cuarteto'}
+                                                        </span>
+                                                        {resolveNames(team.soloist2).join(', ')}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
-                                    );
-                                })}
-                                {calendarTeams.length === 0 && (
-                                    <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
-                                        <p className="text-slate-400 font-medium">No hay itinerario disponible</p>
+                                    )}
+
+                                    {/* Member Names List */}
+                                    <div className="flex flex-wrap gap-2">
+                                        {teamMembers.map((member, idx) => (
+                                            <div key={idx} className="bg-slate-50 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                                <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                                                    {member.name.charAt(0)}
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{member.name}</span>
+                                            </div>
+                                        ))}
+                                        {teamMembers.length === 0 && <span className="text-xs text-slate-400 italic"> - Sin asignaciones - </span>}
                                     </div>
-                                )}
+                                </div>
+                            );
+                        })}
+                        {calendarTeams.length === 0 && (
+                            <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
+                                <p className="text-slate-400 font-medium">No hay itinerario disponible</p>
                             </div>
                         )}
+                    </div>
+                )}
 
-                    </main>
+            </main>
 
-                {/* Bottom Navigation */}
-                <nav className="fixed bottom-0 left-0 right-0 h-20 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 flex items-center justify-around pb-2">
-                    <button
-                        onClick={() => setActiveTab('home')}
-                        className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'home' ? 'text-pink-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
-                    >
-                        <Home size={24} strokeWidth={activeTab === 'home' ? 2.5 : 2} fill={activeTab === 'home' ? 'currentColor' : 'none'} className={activeTab === 'home' ? 'bg-pink-50 rounded-xl box-content p-2' : ''} />
-                        {activeTab !== 'home' && <span className="text-[10px] font-bold">Inicio</span>}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('roster')}
-                        className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'roster' ? 'text-purple-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
-                    >
-                        <Users size={24} strokeWidth={activeTab === 'roster' ? 2.5 : 2} fill={activeTab === 'roster' ? 'currentColor' : 'none'} className={activeTab === 'roster' ? 'bg-purple-50 rounded-xl box-content p-2' : ''} />
-                        {activeTab !== 'roster' && <span className="text-[10px] font-bold">Turnos</span>}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('calendar')}
-                        className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'calendar' ? 'text-indigo-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
-                    >
-                        <Calendar size={24} strokeWidth={activeTab === 'calendar' ? 2.5 : 2} fill={activeTab === 'calendar' ? 'currentColor' : 'none'} className={activeTab === 'calendar' ? 'bg-indigo-50 rounded-xl box-content p-2' : ''} />
-                        {activeTab !== 'calendar' && <span className="text-[10px] font-bold">Itinerario</span>}
-                    </button>
-                </nav>
+            {/* Bottom Navigation */}
+            <nav className="fixed bottom-0 left-0 right-0 h-20 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 flex items-center justify-around pb-2">
+                <button
+                    onClick={() => setActiveTab('home')}
+                    className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'home' ? 'text-pink-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
+                >
+                    <Home size={24} strokeWidth={activeTab === 'home' ? 2.5 : 2} fill={activeTab === 'home' ? 'currentColor' : 'none'} className={activeTab === 'home' ? 'bg-pink-50 rounded-xl box-content p-2' : ''} />
+                    {activeTab !== 'home' && <span className="text-[10px] font-bold">Inicio</span>}
+                </button>
+                <button
+                    onClick={() => setActiveTab('roster')}
+                    className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'roster' ? 'text-purple-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
+                >
+                    <Users size={24} strokeWidth={activeTab === 'roster' ? 2.5 : 2} fill={activeTab === 'roster' ? 'currentColor' : 'none'} className={activeTab === 'roster' ? 'bg-purple-50 rounded-xl box-content p-2' : ''} />
+                    {activeTab !== 'roster' && <span className="text-[10px] font-bold">Turnos</span>}
+                </button>
+                <button
+                    onClick={() => setActiveTab('calendar')}
+                    className={`flex flex-col items-center gap-1 transition-all p-4 ${activeTab === 'calendar' ? 'text-indigo-500 scale-110' : 'text-slate-300 hover:text-slate-400'}`}
+                >
+                    <Calendar size={24} strokeWidth={activeTab === 'calendar' ? 2.5 : 2} fill={activeTab === 'calendar' ? 'currentColor' : 'none'} className={activeTab === 'calendar' ? 'bg-indigo-50 rounded-xl box-content p-2' : ''} />
+                    {activeTab !== 'calendar' && <span className="text-[10px] font-bold">Itinerario</span>}
+                </button>
+            </nav>
         </div>
     );
 };
