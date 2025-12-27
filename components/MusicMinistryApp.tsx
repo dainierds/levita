@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ChurchTenant, MusicTeam, ShiftTeam, ChurchEvent } from '../types';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs, orderBy, onSnapshot, doc } from 'firebase/firestore';
-import { Music, Calendar, Mic2, User, Home, Users, Clock, MapPin, LogOut } from 'lucide-react';
+import { Music, Calendar, Mic2, User, Home, Users, Clock, MapPin, LogOut, Mic } from 'lucide-react';
 import { MOCK_TENANTS } from '../constants';
 
 // Helper to get tenant

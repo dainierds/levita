@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useEvents } from '../../hooks/useEvents';
 import { usePlans } from '../../hooks/usePlans';
-import { Calendar, FileText, BookOpen, Mic, Clock, MapPin, User, Music, Mic2, Play, List } from 'lucide-react';
+import { Calendar, FileText, BookOpen, Mic, Clock, MapPin, User, Music, Mic2, Play, List, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const InicioAnciano: React.FC = () => {
