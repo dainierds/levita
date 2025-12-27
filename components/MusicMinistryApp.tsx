@@ -128,26 +128,7 @@ const MusicMinistryApp: React.FC = () => {
                 setCalendarTeams(rollingCalendar);
             });
 
-            const getGroupLabel = (count: number, service: number) => {
-                let type = '';
-                if (count === 1) type = 'Solista';
-                else if (count === 2) type = 'Dúo';
-                else if (count === 3) type = 'Trío';
-                else if (count === 4) type = 'Cuarteto';
-                else type = 'Grupo';
 
-                return `${type} ${service}er Servicio`;
-            };
-
-            const resolveName = (id: string) => {
-                const u = allMusicUsers.find(u => u.id === id);
-                return u ? u.name : 'Pendiente';
-            };
-
-            const resolveNames = (ids: string[]) => {
-                if (!ids) return [];
-                return ids.map(id => resolveName(id));
-            };
             // 2. Fetch Users (Real-time)
             const usersQ = query(collection(db, 'users'), where('tenantId', '==', tenant.id));
             const unsubscribeUsers = onSnapshot(usersQ, (snap) => {
@@ -210,6 +191,27 @@ const MusicMinistryApp: React.FC = () => {
             bannerGradient: 'from-blue-600 via-cyan-600 to-teal-500' // Different gradient for events
         }))
     ];
+
+    const getGroupLabel = (count: number, service: number) => {
+        let type = '';
+        if (count === 1) type = 'Solista';
+        else if (count === 2) type = 'Dúo';
+        else if (count === 3) type = 'Trío';
+        else if (count === 4) type = 'Cuarteto';
+        else type = 'Grupo';
+
+        return `${type} ${service}er Servicio`;
+    };
+
+    const resolveName = (id: string) => {
+        const u = allMusicUsers.find(u => u.id === id);
+        return u ? u.name : 'Pendiente';
+    };
+
+    const resolveNames = (ids: string[]) => {
+        if (!ids) return [];
+        return ids.map(id => resolveName(id));
+    };
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
