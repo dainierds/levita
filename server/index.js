@@ -361,8 +361,8 @@ wss.on('connection', (ws) => {
 
 // Health Check for Railway
 app.get('/', (req, res) => {
-    console.log("🚀 Server v1.4 (Gemini Stable 1.5) Starting...");
-    res.send('Levita Audio Server is Running (Deepgram + Gemini 1.5-flash) v1.4');
+    console.log("🚀 Server v1.5 (Verbose Logs) Starting...");
+    res.send('Levita Audio Server is Running (Deepgram + Gemini 1.5-flash) v1.5');
 });
 
 // --- YouTube API: Get Live Video ID ---
