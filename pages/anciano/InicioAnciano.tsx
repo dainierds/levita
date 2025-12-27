@@ -102,29 +102,48 @@ const InicioAnciano: React.FC = () => {
                 )}
             </div>
 
-            {/* 2. REUSED SERVICE INFO CARDS (From Music App) */}
+            {/* 2. NEXT SERVICE TEAMS (Linked to Team Roster) */}
             {nextPlans.length > 0 && (
                 <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 delay-200">
                     {(() => {
-                        const nextPlan = nextPlans[0];
-                        const futurePlan = nextPlans[1];
+                        // Strict Filtering: Only show plans that match configured meeting days
+                        // This prevents showing "ghost" plans or deleted events
+                        const allowedDays = (tenant?.settings?.meetingDays || ['Domingo']).map((d: string) => d.toLowerCase());
+
+                        const validPlans = nextPlans.filter(p => {
+                            const pDate = new Date(p.date + 'T12:00:00');
+                            const pDayName = pDate.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
+                            // Simple normalization to match Spanish day names (accents)
+                            // e.g. "sábado" matches "sabado" logic if needed, but usually locale string handles it
+                            // We do a loose check if the day is pertinent
+                            return allowedDays.some((allowed: string) => pDayName.includes(allowed.split('á').join('a').substring(0, 3)));
+                        });
+
+                        // Fallback: If strict filter removes everything (edge case), show raw nextPlans. 
+                        // But usually validPlans is what we want.
+                        const displayPlans = validPlans.length > 0 ? validPlans : nextPlans;
+
+                        const nextPlan = displayPlans[0];
+                        const futurePlan = displayPlans[1];
 
                         // Helper function to render Service Info Card
-                        const renderServiceInfoCard = (plan: typeof nextPlan, label: string, isNext: boolean, themeBg: string) => (
+                        const renderServiceInfoCard = (plan: typeof nextPlan, label: string, themeBg: string) => (
                             <div key={plan.id} className={`${themeBg} rounded-[2rem] p-6 shadow-lg border border-white relative overflow-hidden text-white`}>
                                 {/* Badge */}
-                                <div className="absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider bg-white/20 text-white backdrop-blur-sm">
+                                <div className="absolute top-0 right-0 px-4 py-2 rounded-bl-2xl text-xs font-black uppercase tracking-wider bg-black/20 text-white backdrop-blur-sm">
                                     {label}
                                 </div>
 
                                 {/* Date & Title */}
                                 <div className="flex items-start gap-4 mb-6">
                                     <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-sm bg-white/20 text-white backdrop-blur-md">
-                                        <span className="text-[10px] font-bold uppercase">{new Date(plan.date).toLocaleDateString('es-ES', { weekday: 'short' })}</span>
-                                        <span className="text-xl font-black">{new Date(plan.date).getDate()}</span>
+                                        <span className="text-[10px] font-bold uppercase">{new Date(plan.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'short' })}</span>
+                                        <span className="text-xl font-black">{new Date(plan.date + 'T12:00:00').getDate()}</span>
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-bold leading-tight drop-shadow-sm">{plan.title || 'Culto General'}</h2>
+                                        <h2 className="text-xl font-bold leading-tight drop-shadow-sm capitalize">
+                                            {new Date(plan.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long' })} {new Date(plan.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
+                                        </h2>
                                         <div className="flex items-center gap-2 text-white/80 text-xs font-bold mt-1">
                                             <Clock size={12} /> {plan.time || '10:00 AM'}
                                             <span className="w-1 h-1 bg-white/50 rounded-full"></span>
@@ -137,22 +156,16 @@ const InicioAnciano: React.FC = () => {
                                 <div className="bg-white/10 rounded-2xl p-4 gap-4 grid grid-cols-2 backdrop-blur-sm">
                                     {(() => {
                                         const planTeam = plan.team || {};
-                                        const rosterTeams = (tenant?.settings?.teams || []) as any[];
-                                        const matchingRoster = rosterTeams.find(t => t.date === plan.date);
-                                        const rosterMembers = matchingRoster?.members || {};
-
+                                        // Role mapping matches TeamManager.tsx to ensure we show the same data
                                         const roleMap = [
-                                            { key: 'preacher', rosterKey: 'preacher', label: 'Predicador', icon: User, color: 'text-indigo-500' },
-                                            { key: 'musicDirector', rosterKey: 'musicDirector', label: 'Dir. Música', icon: Music, color: 'text-pink-500' },
-                                            { key: 'elder', rosterKey: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
-                                            { key: 'audioOperator', rosterKey: 'audioOperator', label: 'Audio', icon: Mic2, color: 'text-orange-500' },
-                                            { key: 'videoOperator', rosterKey: 'videoOperator', label: 'Video', icon: Play, color: 'text-blue-500' },
-                                            { key: 'usher', rosterKey: 'usher', label: 'Ujier', icon: User, color: 'text-teal-500' },
+                                            { key: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
+                                            { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-indigo-500' },
+                                            { key: 'musicDirector', label: 'Dir. Música', icon: Music, color: 'text-pink-500' },
+                                            { key: 'audioOperator', label: 'Audio', icon: Mic, color: 'text-orange-500' },
                                         ];
 
                                         return roleMap.map(roleConfig => {
-                                            const name = planTeam[roleConfig.key] || rosterMembers[roleConfig.rosterKey];
-                                            if (!name) return null;
+                                            const name = (planTeam as any)[roleConfig.key];
 
                                             return (
                                                 <div key={roleConfig.key} className="flex items-center gap-3">
@@ -161,7 +174,7 @@ const InicioAnciano: React.FC = () => {
                                                     </div>
                                                     <div className="overflow-hidden">
                                                         <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider ">{roleConfig.label}</p>
-                                                        <p className="font-bold text-white text-xs truncate drop-shadow-sm">{name}</p>
+                                                        <p className="font-bold text-white text-xs truncate drop-shadow-sm">{name || '---'}</p>
                                                     </div>
                                                 </div>
                                             );
@@ -173,11 +186,19 @@ const InicioAnciano: React.FC = () => {
 
                         return (
                             <>
-                                {/* 1. Next Service Info (Blue) */}
-                                {renderServiceInfoCard(nextPlan, 'Siguiente Culto', true, 'bg-[#3b82f6] shadow-blue-200')}
+                                {/* 1. Next Service (Blue) */}
+                                {nextPlan && renderServiceInfoCard(
+                                    nextPlan,
+                                    `Equipo del ${new Date(nextPlan.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long' })}`,
+                                    'bg-[#3b82f6] shadow-blue-200'
+                                )}
 
-                                {/* 2. Future Event Info (Indigo) */}
-                                {futurePlan && renderServiceInfoCard(futurePlan, 'Futuro Evento', false, 'bg-[#6366f1] shadow-indigo-200')}
+                                {/* 2. Future Service (Indigo) - Replaces "Future Event" */}
+                                {futurePlan && renderServiceInfoCard(
+                                    futurePlan,
+                                    `Equipo del ${new Date(futurePlan.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long' })}`,
+                                    'bg-[#6366f1] shadow-indigo-200'
+                                )}
                             </>
                         );
                     })()}
