@@ -105,7 +105,6 @@ const callGemini = async (inputText, systemInstruction) => {
                 generationConfig: {
                     temperature: 0.1,
                     maxOutputTokens: 200,
-                    frequencyPenalty: 0.1,
                 }
             };
 
@@ -407,8 +406,8 @@ wss.on('connection', (ws) => {
 
 // Health Check for Railway
 app.get('/', (req, res) => {
-    console.log("🚀 Server v1.9.2 (Gemini 2.5 Flash) Starting...");
-    res.send('Levita Audio Server v1.9.2 - Powered by Gemini 2.5 Flash');
+    console.log("🚀 Server v1.9.3 (Gemini 2.5 Config Fix) Starting...");
+    res.send('Levita Audio Server v1.9.3 - Params Fixed');
 });
 
 // --- YouTube API: Get Live Video ID ---
