@@ -145,6 +145,11 @@ const MusicMinistryApp: React.FC = () => {
                 const plans = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any)); // Type as any temporarily to map to view
                 const todayStr = new Date().toLocaleDateString('en-CA');
 
+                const upcoming = plans
+                    .filter((p: any) => !p.isActive && p.date >= todayStr)
+                    .sort((a: any, b: any) => a.date.localeCompare(b.date))
+                    .slice(0, 2);
+
                 // Strict Filtering: Only show plans that match configured meeting days
                 const allowedDays = (tenant?.settings?.meetingDays || ['Domingo']).map((d: string) => d.toLowerCase());
 
