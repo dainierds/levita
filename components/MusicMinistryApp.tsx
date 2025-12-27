@@ -37,6 +37,17 @@ const useTenant = () => {
     return { tenant, loading };
 };
 
+// Helper: Format Date
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return { day: '?', month: '?', weekday: '?', full: 'Fecha inválida' };
+    const date = new Date(dateStr + 'T12:00:00'); // Midday to avoid timezone issues
+    const day = date.getDate();
+    const month = date.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '');
+    const weekday = date.toLocaleDateString('es-ES', { weekday: 'long' });
+    const full = date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    return { day, month, weekday, full };
+};
+
 const MusicMinistryApp: React.FC = () => {
     const { user } = useAuth();
     const { tenant: defaultTenant, loading: tenantLoading } = useTenant();
