@@ -60,7 +60,8 @@ const isSpanishData = (text) => {
 }
 
 const callGemini = async (inputText, systemInstruction) => {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    // SWITCH TO STABLE MODEL
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
     // Construct Prompt with Examples (Few-Shot) and Delimiters
     const finalPrompt = `
@@ -76,7 +77,7 @@ const callGemini = async (inputText, systemInstruction) => {
         generationConfig: {
             temperature: 0.1,
             maxOutputTokens: 200,
-            frequencyPenalty: 0.5, // Strategies 4: Penalize repetition
+            frequencyPenalty: 0.1, // Reduced for 1.5-flash compatibility
         }
     };
 
@@ -87,14 +88,24 @@ const callGemini = async (inputText, systemInstruction) => {
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) return null;
+        if (!response.ok) {
+            const errText = await response.text();
+            console.error(`❌ Gemini API Error (${response.status}):`, errText);
+            return null;
+        }
 
         const data = await response.json();
         let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+        // Log Safety Ratings if blocked
+        if (!text && data.promptFeedback) {
+            console.warn("⚠️ Gemini Safety Block:", data.promptFeedback);
+        }
+
         // Clean up common prefixes
         return text.replace(/^(Translation:|Output:|English:|Correction:)/i, "").trim();
     } catch (e) {
-        console.error("Gemini Call Error:", e);
+        console.error("Gemini Network Error:", e);
         return null;
     }
 };
@@ -333,8 +344,8 @@ wss.on('connection', (ws) => {
 
 // Health Check for Railway
 app.get('/', (req, res) => {
-    console.log("🚀 Server v1.3 (Guardrails REMOVED) Starting...");
-    res.send('Levita Audio Server is Running (Deepgram + Gemini) v1.3');
+    console.log("🚀 Server v1.4 (Gemini Stable 1.5) Starting...");
+    res.send('Levita Audio Server is Running (Deepgram + Gemini 1.5-flash) v1.4');
 });
 
 // --- YouTube API: Get Live Video ID ---
