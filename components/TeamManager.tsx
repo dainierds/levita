@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChurchSettings, ServicePlan, User, DayOfWeek } from '../types';
-import { Users, X, Calendar, User as UserIcon, Mic2, Music, Mic, ChevronRight, Edit2, CheckCircle2 } from 'lucide-react';
+import { Users, X, Calendar, User as UserIcon, Mic2, Music, Mic, ChevronRight, Edit2, CheckCircle2, MousePointer2 } from 'lucide-react';
 
 interface TeamManagerProps {
     settings: ChurchSettings;
@@ -14,7 +14,7 @@ interface TeamManagerProps {
 const ROLES = [
     { key: 'elder', label: 'Anciano', icon: UserIcon, role: 'ELDER' },
     { key: 'preacher', label: 'Predicador', icon: Mic2, role: 'PREACHER' },
-    { key: 'musicDirector', label: 'Música', icon: Music, role: 'MUSIC' },
+    { key: 'esMaster', label: 'Maestro de ES', icon: MousePointer2, role: 'ES_MASTER' }, // Updated from musicDirector
     { key: 'audioOperator', label: 'Audio', icon: Mic, role: 'AUDIO' },
 ];
 
