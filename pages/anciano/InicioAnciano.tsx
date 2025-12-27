@@ -31,12 +31,11 @@ const InicioAnciano: React.FC = () => {
     const activeEvent = upcomingEvents[currentEventIndex];
 
     // --- DATA FOR BUTTONS ---
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayStr = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
 
     // Next Turns (General - Top 2)
     const nextPlans = plans
-        .filter(p => !p.isActive && new Date(p.date) >= today)
+        .filter(p => !p.isActive && p.date >= todayStr)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 2);
 
