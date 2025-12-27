@@ -77,19 +77,80 @@ const isSpanishData = (text) => {
 }
 
 const callGemini = async (inputText, systemInstruction) => {
-    // SWITCH TO STABLE MODEL
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    // List of models to try in order of preference (Fallback Strategy v1.8)
+    const models = [
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-pro",
+        "gemini-pro", // Stable Legacy
+        "gemini-1.0-pro"
+    ];
 
-    // Construct Prompt with Examples (Few-Shot) and Delimiters
-    const finalPrompt = `
-    ${systemInstruction}
-    
-    <text_to_translate>
-    ${inputText}
-    </text_to_translate>
-    `;
+    for (const model of models) {
+        try {
+            // Construct Prompt
+            const finalPrompt = `
+            ${systemInstruction}
+            
+            <text_to_translate>
+            ${inputText}
+            </text_to_translate>
+            `;
 
-    const payload = {
+            const payload = {
+                contents: [{ parts: [{ text: finalPrompt }] }],
+                generationConfig: {
+                    temperature: 0.1,
+                    maxOutputTokens: 200,
+                    frequencyPenalty: 0.1,
+                }
+            };
+
+            // Fix: Allow reading VITE_ prefixed key
+            const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                // If 404 (Not Found) or 429 (Quota), try next model
+                if (response.status === 404 || response.status === 429) {
+                    console.warn(`⚠️ Model ${model} failed (${response.status}). Trying next...`);
+                    continue;
+                }
+                console.error(`❌ Gemini API Error (${model} - ${response.status}):`, errText);
+                return null; // Other errors (400, 401) are fatal
+            }
+
+            const data = await response.json();
+            let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+            if (!text && data.promptFeedback) {
+                console.warn(`⚠️ Safety Block (${model}):`, data.promptFeedback);
+                return null;
+            }
+
+            console.log(`✅ Success with ${model}`); // DEBUG
+            return text.replace(/^(Translation:|Output:|English:|Correction:)/i, "").trim();
+
+        } catch (e) {
+            console.error(`Network Error (${model}):`, e);
+            continue;
+        }
+    }
+
+    console.error("❌ ALL Models failed.");
+    return null;
+};
+
+// Start Commenting out old function body that is now replaced by the loop content above
+/*
+    const oldPayload = {
         contents: [{ parts: [{ text: finalPrompt }] }],
         generationConfig: {
             temperature: 0.1,
@@ -97,34 +158,35 @@ const callGemini = async (inputText, systemInstruction) => {
             frequencyPenalty: 0.1, // Reduced for 1.5-flash compatibility
         }
     };
+*/
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+try {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
 
-        if (!response.ok) {
-            const errText = await response.text();
-            console.error(`❌ Gemini API Error (${response.status}):`, errText);
-            return null;
-        }
-
-        const data = await response.json();
-        let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-        // Log Safety Ratings if blocked
-        if (!text && data.promptFeedback) {
-            console.warn("⚠️ Gemini Safety Block:", data.promptFeedback);
-        }
-
-        // Clean up common prefixes
-        return text.replace(/^(Translation:|Output:|English:|Correction:)/i, "").trim();
-    } catch (e) {
-        console.error("Gemini Network Error:", e);
+    if (!response.ok) {
+        const errText = await response.text();
+        console.error(`❌ Gemini API Error (${response.status}):`, errText);
         return null;
     }
+
+    const data = await response.json();
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    // Log Safety Ratings if blocked
+    if (!text && data.promptFeedback) {
+        console.warn("⚠️ Gemini Safety Block:", data.promptFeedback);
+    }
+
+    // Clean up common prefixes
+    return text.replace(/^(Translation:|Output:|English:|Correction:)/i, "").trim();
+} catch (e) {
+    console.error("Gemini Network Error:", e);
+    return null;
+}
 };
 
 
@@ -369,8 +431,8 @@ wss.on('connection', (ws) => {
 
 // Health Check for Railway
 app.get('/', (req, res) => {
-    console.log("🚀 Server v1.7 (FORCE RESTART) Starting...");
-    res.send('Levita Audio Server v1.7 - Force Restart');
+    console.log("🚀 Server v1.8 (Validation Fixed) Starting...");
+    res.send('Levita Audio Server v1.8 - Fallback Loop Active');
 });
 
 // --- YouTube API: Get Live Video ID ---
