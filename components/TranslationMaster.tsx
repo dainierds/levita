@@ -15,6 +15,7 @@ const TranslationMaster: React.FC = () => {
     const [level, setLevel] = useState(0);
     const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
     const [permissionError, setPermissionError] = useState('');
+    const [lastLog, setLastLog] = useState<string>(''); // DEBUG STATE
 
     // Audio Context Refs
     const audioContextRef = useRef<AudioContext | null>(null);
