@@ -49,14 +49,14 @@ const isSpanishData = (text) => {
     spanishCommons.forEach(word => { if (lowerText.includes(word)) spanCount++; });
     englishCommons.forEach(word => { if (lowerText.includes(word)) engCount++; });
 
-    // CRITERIOS MÁS ESTRICTOS:
+    // CRITERIOS MÁS ESTRICTOS (DISABLED FOR DEBUG v1.3)
     // 1. Si hay palabras en español y CERO palabras claras en inglés -> Es Español.
-    if (spanCount > 0 && engCount === 0) return true;
+    // if (spanCount > 0 && engCount === 0) return true;
 
     // 2. Si gana el español por margen -> Es Español.
-    if (spanCount > engCount) return true;
+    // if (spanCount > engCount) return true;
 
-    return false;
+    return false; // Always allow content in v1.3
 }
 
 const callGemini = async (inputText, systemInstruction) => {
@@ -130,18 +130,17 @@ const translateText = async (text, targetLanguage) => {
     // 2. EL GUARDRAIL (La Verificación)
     let failed = false;
 
-    // A. Chequeo de "Eco" (Repetición exacta o casi exacta)
-    // Si la salida es igual a la entrada (o muy similar), la IA falló y solo transcribió.
-    if (cleanOutput === cleanInput || (cleanOutput.length > 5 && cleanInput.includes(cleanOutput))) {
-        console.warn("⚠️ ALERTA: La IA repitió el input (Efecto Eco).");
-        failed = true;
-    }
+    // A. Chequeo de "Eco" (DISABLED for Debug v1.3)
+    // if (cleanOutput === cleanInput || (cleanOutput.length > 5 && cleanInput.includes(cleanOutput))) {
+    //     console.warn("⚠️ ALERTA: La IA repitió el input (Efecto Eco).");
+    //     failed = true;
+    // }
 
-    // B. Chequeo de idioma
-    if (translated && isSpanishData(translated)) {
-        console.warn("⚠️ ALERTA: La IA respondió en español.");
-        failed = true;
-    }
+    // B. Chequeo de idioma (DISABLED for Debug v1.3)
+    // if (translated && isSpanishData(translated)) {
+    //     console.warn("⚠️ ALERTA: La IA respondió en español.");
+    //     failed = true;
+    // }
 
     // SI FALLÓ ALGUNA COMPROBACIÓN -> REINTENTO
     if (failed) {
@@ -334,8 +333,8 @@ wss.on('connection', (ws) => {
 
 // Health Check for Railway
 app.get('/', (req, res) => {
-    console.log("🚀 Server v1.1.0 (Guardrails Added) Starting...");
-    res.send('Levita Audio Server is Running (Deepgram + Gemini) v1.1.0');
+    console.log("🚀 Server v1.3 (Guardrails REMOVED) Starting...");
+    res.send('Levita Audio Server is Running (Deepgram + Gemini) v1.3');
 });
 
 // --- YouTube API: Get Live Video ID ---
