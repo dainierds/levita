@@ -77,14 +77,14 @@ const isSpanishData = (text) => {
 }
 
 const callGemini = async (inputText, systemInstruction) => {
-    // List of models to try in order of preference (Optimized for User Account v1.9)
-    // Based on user provided allowed-models list
+    // List of models to try in order of preference (Optimized v1.9.2 - 2.5 Flash Priority)
+    // User requested specific usage of gemini-2.5-flash
     const models = [
-        "gemini-2.0-flash",       // Stable 2.0 (Available)
-        "gemini-2.5-flash",       // New Stable 2.5 (Available)
-        "gemini-1.5-flash-latest", // Confirmed Available
+        "gemini-2.5-flash",       // 🚀 Priority 1 (User Requested)
+        "gemini-2.0-flash",       // Fallback 1
+        "gemini-1.5-flash-latest", // Fallback 2
         "gemini-flash-latest",    // Alias
-        "gemini-pro",             // Legacy Fallback
+        "gemini-pro",             // Legacy
     ];
 
     for (const model of models) {
@@ -407,8 +407,8 @@ wss.on('connection', (ws) => {
 
 // Health Check for Railway
 app.get('/', (req, res) => {
-    console.log("🚀 Server v1.9.1 (Syntax Fix) Starting...");
-    res.send('Levita Audio Server v1.9.1 - Syntax Fix Applied');
+    console.log("🚀 Server v1.9.2 (Gemini 2.5 Flash) Starting...");
+    res.send('Levita Audio Server v1.9.2 - Powered by Gemini 2.5 Flash');
 });
 
 // --- YouTube API: Get Live Video ID ---
