@@ -229,6 +229,7 @@ const broadcast = (data, isBinary = false) => {
 const generateTTS = async (text) => {
     if (!text) return null;
     try {
+        console.log(`🔊 Generating TTS...`); // DEBUG
         const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
         // Using REST API for "chunked" TTS (best for sentence-based translation)
         const response = await deepgram.speak.request(
@@ -244,6 +245,7 @@ const generateTTS = async (text) => {
         if (stream) {
             // Convert stream to buffer
             const buffer = await streamToBuffer(stream);
+            console.log(`✅ TTS Ready (${buffer.length} bytes)`); // DEBUG
             return buffer;
         }
         return null;
@@ -264,8 +266,9 @@ const streamToBuffer = async (stream) => {
 
 // --- WebSocket Logic ---
 wss.on('connection', (ws) => {
-    console.log('Client connected to Translation Server');
+    console.log('🔌 Client Connected'); // DEBUG
     clients.add(ws);
+    let packetCount = 0; // Chismoso counter
 
     let deepgramLive = null;
     let isSource = false; // Flag to identify if this is the Admin/Mic Source
@@ -283,14 +286,14 @@ wss.on('connection', (ws) => {
 
         // Deepgram Events
         deepgramLive.on(LiveTranscriptionEvents.Open, () => {
-            console.log("Deepgram Connection OPEN");
+            console.log("🟢 Deepgram OPEN"); // DEBUG
         });
 
         deepgramLive.on(LiveTranscriptionEvents.Transcript, async (data) => {
             const transcript = data.channel.alternatives[0].transcript;
 
             if (transcript && data.is_final) {
-                console.log("🎤 Transcript Received:", transcript); // DEBUG
+                console.log(`🎤 Transcript: "${transcript}"`); // DEBUG
 
                 // 1. Send Original Transcript immediately (Broadcast Text)
                 const textMessage = {
@@ -300,9 +303,9 @@ wss.on('connection', (ws) => {
                 };
 
                 // Translate
-                console.log("🔄 Translator called for:", transcript.substring(0, 20) + "..."); // DEBUG
+                console.log(`🔄 Translating...`); // DEBUG
                 const translated = await translateText(transcript, 'en');
-                console.log("✅ Translation Result:", translated); // DEBUG
+                console.log(`✅ Translation: "${translated}"`); // DEBUG
 
                 // If filtered, send a placeholder so UI validates connection
                 textMessage.translation = translated || "[...]";
@@ -326,10 +329,10 @@ wss.on('connection', (ws) => {
 
         // ... Error handling ...
         deepgramLive.on(LiveTranscriptionEvents.Error, (err) => {
-            console.error("Deepgram Error:", err);
+            console.error("❌ Deepgram Error:", err);
         });
         deepgramLive.on(LiveTranscriptionEvents.Close, () => {
-            console.log("Deepgram Connection CLOSED");
+            console.log("🔴 Deepgram CLOSED");
         });
 
     } catch (err) {
@@ -340,8 +343,13 @@ wss.on('connection', (ws) => {
 
 
     ws.on('message', (message) => {
-        // Assume only the "Source" (Admin) sends audio data
-        // Visitors just listen
+        // Log incoming audio packets (The "Chismoso" part)
+        packetCount++;
+        if (packetCount % 50 === 0) {
+            const size = Buffer.byteLength(message);
+            console.log(`📥 Audio Packet #${packetCount} received (${size} bytes)`);
+        }
+
         if (deepgramLive && deepgramLive.getReadyState() === 1) {
             deepgramLive.send(message);
             isSource = true;
