@@ -41,7 +41,7 @@ const VisitorTranslationMonitor: React.FC<VisitorTranslationMonitorProps> = ({ t
         <div className="bg-[#2d313a]/50 p-6 rounded-[2.5rem] border border-slate-700/50">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-white flex items-center gap-2 text-sm">
-                    <Globe size={16} className="text-green-400" /> Vista del Visitante (Monitor)
+                    <Globe size={16} className="text-green-400" /> Vista del Visitante (Monitor v1.2)
                 </h3>
                 <span className="text-[10px] font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded-full uppercase">
                     Simulación Móvil

@@ -277,14 +277,14 @@ wss.on('connection', (ws) => {
                 const translated = await translateText(transcript, 'en');
                 console.log("✅ Translation Result:", translated); // DEBUG
 
-                textMessage.translation = translated || "";
+                // If filtered, send a placeholder so UI validates connection
+                textMessage.translation = translated || "[...]";
 
                 // Broadcast JSON update to everyone (Admin + Visitors)
-                // ALWAYS broadcast so Admin sees the Raw Transcript
                 broadcast(JSON.stringify(textMessage));
 
                 if (!translated) {
-                    console.warn("⚠️ Translation filtered (Guardrail), but sent Raw Transcript.");
+                    console.warn("⚠️ Translation filtered (Spanish/Echo), sent '[...]' placeholder.");
                 }
 
                 // 2. Generate Audio (TTS) -> Broadcast Binary
