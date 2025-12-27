@@ -162,72 +162,23 @@ const MusicMinistryApp: React.FC = () => {
     }, [isAuthenticated, tenant?.id]);
 
     // Unified Banners (Derived State)
-    // ... (rest of component) ...
-
-    {/* --- TAB 2: ROSTER --- */ }
-    {
-        activeTab === 'roster' && (
-            <div className="space-y-4">
-                {upcomingShifts.map((shift) => {
-                    const dateInfo = formatDate(shift.date || '');
-                    return (
-                        <div key={shift.id} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                            <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-50">
-                                <div>
-                                    <h3 className="font-black text-slate-800 capitalize text-lg">{dateInfo.weekday}</h3>
-                                    <p className="text-xs font-bold text-purple-500">{dateInfo.full}</p>
-                                </div>
-                                <div className="bg-purple-50 text-purple-600 px-3 py-1 rounded-full text-xs font-bold">
-                                    Turno
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                {shift.members?.preacher && (
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                                            <Mic2 size={18} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Predicador</p>
-                                            <p className="font-bold text-slate-800">{resolveName(shift.members.preacher)}</p>
-                                        </div>
-                                    </div>
-                                )}
-                                {shift.members?.elder && (
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                            <User size={18} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Anciano de Turno</p>
-                                            <p className="font-bold text-slate-800">{resolveName(shift.members.elder)}</p>
-                                        </div>
-                                    </div>
-                                )}
-                                {shift.members?.musicDirector && (
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
-                                            <Music size={18} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Director Música</p>
-                                            <p className="font-bold text-slate-800">{resolveName(shift.members.musicDirector)}</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )
-                })}
-                {upcomingShifts.length === 0 && (
-                    <div className="text-center p-12 bg-white rounded-3xl border border-dashed border-slate-200">
-                        <p className="text-slate-400 font-medium">No hay turnos próximos. Asegúrate de configurar los turnos en el Panel de Administración → Miembros → Turnos.</p>
-                    </div>
-                )}
-            </div>
-        )
-    }
+    const combinedBanners = [
+        // 1. Welcome Card (Always First)
+        {
+            type: 'WELCOME',
+            id: 'welcome-card',
+            bannerGradient: 'from-indigo-600 via-purple-600 to-pink-500'
+        },
+        // 2. Events (Mapped)
+        ...events.map(e => ({
+            type: 'EVENT',
+            id: e.id,
+            title: e.title,
+            date: e.date,
+            time: e.time || 'N/A',
+            bannerGradient: 'from-blue-600 via-cyan-600 to-teal-500' // Different gradient for events
+        }))
+    ];
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
