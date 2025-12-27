@@ -145,15 +145,22 @@ const MusicMinistryApp: React.FC = () => {
                 const plans = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any)); // Type as any temporarily to map to view
                 const todayStr = new Date().toLocaleDateString('en-CA');
 
-                const upcoming = plans
-                    .filter((p: any) => !p.isActive && p.date >= todayStr)
-                    .sort((a: any, b: any) => a.date.localeCompare(b.date))
-                    .slice(0, 2);
+                // Strict Filtering: Only show plans that match configured meeting days
+                const allowedDays = (tenant?.settings?.meetingDays || ['Domingo']).map((d: string) => d.toLowerCase());
+
+                const validPlans = upcoming.filter((p: any) => {
+                    const pDate = new Date(p.date + 'T12:00:00');
+                    const pDayName = pDate.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
+                    return allowedDays.some((allowed: string) => pDayName.includes(allowed.split('á').join('a').substring(0, 3)));
+                });
+
+                // Fallback or use valid
+                const displayPlans = validPlans.length > 0 ? validPlans : upcoming;
 
                 // Map ServicePlan to structure expected by view (or update view)
                 // View expects: date, members: { preacher, elder, musicDirector }
                 // ServicePlan has: date, team: { preacher, elder, musicDirector }
-                const mappedShifts = upcoming.map((p: any) => ({
+                const mappedShifts = displayPlans.map((p: any) => ({
                     id: p.id,
                     date: p.date,
                     members: p.team
