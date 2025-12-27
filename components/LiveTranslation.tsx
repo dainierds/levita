@@ -114,10 +114,10 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
         try {
           const parsed = JSON.parse(data);
           if (parsed.type === 'TRANSCRIPTION' && parsed.translation) {
-            setTranslation(parsed.translation);
+            setTranslation(parsed.translation || "");
             setSegments(prev => {
               // Keep last 5 segments to avoid huge DOM
-              const newSegments = [...prev, { original: parsed.original, translation: parsed.translation }];
+              const newSegments = [...prev, { original: parsed.original, translation: parsed.translation || "" }];
               return newSegments.slice(-5);
             });
           }
