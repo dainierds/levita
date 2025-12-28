@@ -142,29 +142,37 @@ const MusicMinistryApp: React.FC = () => {
             );
 
             const unsubscribePlans = onSnapshot(plansQ, (snapshot) => {
-                const plans = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any)); // Type as any temporarily to map to view
-                const todayStr = new Date().toLocaleDateString('en-CA');
+                const plans = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+
+                // Get Today Local Midnight
+                const now = new Date();
+                const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
                 const upcoming = plans
-                    .filter((p: any) => !p.isActive && p.date >= todayStr)
-                    .sort((a: any, b: any) => a.date.localeCompare(b.date))
-                    .slice(0, 2);
+                    .filter((p: any) => {
+                        if (p.isActive) return true;
+                        // Parse Plan Date (YYYY-MM-DD) to Local Midnight
+                        const [y, m, d] = p.date.split('-').map(Number);
+                        const planDate = new Date(y, m - 1, d);
+                        return planDate >= todayLocal;
+                    })
+                    .sort((a: any, b: any) => a.date.localeCompare(b.date));
 
                 // Strict Filtering: Only show plans that match configured meeting days
                 const allowedDays = (tenant?.settings?.meetingDays || ['Domingo']).map((d: string) => d.toLowerCase());
 
                 const validPlans = upcoming.filter((p: any) => {
-                    const pDate = new Date(p.date + 'T12:00:00');
+                    const [y, m, d] = p.date.split('-').map(Number);
+                    const pDate = new Date(y, m - 1, d);
+                    // Fix: weekday calculation from local date
                     const pDayName = pDate.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
                     return allowedDays.some((allowed: string) => pDayName.includes(allowed.split('á').join('a').substring(0, 3)));
                 });
 
-                // Fallback or use valid
-                const displayPlans = validPlans.length > 0 ? validPlans : upcoming;
+                // Take top 2 from valid, or fallback to upcoming
+                const displayPlans = (validPlans.length > 0 ? validPlans : upcoming).slice(0, 2);
 
-                // Map ServicePlan to structure expected by view (or update view)
-                // View expects: date, members: { preacher, elder, musicDirector }
-                // ServicePlan has: date, team: { preacher, elder, musicDirector }
+                // Map ServicePlan to structure expected by view
                 const mappedShifts = displayPlans.map((p: any) => ({
                     id: p.id,
                     date: p.date,
@@ -203,6 +211,17 @@ const MusicMinistryApp: React.FC = () => {
             bannerGradient: 'from-blue-600 via-cyan-600 to-teal-500' // Different gradient for events
         }))
     ];
+
+    // Auto-Scroll Effect
+    useEffect(() => {
+        if (combinedBanners.length <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentBannerIndex(prev => (prev + 1) % combinedBanners.length);
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [combinedBanners.length]);
 
     const getGroupLabel = (count: number, service: number) => {
         let type = '';
@@ -533,8 +552,8 @@ const MusicMinistryApp: React.FC = () => {
                                             const members = shift.members || {};
                                             const roleMap = [
                                                 { key: 'elder', label: 'Anciano', icon: User, color: 'text-purple-500' },
+                                                { key: 'sabbathSchoolTeacher', label: 'Maestro de ES', icon: Users, color: 'text-green-500' },
                                                 { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-indigo-500' },
-                                                { key: 'esMaster', label: 'Maestro de ES', icon: Users, color: 'text-green-500' },
                                                 { key: 'audioOperator', label: 'Audio', icon: Mic, color: 'text-orange-500' },
                                             ];
 
