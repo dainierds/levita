@@ -29,7 +29,8 @@ const BoardProjection: React.FC = () => {
 
     const { options, totalVotesCast, presentMemberIds, status, results } = session;
     const totalPresent = presentMemberIds.length;
-    const isClosed = status === 'CLOSED';
+    // Auto-reveal: If closed OR if everyone has voted
+    const isRevealed = status === 'CLOSED' || (status === 'OPEN' && totalVotesCast === totalPresent && totalPresent > 0);
 
     // Animation: If closed, bars height = pct. If open, height = 0.
 
@@ -41,8 +42,8 @@ const BoardProjection: React.FC = () => {
             {/* HEADER */}
             <header className="relative z-10 flex justify-between items-start mb-16">
                 <div>
-                    <span className="bg-indigo-600 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-widest shadow-lg shadow-indigo-900/50">
-                        Votación en Curso
+                    <span className={`px-4 py-1 rounded-full text-sm font-bold uppercase tracking-widest shadow-lg shadow-indigo-900/50 ${isRevealed ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white'}`}>
+                        {isRevealed ? 'Resultados Finales' : 'Votación en Curso'}
                     </span>
                     <h1 className="text-6xl font-black mt-6 leading-tight max-w-4xl tracking-tight">
                         {session.title}
@@ -69,12 +70,12 @@ const BoardProjection: React.FC = () => {
                 {options.map((opt) => {
                     // Logic: Even if OPEN, we render columns but height 0.
                     // If CLOSED, we calculate height.
-                    const count = isClosed ? (results?.[opt.id] || 0) : 0;
+                    const count = isRevealed ? (results?.[opt.id] || 0) : 0;
                     // For height calc, assume max possible is totalPresent (100% height)
                     // Or relative to highest vote? Relative to totalPresent is safer for "Majority" visualization.
                     const percentage = totalPresent > 0 ? (count / totalPresent) * 100 : 0;
                     // Min height for label visibility
-                    const displayHeight = isClosed ? Math.max(percentage, 5) : 5; // 5% min
+                    const displayHeight = isRevealed ? Math.max(percentage, 5) : 5; // 5% min
 
                     const barColor = opt.color === 'green' ? 'bg-green-500' :
                         opt.color === 'red' ? 'bg-red-500' :
@@ -83,7 +84,7 @@ const BoardProjection: React.FC = () => {
                     return (
                         <div key={opt.id} className="flex-1 h-[60vh] flex flex-col justify-end group">
                             {/* DATA LABEL (Only Visible if Closed) */}
-                            <div className={`text-center mb-4 transition-all duration-1000 ${isClosed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                            <div className={`text-center mb-4 transition-all duration-1000 ${isRevealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                                 <span className="text-5xl font-black block">{count}</span>
                                 <span className="text-slate-400 font-bold">{Math.round(percentage)}%</span>
                             </div>
@@ -92,7 +93,7 @@ const BoardProjection: React.FC = () => {
                             <div className="relative w-full bg-slate-800/50 rounded-t-3xl overflow-hidden backdrop-blur-sm border-x border-t border-white/5 mx-auto max-w-[200px]" style={{ height: '100%' }}>
                                 <div
                                     className={`absolute bottom-0 w-full rounded-t-3xl transition-all duration-[2000ms] ease-out ${barColor} shadow-[0_0_40px_rgba(0,0,0,0.3)]`}
-                                    style={{ height: isClosed ? `${percentage}%` : '0%' }}
+                                    style={{ height: isRevealed ? `${percentage}%` : '0%' }}
                                 >
                                     {/* Gloss Effect */}
                                     <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/20 to-transparent" />

@@ -64,7 +64,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
 
     return (
         <div className="min-h-screen bg-background flex text-slate-800 font-sans selection:bg-indigo-100">
-            {role !== 'ELDER' && (
+            {role !== 'ELDER' && role !== 'BOARD' && (
                 <Sidebar
                     currentView={currentView}
                     setCurrentView={setCurrentView}
@@ -74,17 +74,20 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 />
             )}
 
-            <main className={`flex-1 relative ${role !== 'ELDER' ? 'md:ml-64' : 'bg-slate-50 min-h-screen'}`}>
+            <main className={`flex-1 relative ${role !== 'ELDER' && role !== 'BOARD' ? 'md:ml-64' : 'bg-slate-50 min-h-screen'}`}>
                 {/* Mobile Header - Matches Backup */}
                 <div className="md:hidden p-4 flex justify-between items-center bg-white shadow-sm sticky top-0 z-40">
                     <div className="flex items-center gap-4">
                         <h1 className="font-bold text-xl">LEVITA</h1>
                     </div>
+                    {/* Hide NotificationBell for BOARD if requested, but user said 'solo notificaciones' is allowed? 
+                        User said: "no tiene opcion de salir, solo de las notificaciones" -> So Bell stays. 
+                    */}
                     <NotificationBell />
                 </div>
 
-                {/* Desktop Top Bar - Hide for Elder */}
-                {role !== 'ELDER' && (
+                {/* Desktop Top Bar - Hide for Elder AND Board (Board uses mobile header mostly, but if desktop, hide clutter) */}
+                {role !== 'ELDER' && role !== 'BOARD' && (
                     <div className="hidden md:flex absolute top-6 right-8 z-50 items-center gap-4">
 
                         {/* LIVE TOGGLE */}
