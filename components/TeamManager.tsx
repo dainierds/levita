@@ -158,7 +158,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, plans, saveP
                                 <div className="p-8 grid grid-cols-1 gap-6">
                                     {ROLES.map(role => {
                                         const assignedName = plan ? (plan.team as any)[role.key] : '';
-                                        const roleUsers = users.filter(u => u.role === role.role);
+                                        const roleUsers = users.filter(u => u.role === role.role || u.secondaryRoles?.includes(role.role as any));
 
                                         return (
                                             <div key={role.key} className="space-y-2">

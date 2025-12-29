@@ -39,7 +39,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
 
     // Filter only MUSIC role users and sort alphabetically
     const musicUsers = users
-        .filter(u => u.role === 'MUSIC')
+        .filter(u => u.role === 'MUSIC' || u.secondaryRoles?.includes('MUSIC'))
         .sort((a, b) => a.name.localeCompare(b.name));
 
     useEffect(() => {

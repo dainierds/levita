@@ -196,7 +196,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
                         <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                             {ROLES_CONFIG.map(role => {
                                 const assignedName = currentService.plan ? (currentService.plan.team as any)[role.key] : '';
-                                const roleUsers = users.filter(u => u.role === role.role);
+                                const roleUsers = users.filter(u => u.role === role.role || u.secondaryRoles?.includes(role.role as any));
                                 // Sort A-Z
                                 roleUsers.sort((a, b) => a.name.localeCompare(b.name));
 
