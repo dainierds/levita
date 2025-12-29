@@ -76,13 +76,12 @@ const VisitorTranslationMonitor: React.FC<VisitorTranslationMonitorProps> = ({ t
                             </span>
 
                             <div
-                                reference={scrollRef} // Fix: Use ref attribute if supported or useRef directly on element
                                 ref={scrollRef}
-                                className="flex-1 overflow-y-auto space-y-4 no-scrollbar mask-fade-top"
+                                className="flex-1 overflow-y-auto space-y-6 no-scrollbar mask-fade-top pb-4"
                                 style={{ maxHeight: '300px' }}
                             >
                                 {segments.length > 0 ? segments.map((seg, i) => (
-                                    <div key={i} className={`leading-relaxed transition-all duration-500 ${i === segments.length - 1 ? 'text-lg font-bold opacity-100 scale-100' : 'text-sm opacity-60 scale-95 origin-left'}`}>
+                                    <div key={i} className={`leading-relaxed break-words transition-all duration-500 ${i === segments.length - 1 ? 'text-xl font-bold opacity-100 text-white' : 'text-base font-medium opacity-60 text-indigo-100'}`}>
                                         {seg.translation || <span className="opacity-0">...</span>}
                                     </div>
                                 )) : (
