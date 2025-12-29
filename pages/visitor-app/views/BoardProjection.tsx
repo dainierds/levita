@@ -32,6 +32,35 @@ const BoardProjection: React.FC = () => {
     // Auto-reveal: If closed OR if everyone has voted
     const isRevealed = status === 'CLOSED' || (status === 'OPEN' && totalVotesCast === totalPresent && totalPresent > 0);
 
+    // Calculate Winner Color
+    let badgeColor = 'bg-indigo-600';
+    if (isRevealed && results) {
+        let maxVotes = -1;
+        let winningOptionId = '';
+
+        // Find winner
+        options.forEach(opt => {
+            const votes = results[opt.id] || 0;
+            if (votes > maxVotes) {
+                maxVotes = votes;
+                winningOptionId = opt.id;
+            } else if (votes === maxVotes) {
+                winningOptionId = 'tie'; // Tie
+            }
+        });
+
+        if (winningOptionId && winningOptionId !== 'tie') {
+            const winner = options.find(o => o.id === winningOptionId);
+            if (winner) {
+                if (winner.color === 'red') badgeColor = 'bg-red-600 shadow-red-900/50';
+                else if (winner.color === 'green') badgeColor = 'bg-green-600 shadow-green-900/50';
+                else badgeColor = 'bg-slate-500'; // Default for others
+            }
+        } else if (winningOptionId === 'tie') {
+            badgeColor = 'bg-amber-500 shadow-amber-900/50'; // Tie color
+        }
+    }
+
     // Animation: If closed, bars height = pct. If open, height = 0.
 
     return (
@@ -42,7 +71,7 @@ const BoardProjection: React.FC = () => {
             {/* HEADER */}
             <header className="relative z-10 flex justify-between items-start mb-16">
                 <div>
-                    <span className={`px-4 py-1 rounded-full text-sm font-bold uppercase tracking-widest shadow-lg shadow-indigo-900/50 ${isRevealed ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white'}`}>
+                    <span className={`px-4 py-1 rounded-full text-sm font-bold uppercase tracking-widest shadow-lg ${isRevealed ? badgeColor : 'bg-indigo-600 shadow-indigo-900/50'} text-white transition-colors duration-1000`}>
                         {isRevealed ? 'Resultados Finales' : 'Votación en Curso'}
                     </span>
                     <h1 className="text-6xl font-black mt-6 leading-tight max-w-4xl tracking-tight">
