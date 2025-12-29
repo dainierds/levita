@@ -51,7 +51,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
     .filter(t => {
       // Filter out teams on days that don't have a recurring meeting time (unless a Plan exists, handled separately)
       if (!t.date || !settings?.meetingTimes) return false;
-      const dateObj = new Date(t.date);
+
+      // Parse as LOCAL date to avoid UTC shift
+      const [y, m, d] = t.date.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+
       const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
       const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
       // Only include if this day is a configured meeting day
@@ -59,7 +63,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
     })
     .map(t => {
       // Find recurrent time for this day of week
-      const dateObj = new Date(t.date!);
+      const [y, m, d] = t.date!.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+
       const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
       const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
       const recTime = settings?.meetingTimes?.[capitalizedDay as any] || '10:00';
