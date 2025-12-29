@@ -94,7 +94,13 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
     // Option Management
     const addOption = () => {
         const id = Math.random().toString(36).substr(2, 5);
-        setDraftOptions([...draftOptions, { id, label: '', color: 'blue' }]);
+        const palette = ['blue', 'purple', 'orange', 'pink', 'cyan', 'emerald', 'indigo'];
+        // Start from index 0 if it's the first added option (length 0), etc.
+        // But note: binary mode uses green/red. Selection mode starts empty or with 2?
+        // If we reset, draftOptions might carry over. 
+        // Let's just cycle based on current length.
+        const color = palette[draftOptions.length % palette.length];
+        setDraftOptions([...draftOptions, { id, label: '', color }]);
     };
 
     const updateOption = (idx: number, field: string, value: string) => {

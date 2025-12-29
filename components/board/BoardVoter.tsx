@@ -153,11 +153,20 @@ const BoardVoter: React.FC<BoardVoterProps> = ({ user, tenantId }) => {
                         key={opt.id}
                         onClick={() => handleVote(opt.id)}
                         disabled={loading}
-                        className={`w-full flex-1 rounded-3xl shadow-lg border-b-8 transform transition-all duration-100 active:scale-95 active:border-b-0 active:translate-y-2 flex flex-col items-center justify-center gap-2 ${opt.color === 'green'
-                                ? 'bg-green-500 border-green-700 text-white shadow-green-200'
-                                : opt.color === 'red'
-                                    ? 'bg-red-500 border-red-700 text-white shadow-red-200'
-                                    : 'bg-white border-slate-300 text-slate-700'
+                        className={`w-full flex-1 rounded-3xl shadow-xl border-b-[12px] transform transition-all duration-75 active:border-b-0 active:translate-y-[12px] active:shadow-none flex flex-col items-center justify-center gap-2 ${(() => {
+                                switch (opt.color) {
+                                    case 'green': return 'bg-green-500 border-green-700 text-white shadow-green-200';
+                                    case 'red': return 'bg-red-500 border-red-700 text-white shadow-red-200';
+                                    case 'blue': return 'bg-blue-500 border-blue-700 text-white shadow-blue-200';
+                                    case 'purple': return 'bg-purple-500 border-purple-700 text-white shadow-purple-200';
+                                    case 'orange': return 'bg-orange-500 border-orange-700 text-white shadow-orange-200';
+                                    case 'pink': return 'bg-pink-500 border-pink-700 text-white shadow-pink-200';
+                                    case 'cyan': return 'bg-cyan-500 border-cyan-700 text-white shadow-cyan-200';
+                                    case 'emerald': return 'bg-emerald-500 border-emerald-700 text-white shadow-emerald-200';
+                                    case 'indigo': return 'bg-indigo-500 border-indigo-700 text-white shadow-indigo-200';
+                                    default: return 'bg-white border-slate-300 text-slate-700';
+                                }
+                            })()
                             }`}
                     >
                         <span className="text-5xl font-black tracking-tight drop-shadow-md">{opt.label}</span>
