@@ -134,7 +134,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 )}
 
                 <div className="max-w-7xl mx-auto w-full">
-                    {currentView === 'dashboard' && role === 'ADMIN' && (
+                    {currentView === 'dashboard' && (role === 'ADMIN' || role === 'BOARD') && (
                         <Dashboard setCurrentView={setCurrentView} role={role} settings={settings} users={users} />
                     )}
 
@@ -146,7 +146,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                         <ServicePlanner tier={currentTenantTier} users={users} />
                     )}
 
-                    {currentView === 'events' && role === 'ADMIN' && (
+                    {currentView === 'events' && (role === 'ADMIN' || role === 'BOARD') && (
                         <EventsAdmin events={events} tier={currentTenantTier} />
                     )}
 
@@ -194,7 +194,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                         <PrayerRequestsAdmin />
                     )}
 
-                    {currentView === 'statistics' && (role === 'ADMIN') && (
+                    {currentView === 'statistics' && (role === 'ADMIN' || role === 'BOARD') && (
                         <div className="p-8 max-w-full mx-auto">
                             <StatisticsPanel plans={plans} />
                         </div>

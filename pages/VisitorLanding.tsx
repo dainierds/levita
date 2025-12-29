@@ -316,6 +316,21 @@ const VisitorLanding: React.FC = () => {
                             </div>
                         </button>
 
+                        {/* Church Board */}
+                        <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Junta de Iglesia', 'junta@levita.com'); }}
+                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-indigo-200 transition-all flex items-center gap-6"
+                        >
+                            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
+                                <Users size={32} />
+                            </div>
+                            <div className="text-left">
+                                <h3 className="text-xl font-bold text-slate-800">Junta de Iglesia</h3>
+                                <p className="text-sm text-slate-400">Acceso a Panel y Reportes</p>
+                            </div>
+                        </button>
+
                         {/* Admin */}
                         <button
                             type="button"

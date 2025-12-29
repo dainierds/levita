@@ -51,6 +51,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
     case 'ELDER':
       allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics'];
       break;
+    case 'BOARD':
+      // Board sees Dashboard, Planner, Team, Roster, Statistics, Events
+      allowedIds = ['dashboard', 'planner', 'team', 'roster', 'statistics', 'events'];
+      break;
     case 'AUDIO':
     case 'MUSIC':
     case 'PREACHER':

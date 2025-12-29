@@ -1,4 +1,4 @@
-export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'ELDER' | 'PREACHER' | 'MUSIC' | 'AUDIO' | 'TECH' | 'MEMBER' | 'VISITOR' | 'TEACHER';
+export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'ELDER' | 'PREACHER' | 'MUSIC' | 'AUDIO' | 'TECH' | 'MEMBER' | 'VISITOR' | 'TEACHER' | 'BOARD';
 
 export type EventType = 'SERVICE' | 'MEETING' | 'WORKSHOP' | 'OTHER';
 
