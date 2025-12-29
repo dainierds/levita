@@ -121,39 +121,65 @@ const BoardVoter: React.FC<BoardVoterProps> = ({ user, tenantId }) => {
         );
     }
 
-    // 5. VOTING OPEN
+    // 5. Session Closed (But not old enough to be "Waiting" and User didn't vote)
+    if (session.status === 'CLOSED') {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-8 text-center">
+                <div className="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 mb-6">
+                    <Lock size={40} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-800 mb-2">Votación Finalizada</h2>
+                <p className="text-slate-500">La sesión ha sido cerrada por el administrador.</p>
+                {!hasVoted && (
+                    <p className="text-amber-600 text-xs font-bold mt-4 bg-amber-50 px-3 py-1 rounded-full">
+                        No registraste tu voto
+                    </p>
+                )}
+            </div>
+        );
+    }
+
+    // 6. VOTING OPEN (Mobile Optimized)
     return (
-        <div className="min-h-screen bg-slate-50 p-6 flex flex-col justify-center">
+        <div className="min-h-[80vh] flex flex-col justify-center p-4 max-w-md mx-auto">
             <header className="mb-8 text-center">
-                <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-black uppercase tracking-wider mb-4 animate-pulse">
-                    Votación Activa
-                </span>
-                <h1 className="text-2xl font-black text-slate-900 leading-tight">
+                <h1 className="text-3xl font-black text-slate-900 leading-tight mb-2">
                     {session.title}
                 </h1>
                 {session.description && (
-                    <p className="text-slate-500 mt-2 text-sm">{session.description}</p>
+                    <p className="text-slate-500 text-sm">{session.description}</p>
                 )}
             </header>
 
-            <div className="space-y-4 max-w-md mx-auto w-full">
+            <div className="space-y-3 w-full flex-1 flex flex-col justify-center">
                 {session.options.map((opt) => (
                     <button
                         key={opt.id}
                         onClick={() => handleVote(opt.id)}
                         disabled={loading}
-                        className={`w-full p-6 rounded-2xl shadow-sm border-2 transition-all duration-200 group active:scale-95 ${opt.color === 'green' ? 'bg-white border-green-100 hover:border-green-500 hover:bg-green-50 text-green-700' :
-                                opt.color === 'red' ? 'bg-white border-red-100 hover:border-red-500 hover:bg-red-50 text-red-700' :
-                                    'bg-white border-slate-100 hover:border-slate-400 hover:bg-slate-50 text-slate-700'
+                        className={`w-full py-5 px-6 rounded-2xl shadow-sm border-2 transform transition-all duration-100 active:scale-95 flex items-center justify-between ${opt.color === 'green' ? 'bg-white border-green-100 text-green-700 shadow-green-100/50' :
+                                opt.color === 'red' ? 'bg-white border-red-100 text-red-700 shadow-red-100/50' :
+                                    'bg-white border-slate-100 text-slate-700 shadow-slate-200/50'
                             }`}
                     >
-                        <span className="text-xl font-bold block">{opt.label}</span>
+                        <span className="text-xl font-bold">{opt.label}</span>
+                        <div className={`w-6 h-6 rounded-full border-4 ${opt.color === 'green' ? 'border-green-100 bg-green-500' :
+                                opt.color === 'red' ? 'border-red-100 bg-red-500' :
+                                    'border-slate-100 bg-slate-300'
+                            }`} />
                     </button>
                 ))}
             </div>
 
+            <div className="mt-8 text-center">
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    En vivo • Voto Secreto
+                </p>
+            </div>
+
             {error && (
-                <div className="mt-6 p-4 bg-red-50 text-red-600 text-center rounded-xl text-sm font-bold animate-in shake">
+                <div className="fixed bottom-6 left-6 right-6 p-4 bg-red-500 text-white text-center rounded-xl shadow-xl font-bold animate-in slide-in-from-bottom-4 z-50">
                     {error}
                 </div>
             )}

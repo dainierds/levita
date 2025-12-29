@@ -396,7 +396,7 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
                         )}
 
                         <a
-                            href={`/projection/${tenantId}`}
+                            href={`/projection/board/${tenantId}`}
                             target="_blank"
                             className="px-4 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-colors flex items-center gap-2"
                             title="Abrir Vista Proyector"
