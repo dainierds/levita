@@ -48,12 +48,21 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
   // Or just merge them and let Plan take precedence if dupe date.
   const futureTeams = (settings?.teams || [])
     .filter(t => t.date && new Date(t.date) >= today)
+    .filter(t => {
+      // Filter out teams on days that don't have a recurring meeting time (unless a Plan exists, handled separately)
+      if (!t.date || !settings?.meetingTimes) return false;
+      const dateObj = new Date(t.date);
+      const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+      const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+      // Only include if this day is a configured meeting day
+      return Object.keys(settings.meetingTimes).includes(capitalizedDay);
+    })
     .map(t => {
       // Find recurrent time for this day of week
       const dateObj = new Date(t.date!);
       const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
       const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-      const recTime = settings?.meetingTimes?.[capitalizedDay] || '10:00'; // Default if not found
+      const recTime = settings?.meetingTimes?.[capitalizedDay as any] || '10:00';
 
       return {
         dateStr: t.date!,
