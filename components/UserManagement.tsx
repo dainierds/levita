@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { User, Role, SubscriptionTier, TIER_LIMITS } from '../types';
-import { UserPlus, Link, Shield, CheckCircle, Copy, Check, Trash2, AlertTriangle, Clock, X, User as UserIcon, BookOpen, Users } from 'lucide-react'; // Added Clock, X, BookOpen, Users
-import { createInvitation, getPendingInvitations, deleteInvitation } from '../services/invitationService'; // Added imports
+import { UserPlus, Link, Shield, CheckCircle, Copy, Check, Trash2, AlertTriangle, Clock, X, User as UserIcon, BookOpen, Users, Edit2 } from 'lucide-react';
+import { createInvitation, getPendingInvitations, deleteInvitation } from '../services/invitationService';
 import { useNotification } from './NotificationSystem';
 import { db } from '../services/firebase';
-import { doc, deleteDoc, setDoc } from 'firebase/firestore';
-import { Invitation } from '../types'; // Check if imported
+import { doc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { Invitation } from '../types';
 
 interface UserManagementProps {
   users: User[];
@@ -30,7 +30,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
   const [invitationLink, setInvitationLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const [pendingInvitations, setPendingInvitations] = useState<Invitation[]>([]); // New state
+  const [pendingInvitations, setPendingInvitations] = useState<Invitation[]>([]);
+
+  // Multi-Role Editing State
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const { addNotification } = useNotification();
 
@@ -74,17 +77,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
     setInvitationLink('');
 
     try {
-      // Use current user's tenantId. If not set (e.g. Super Admin or mock), fallback to 'default'
       const tenantId = currentUser.tenantId || 'default';
 
-      // Special handling for roles without interface (PREACHER)
-      // These roles don't need an invitation link, they are just created directly for rostering.
       if (['PREACHER', 'TEACHER'].includes(formData.role)) {
         const newUserId = `local-${Math.random().toString(36).substr(2, 9)}`;
         const newUser: User = {
           id: newUserId,
           name: formData.name,
-          email: '', // No email required for these roles
+          email: '',
           role: formData.role,
           tenantId,
           status: 'ACTIVE'
@@ -92,22 +92,18 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
 
         await setDoc(doc(db, 'users', newUserId), newUser);
         addNotification('success', 'Usuario Agregado', `${formData.name} ha sido añadido al equipo.`);
-        setFormData(prev => ({ ...prev, name: '' })); // Keep role, reset name
+        setFormData(prev => ({ ...prev, name: '' }));
         setIsLoading(false);
         return;
       }
 
       const code = await createInvitation(tenantId, formData.role, formData.name, currentUser.id);
-
-      // Construct the full link (assuming app is hosted at root or /app)
-      // In dev: http://localhost:3000/join?code=...
       const origin = window.location.origin;
       const link = `${origin}/join?code=${code}`;
 
       setInvitationLink(link);
       addNotification('success', 'Invitación Generada', 'Copia el enlace y envíalo al nuevo usuario.');
 
-      // Refresh list
       const invites = await getPendingInvitations(tenantId);
       setPendingInvitations(invites);
 
@@ -130,9 +126,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
 
     try {
       await deleteDoc(doc(db, 'users', userId));
-      // Optimistic update not strictly needed as onSnapshot in App.tsx will handle it, 
-      // but setUsers is passed so we can use it if we want instant feedback before server sync.
-      // However, since useUsers in App.tsx controls the source of truth, we rely on that.
       addNotification('success', 'Usuario Eliminado', 'El usuario ha sido removido correctamente.');
       setUserToDelete(null);
     } catch (error) {
@@ -140,6 +133,37 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
       addNotification('error', 'Error', 'No se pudo eliminar el usuario.');
     }
   };
+
+  // --- Multi-Role Logic ---
+  const toggleSecondaryRole = (roleKey: string) => {
+    if (!editingUser) return;
+    const current = editingUser.secondaryRoles || [];
+    const role = roleKey as Role;
+
+    // Don't allow adding the primary role again
+    if (role === editingUser.role) return;
+
+    if (current.includes(role)) {
+      setEditingUser({ ...editingUser, secondaryRoles: current.filter(r => r !== role) });
+    } else {
+      setEditingUser({ ...editingUser, secondaryRoles: [...current, role] });
+    }
+  };
+
+  const handleSaveRoles = async () => {
+    if (!editingUser) return;
+    try {
+      await updateDoc(doc(db, 'users', editingUser.id), {
+        secondaryRoles: editingUser.secondaryRoles || []
+      });
+      addNotification('success', 'Roles Actualizados', `Permisos de ${editingUser.name} guardados.`);
+      setEditingUser(null);
+    } catch (error) {
+      console.error("Error updating roles:", error);
+      addNotification('error', 'Error', 'No se pudieron guardar los cambios.');
+    }
+  };
+
 
   return (
     <div className="p-4 md:p-8 max-w-full mx-auto space-y-8">
@@ -172,7 +196,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rol a Asignar</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rol Principal</label>
                 <div className="grid grid-cols-2 gap-2">
                   {ROLES_TO_CREATE.map((r) => (
                     <button
@@ -331,7 +355,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                                 {u.name.charAt(0)}
                               </div>
                               <div>
-                                <p className="font-bold text-slate-800 text-sm">{u.name}</p>
+                                <p className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                  {u.name}
+                                  {u.secondaryRoles && u.secondaryRoles.length > 0 && (
+                                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded border border-slate-200" title="Roles Secundarios">
+                                      +{u.secondaryRoles.length}
+                                    </span>
+                                  )}
+                                </p>
                                 <p className="text-[10px] text-slate-500">{u.email}</p>
                               </div>
                             </div>
@@ -353,31 +384,42 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                           </td>
                           <td className="py-4 text-right pr-4">
                             {u.id !== currentUser.id && (
-                              userToDelete === u.id ? (
-                                <div className="flex items-center justify-end gap-2 animate-in fade-in slide-in-from-right-4">
-                                  <span className="text-xs font-bold text-red-500 mr-2">¿Seguro?</span>
-                                  <button
-                                    onClick={() => handleDeleteUser(u.id)}
-                                    className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                                  >
-                                    <Check size={16} />
-                                  </button>
-                                  <button
-                                    onClick={() => setUserToDelete(null)}
-                                    className="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors"
-                                  >
-                                    <span className="text-xs font-bold">X</span>
-                                  </button>
-                                </div>
-                              ) : (
+                              <div className="flex items-center justify-end gap-2">
+                                {/* EDIT BUTTON - Multi-Role */}
                                 <button
-                                  onClick={() => setUserToDelete(u.id)}
-                                  className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                                  title="Eliminar Usuario"
+                                  onClick={() => setEditingUser(u)}
+                                  className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                  title="Editar Roles"
                                 >
-                                  <Trash2 size={16} />
+                                  <Edit2 size={16} />
                                 </button>
-                              )
+
+                                {userToDelete === u.id ? (
+                                  <div className="flex items-center justify-end gap-2 animate-in fade-in slide-in-from-right-4">
+                                    <span className="text-xs font-bold text-red-500 mr-2">¿Seguro?</span>
+                                    <button
+                                      onClick={() => handleDeleteUser(u.id)}
+                                      className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                    >
+                                      <Check size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => setUserToDelete(null)}
+                                      className="p-2 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors"
+                                    >
+                                      <span className="text-xs font-bold">X</span>
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => setUserToDelete(u.id)}
+                                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                    title="Eliminar Usuario"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -390,6 +432,72 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
           })()}
         </div>
       </div>
+
+      {/* EDIT USER ROLES MODAL */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-full max-w-lg p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-slate-800">Editar Permisos</h3>
+                <p className="text-slate-500">Asigna roles adicionales a <span className="font-bold text-indigo-600">{editingUser.name}</span>.</p>
+              </div>
+              <button
+                onClick={() => setEditingUser(null)}
+                className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              <p className="text-xs font-bold text-slate-400 uppercase mb-2">Rol Principal (Fijo)</p>
+              <div className="flex items-center gap-2 font-bold text-slate-700">
+                <Shield size={16} className="text-indigo-500" />
+                {ROLES_TO_CREATE.find(r => r.key === editingUser.role)?.label || editingUser.role}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-slate-400 uppercase">Roles Secundarios (Opcional)</p>
+              <div className="grid grid-cols-2 gap-3">
+                {ROLES_TO_CREATE.filter(r => r.key !== editingUser.role).map((option) => {
+                  const isSelected = editingUser.secondaryRoles?.includes(option.key as Role);
+                  return (
+                    <button
+                      key={option.key}
+                      onClick={() => toggleSecondaryRole(option.key)}
+                      className={`p-3 rounded-xl border flex items-center justify-between transition-all ${isSelected
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                    >
+                      <span className="text-sm font-bold">{option.label}</span>
+                      {isSelected && <CheckCircle size={16} className="text-indigo-600" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={() => setEditingUser(null)}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveRoles}
+                className="flex-1 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors shadow-lg"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

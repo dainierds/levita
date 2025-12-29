@@ -42,28 +42,26 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
     { id: 'settings', label: t('menu.settings'), icon: Settings },
   ];
 
-  // 2. Filter by Role Strictness
-  let allowedIds: string[] = [];
+  // 2. Define Permissions Helper
+  const getPermissionsForRole = (r: Role): string[] => {
+    switch (r) {
+      case 'ADMIN': return ['dashboard', 'planner', 'team', 'music_dept', 'sermons', 'roster', 'prayers', 'statistics', 'events', 'notifications', 'users', 'voting_admin', 'settings'];
+      case 'ELDER': return ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics'];
+      case 'BOARD': return ['dashboard'];
+      case 'AUDIO':
+      case 'MUSIC':
+      case 'PREACHER':
+      case 'TEACHER': // Added Teacher
+        return ['planner', 'team', 'roster'];
+      default: return [];
+    }
+  };
 
-  switch (role) {
-    case 'ADMIN':
-      allowedIds = ['dashboard', 'planner', 'team', 'music_dept', 'sermons', 'roster', 'prayers', 'statistics', 'events', 'notifications', 'users', 'voting_admin', 'settings'];
-      break;
-    case 'ELDER':
-      allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics'];
-      break;
-    case 'BOARD':
-      // Board sees ONLY Dashboard (Voting App)
-      allowedIds = ['dashboard'];
-      break;
-    case 'AUDIO':
-    case 'MUSIC':
-    case 'PREACHER':
-      allowedIds = ['planner', 'team', 'roster'];
-      break;
-    default:
-      allowedIds = [];
-  }
+  // 3. Aggregate Permissions from Primary and Secondary Roles
+  const allUserRoles = [role, ...(user.secondaryRoles || [])];
+  const allowedIds = Array.from(new Set(
+    allUserRoles.flatMap(r => getPermissionsForRole(r))
+  ));
 
   // 3. Filter by Tier (Feature Flags)
   const tierAllowed = TIER_FEATURES[tier];
