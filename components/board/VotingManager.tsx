@@ -17,8 +17,7 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
     const [draftTitle, setDraftTitle] = useState('');
     const [draftOptions, setDraftOptions] = useState<VoteOption[]>([
         { id: 'yes', label: 'Sí', color: 'green' },
-        { id: 'no', label: 'No', color: 'red' },
-        { id: 'abstain', label: 'Abstención', color: 'gray' }
+        { id: 'no', label: 'No', color: 'red' }
     ]);
     const [quorumMap, setQuorumMap] = useState<Record<string, boolean>>({});
 
@@ -51,9 +50,9 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
             // Reset to default options for next time
             setDraftOptions([
                 { id: 'yes', label: 'Sí', color: 'green' },
-                { id: 'no', label: 'No', color: 'red' },
-                { id: 'abstain', label: 'Abstención', color: 'gray' }
+                { id: 'no', label: 'No', color: 'red' }
             ]);
+            setAllowAbstain(false);
         } catch (error) {
             console.error(error);
         } finally {
@@ -109,7 +108,7 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
     };
 
     // State for Binary Mode settings
-    const [allowAbstain, setAllowAbstain] = useState(true);
+    const [allowAbstain, setAllowAbstain] = useState(false);
 
     // Helper to set binary options based on settings
     const setBinaryOptions = (abstain: boolean) => {
