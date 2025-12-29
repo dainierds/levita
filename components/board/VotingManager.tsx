@@ -133,61 +133,137 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
 
             {/* CREATE NEW SESSION CARD */}
             {(!activeSession || isClosed) && (
-                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-                    <h2 className="text-xl font-bold text-slate-800 mb-4">Nueva Votación</h2>
-                    <div className="space-y-4">
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                    <h2 className="text-xl font-bold text-slate-800 mb-6">Nueva Votación</h2>
+
+                    <div className="space-y-8">
+                        {/* 1. Question Title */}
                         <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Pregunta / Título</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Pregunta / Tema</label>
                             <input
                                 value={draftTitle}
                                 onChange={(e) => setDraftTitle(e.target.value)}
                                 placeholder="Ej. Aprobación de Presupuesto 2024"
-                                className="w-full text-lg font-bold border-b-2 border-slate-200 focus:border-indigo-600 outline-none py-2 px-1 bg-transparent transition-colors"
+                                className="w-full text-2xl font-black border-b-2 border-slate-200 focus:border-indigo-600 outline-none py-2 px-1 bg-transparent transition-colors placeholder:text-slate-300"
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Opciones de Voto</label>
-                            <div className="space-y-2">
-                                {draftOptions.map((opt, idx) => (
-                                    <div key={idx} className="flex gap-2">
-                                        <input
-                                            value={opt.label}
-                                            onChange={(e) => updateOption(idx, 'label', e.target.value)}
-                                            placeholder="Opción"
-                                            className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium"
-                                        />
-                                        <select
-                                            value={opt.color}
-                                            onChange={(e) => updateOption(idx, 'color', e.target.value)}
-                                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 text-xs"
-                                        >
-                                            <option value="green">Verde (Sí)</option>
-                                            <option value="red">Rojo (No)</option>
-                                            <option value="gray">Gris (Neutro)</option>
-                                            <option value="blue">Azul</option>
-                                            <option value="yellow">Amarillo</option>
-                                        </select>
-                                        <button onClick={() => removeOption(idx)} className="text-slate-300 hover:text-red-500">
-                                            <X size={18} />
-                                        </button>
+                        {/* 2. Voting Mode Selection (Split View) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            {/* LEFT: Binary Mode */}
+                            <div
+                                onClick={() => {
+                                    setDraftOptions([
+                                        { id: 'yes', label: 'Sí', color: 'green' },
+                                        { id: 'no', label: 'No', color: 'red' },
+                                        { id: 'abstain', label: 'Abstención', color: 'gray' }
+                                    ]);
+                                }}
+                                className={`relative p-6 rounded-2xl border-2 cursor-pointer transition-all hover:shadow-md ${draftOptions[0]?.id === 'yes'
+                                        ? 'border-indigo-500 bg-indigo-50/50 ring-4 ring-indigo-50'
+                                        : 'border-slate-100 bg-white hover:border-slate-200'
+                                    }`}
+                            >
+                                {draftOptions[0]?.id === 'yes' && (
+                                    <div className="absolute top-4 right-4 text-indigo-600">
+                                        <CheckCircle size={24} fill="currentColor" className="text-white" />
                                     </div>
-                                ))}
-                                {draftOptions.length < 6 && (
-                                    <button onClick={addOption} className="text-xs font-bold text-indigo-500 flex items-center gap-1 mt-2">
-                                        <Plus size={14} /> Agregar Opción
-                                    </button>
                                 )}
+                                <h3 className="font-bold text-slate-800 mb-2">Votación Simple</h3>
+                                <p className="text-xs text-slate-500 mb-4">Para decisiones de aprobación o rechazo.</p>
+
+                                <div className="space-y-2 pointer-events-none opacity-75">
+                                    <div className="w-full py-2 px-3 bg-white border border-green-200 text-green-700 font-bold rounded-lg text-sm flex justify-between">
+                                        Sí <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                                    </div>
+                                    <div className="w-full py-2 px-3 bg-white border border-red-200 text-red-700 font-bold rounded-lg text-sm flex justify-between">
+                                        No <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                                    </div>
+                                    <div className="w-full py-2 px-3 bg-white border border-slate-200 text-slate-500 font-bold rounded-lg text-sm flex justify-between">
+                                        Abstención <div className="w-4 h-4 rounded-full bg-slate-400"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* RIGHT: Multiple Choice Mode */}
+                            <div
+                                onClick={() => {
+                                    // Only reset defaults if we are switching FROM binary mode
+                                    if (draftOptions[0]?.id === 'yes') {
+                                        setDraftOptions([
+                                            { id: Math.random().toString(36).substr(2, 5), label: 'Opción 1', color: 'blue' },
+                                            { id: Math.random().toString(36).substr(2, 5), label: 'Opción 2', color: 'blue' },
+                                            { id: Math.random().toString(36).substr(2, 5), label: 'Opción 3', color: 'blue' },
+                                            { id: Math.random().toString(36).substr(2, 5), label: 'Opción 4', color: 'blue' }
+                                        ]);
+                                    }
+                                }}
+                                className={`relative p-6 rounded-2xl border-2 transition-all hover:shadow-md ${draftOptions[0]?.id !== 'yes'
+                                        ? 'border-indigo-500 bg-indigo-50/50 ring-4 ring-indigo-50'
+                                        : 'border-slate-100 bg-white hover:border-slate-200 cursor-pointer'
+                                    }`}
+                            >
+                                {draftOptions[0]?.id !== 'yes' && (
+                                    <div className="absolute top-4 right-4 text-indigo-600">
+                                        <CheckCircle size={24} fill="currentColor" className="text-white" />
+                                    </div>
+                                )}
+                                <h3 className="font-bold text-slate-800 mb-2">Selección Múltiple</h3>
+                                <p className="text-xs text-slate-500 mb-4">Para elegir entre varias alternativas.</p>
+
+                                <div className={`space-y-2 ${draftOptions[0]?.id === 'yes' ? 'pointer-events-none opacity-50 blur-[1px]' : ''}`}>
+                                    {draftOptions[0]?.id !== 'yes' ? (
+                                        <>
+                                            {draftOptions.map((opt, idx) => (
+                                                <div key={idx} className="flex gap-2">
+                                                    <div className="flex items-center justify-center w-8 h-full bg-indigo-100/50 rounded-lg text-indigo-600 font-bold text-xs">
+                                                        {idx + 1}
+                                                    </div>
+                                                    <input
+                                                        value={opt.label}
+                                                        onChange={(e) => updateOption(idx, 'label', e.target.value)}
+                                                        placeholder={`Opción ${idx + 1}`}
+                                                        className="flex-1 bg-white border-2 border-indigo-100 focus:border-indigo-400 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none transition-colors"
+                                                    />
+                                                    {draftOptions.length > 2 && (
+                                                        <button onClick={(e) => { e.stopPropagation(); removeOption(idx); }} className="text-slate-300 hover:text-red-500 px-1">
+                                                            <X size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {draftOptions.length < 8 && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); addOption(); }}
+                                                    className="w-full py-2 border-2 border-dashed border-indigo-200 text-indigo-400 font-bold rounded-lg text-xs hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center gap-1"
+                                                >
+                                                    <Plus size={14} /> Agregar Opción
+                                                </button>
+                                            )}
+                                        </>
+                                    ) : (
+                                        // Placeholder for when disabled (Visual only)
+                                        [1, 2, 3, 4].map(n => (
+                                            <div key={n} className="flex gap-2 opacity-50">
+                                                <div className="w-full py-2 px-3 bg-slate-50 border border-slate-100 text-slate-400 font-medium rounded-lg text-sm">
+                                                    Opción {n}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
 
-                        <div className="pt-4">
+                        {/* CREATE BUTTON */}
+                        <div className="pt-4 flex justify-end">
                             <button
                                 onClick={handleCreateSession}
                                 disabled={loading || !draftTitle}
-                                className="px-6 py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-black transition-all disabled:opacity-50"
+                                className="w-full md:w-auto px-8 py-4 bg-slate-900 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl hover:bg-black hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-3"
                             >
-                                {loading ? 'Creando...' : 'Crear Sesión'}
+                                {loading ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creando...</> : 'Crear Sesión'}
                             </button>
                         </div>
                     </div>
