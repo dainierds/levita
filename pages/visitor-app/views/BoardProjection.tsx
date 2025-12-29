@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { listenToActiveSession, VotingSession } from '../../services/votingService';
+import { listenToActiveSession } from '../../../services/votingService';
+import { VotingSession } from '../../../types';
 import { BarChart2, Users, CheckCircle } from 'lucide-react';
 
 const BoardProjection: React.FC = () => {
