@@ -147,22 +147,24 @@ const BoardVoter: React.FC<BoardVoterProps> = ({ user, tenantId }) => {
                 )}
             </header>
 
-            <div className="space-y-3 w-full flex-1 flex flex-col justify-center">
+            <div className="flex-1 flex flex-col gap-4 w-full justify-center min-h-[50vh]">
                 {session.options.map((opt) => (
                     <button
                         key={opt.id}
                         onClick={() => handleVote(opt.id)}
                         disabled={loading}
-                        className={`w-full py-5 px-6 rounded-2xl shadow-sm border-2 transform transition-all duration-100 active:scale-95 flex items-center justify-between ${opt.color === 'green' ? 'bg-white border-green-100 text-green-700 shadow-green-100/50' :
-                            opt.color === 'red' ? 'bg-white border-red-100 text-red-700 shadow-red-100/50' :
-                                'bg-white border-slate-100 text-slate-700 shadow-slate-200/50'
+                        className={`w-full flex-1 rounded-3xl shadow-lg border-b-8 transform transition-all duration-100 active:scale-95 active:border-b-0 active:translate-y-2 flex flex-col items-center justify-center gap-2 ${opt.color === 'green'
+                                ? 'bg-green-500 border-green-700 text-white shadow-green-200'
+                                : opt.color === 'red'
+                                    ? 'bg-red-500 border-red-700 text-white shadow-red-200'
+                                    : 'bg-white border-slate-300 text-slate-700'
                             }`}
                     >
-                        <span className="text-xl font-bold">{opt.label}</span>
-                        <div className={`w-6 h-6 rounded-full border-4 ${opt.color === 'green' ? 'border-green-100 bg-green-500' :
-                            opt.color === 'red' ? 'border-red-100 bg-red-500' :
-                                'border-slate-100 bg-slate-300'
-                            }`} />
+                        <span className="text-5xl font-black tracking-tight drop-shadow-md">{opt.label}</span>
+                        {/* Optional Icon/Text for accessibility */}
+                        <span className="text-sm font-bold opacity-80 uppercase tracking-widest">
+                            {opt.color === 'green' ? 'Confirmar' : opt.color === 'red' ? 'Rechazar' : 'Seleccionar'}
+                        </span>
                     </button>
                 ))}
             </div>
