@@ -166,8 +166,8 @@ export interface ChurchTenant {
 // Feature Flags based on Tier
 export const TIER_FEATURES: Record<SubscriptionTier, string[]> = {
   BASIC: ['dashboard', 'planner', 'users', 'team'],
-  GOLD: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'team', 'sermons', 'music_dept'],
-  PLATINUM: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'ai_assistant', 'live_translation', 'team', 'sermons', 'statistics', 'music_dept']
+  GOLD: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'team', 'sermons', 'music_dept', 'voting_admin'],
+  PLATINUM: ['dashboard', 'planner', 'users', 'events', 'roster', 'settings', 'notifications', 'ai_assistant', 'live_translation', 'team', 'sermons', 'statistics', 'music_dept', 'voting_admin']
 };
 
 export const TIER_LIMITS: Record<SubscriptionTier, number> = {

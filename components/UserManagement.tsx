@@ -274,7 +274,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
         </div>
 
         {/* User List - Grouped by Role */}
-        <div className="lg:col-span-2 xl:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <div className="lg:col-span-2 xl:col-span-3 columns-1 md:columns-2 gap-6 space-y-6">
 
           {(() => {
             // Define sections order and configuration
@@ -304,7 +304,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
             }
 
             return groupedUsers.map(group => (
-              <div key={group.key} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
+              <div key={group.key} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 break-inside-avoid mb-6">
                 <h3 className={`font-bold text-lg mb-6 flex items-center gap-2 ${group.color}`}>
                   <div className={`w-8 h-8 rounded-full ${group.bg} flex items-center justify-center`}>
                     <group.icon size={16} />
