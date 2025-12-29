@@ -108,6 +108,22 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
         setDraftOptions(draftOptions.filter((_, i) => i !== idx));
     };
 
+    // State for Binary Mode settings
+    const [allowAbstain, setAllowAbstain] = useState(true);
+
+    // Helper to set binary options based on settings
+    const setBinaryOptions = (abstain: boolean) => {
+        setAllowAbstain(abstain); // Sync state
+        const opts = [
+            { id: 'yes', label: 'Sí', color: 'green' },
+            { id: 'no', label: 'No', color: 'red' }
+        ];
+        if (abstain) {
+            opts.push({ id: 'abstain', label: 'Abstención', color: 'gray' });
+        }
+        setDraftOptions(opts);
+    };
+
     // --- RENDER ---
 
     // 1. No Active Session -> Creation Form
@@ -126,7 +142,7 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
             <header className="mb-8">
                 <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
                     <Hand className="text-indigo-600" />
-                    Votación J.D.I
+                    Votación de Junta
                 </h1>
                 <p className="text-slate-500">Sistema de Votación Secreta en Tiempo Real</p>
             </header>
@@ -151,18 +167,11 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
                         {/* 2. Voting Mode Selection (Split View) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                            {/* LEFT: Binary Mode */}
                             <div
-                                onClick={() => {
-                                    setDraftOptions([
-                                        { id: 'yes', label: 'Sí', color: 'green' },
-                                        { id: 'no', label: 'No', color: 'red' },
-                                        { id: 'abstain', label: 'Abstención', color: 'gray' }
-                                    ]);
-                                }}
+                                onClick={() => setBinaryOptions(allowAbstain)}
                                 className={`relative p-6 rounded-2xl border-2 cursor-pointer transition-all hover:shadow-md ${draftOptions[0]?.id === 'yes'
-                                        ? 'border-indigo-500 bg-indigo-50/50 ring-4 ring-indigo-50'
-                                        : 'border-slate-100 bg-white hover:border-slate-200'
+                                    ? 'border-indigo-500 bg-indigo-50/50 ring-4 ring-indigo-50'
+                                    : 'border-slate-100 bg-white hover:border-slate-200'
                                     }`}
                             >
                                 {draftOptions[0]?.id === 'yes' && (
@@ -173,6 +182,28 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
                                 <h3 className="font-bold text-slate-800 mb-2">Votación Simple</h3>
                                 <p className="text-xs text-slate-500 mb-4">Para decisiones de aprobación o rechazo.</p>
 
+                                {/* Abstention Toggle */}
+                                <div className="mb-4 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={allowAbstain}
+                                            onChange={(e) => {
+                                                const newVal = e.target.checked;
+                                                // If currently in binary mode, update options immediately
+                                                if (draftOptions[0]?.id === 'yes') {
+                                                    setBinaryOptions(newVal);
+                                                } else {
+                                                    setAllowAbstain(newVal);
+                                                }
+                                            }}
+                                        />
+                                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                        <span className="ml-2 text-xs font-bold text-slate-600">Permitir Abstención</span>
+                                    </label>
+                                </div>
+
                                 <div className="space-y-2 pointer-events-none opacity-75">
                                     <div className="w-full py-2 px-3 bg-white border border-green-200 text-green-700 font-bold rounded-lg text-sm flex justify-between">
                                         Sí <div className="w-4 h-4 rounded-full bg-green-500"></div>
@@ -180,9 +211,11 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
                                     <div className="w-full py-2 px-3 bg-white border border-red-200 text-red-700 font-bold rounded-lg text-sm flex justify-between">
                                         No <div className="w-4 h-4 rounded-full bg-red-500"></div>
                                     </div>
-                                    <div className="w-full py-2 px-3 bg-white border border-slate-200 text-slate-500 font-bold rounded-lg text-sm flex justify-between">
-                                        Abstención <div className="w-4 h-4 rounded-full bg-slate-400"></div>
-                                    </div>
+                                    {allowAbstain && (
+                                        <div className="w-full py-2 px-3 bg-white border border-slate-200 text-slate-500 font-bold rounded-lg text-sm flex justify-between animate-in fade-in slide-in-from-top-1">
+                                            Abstención <div className="w-4 h-4 rounded-full bg-slate-400"></div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -200,8 +233,8 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
                                     }
                                 }}
                                 className={`relative p-6 rounded-2xl border-2 transition-all hover:shadow-md ${draftOptions[0]?.id !== 'yes'
-                                        ? 'border-indigo-500 bg-indigo-50/50 ring-4 ring-indigo-50'
-                                        : 'border-slate-100 bg-white hover:border-slate-200 cursor-pointer'
+                                    ? 'border-indigo-500 bg-indigo-50/50 ring-4 ring-indigo-50'
+                                    : 'border-slate-100 bg-white hover:border-slate-200 cursor-pointer'
                                     }`}
                             >
                                 {draftOptions[0]?.id !== 'yes' && (

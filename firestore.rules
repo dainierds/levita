@@ -163,6 +163,14 @@ service cloud.firestore {
         allow delete: if belongsToTenant(resource.data.tenantId);
     }
 
+    // 7. Voting Sessions
+    match /voting_sessions/{sessionId} {
+      allow read: if true;
+      allow create: if belongsToTenant(request.resource.data.tenantId);
+      allow update: if isSignedIn(); 
+      allow delete: if belongsToTenant(resource.data.tenantId);
+    }
+
     // Regla por defecto: Bloquear todo lo demás por seguridad
     match /{document=**} {
       allow read, write: if false;
