@@ -64,8 +64,27 @@ const BoardVoter: React.FC<BoardVoterProps> = ({ user, tenantId }) => {
         );
     }
 
-    // 3. Already Voted (Waiting Results) - Or Session Closed (Results on Screen)
-    // Note: We check local state 'successMsg' for immediate feedback, OR the array in session for persistence re-load.
+    // 3. Session Closed (Cleaner View) - MOVED UP PRIORITY
+    if (session.status === 'CLOSED') {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-8 text-center animate-in fade-in">
+                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg shadow-slate-100 mb-6">
+                    <img
+                        src="https://cdn-icons-png.flaticon.com/512/747/747376.png"
+                        alt="No voting"
+                        className="w-12 h-12 opacity-20 grayscale"
+                    />
+                </div>
+                <h2 className="text-xl font-black text-slate-800 mb-2">Sin Votaciones Activas</h2>
+                <p className="text-slate-400 max-w-xs mx-auto">
+                    No hay ninguna sesión de votación en curso en este momento.
+                    La pantalla se actualizará automáticamente cuando inicie una nueva.
+                </p>
+            </div>
+        );
+    }
+
+    // 4. Already Voted (Waiting Results)
     const hasVoted = session.votedUserIds.includes(user.id);
 
     if (hasVoted) {
@@ -77,33 +96,8 @@ const BoardVoter: React.FC<BoardVoterProps> = ({ user, tenantId }) => {
                 <h2 className="text-2xl font-black text-slate-800 mb-2">Voto Registrado</h2>
                 <p className="text-slate-500 mb-8">
                     Tu participación es anónima. <br />
-                    {session.status === 'CLOSED' ? 'La votación ha finalizado.' : 'Esperando resultados en pantalla...'}
+                    Esperando resultados en pantalla...
                 </p>
-                {/* Could show results here if CLOSED, but requirement says "On Projection Screen". Maybe show simplified here? */}
-                {session.status === 'CLOSED' && (
-                    <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100 w-full max-w-sm">
-                        <p className="text-xs font-bold text-slate-400 uppercase mb-2">Resultados Finales</p>
-                        {session.options.map(opt => {
-                            const count = session.results?.[opt.id] || 0;
-                            const total = session.totalVotesCast || 1;
-                            const pct = Math.round((count / total) * 100);
-                            return (
-                                <div key={opt.id} className="mb-3 last:mb-0">
-                                    <div className="flex justify-between text-sm font-bold text-slate-700 mb-1">
-                                        <span>{opt.label}</span>
-                                        <span>{count}</span>
-                                    </div>
-                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full transition-all duration-1000"
-                                            style={{ width: `${pct}%`, backgroundColor: opt.color === 'green' ? '#22c55e' : opt.color === 'red' ? '#ef4444' : '#94a3b8' }}
-                                        />
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                )}
             </div>
         );
     }

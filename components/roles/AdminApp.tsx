@@ -80,10 +80,19 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                     <div className="flex items-center gap-4">
                         <h1 className="font-bold text-xl">LEVITA</h1>
                     </div>
-                    {/* Hide NotificationBell for BOARD if requested, but user said 'solo notificaciones' is allowed? 
-                        User said: "no tiene opcion de salir, solo de las notificaciones" -> So Bell stays. 
-                    */}
-                    <NotificationBell />
+
+                    <div className="flex items-center gap-3">
+                        {role === 'BOARD' && (
+                            <button
+                                onClick={logout}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-full text-xs font-bold active:scale-95 transition-transform"
+                            >
+                                <LogOut size={14} />
+                                <span>Salir</span>
+                            </button>
+                        )}
+                        <NotificationBell />
+                    </div>
                 </div>
 
                 {/* Desktop Top Bar - Hide for Elder AND Board (Board uses mobile header mostly, but if desktop, hide clutter) */}
