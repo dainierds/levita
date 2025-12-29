@@ -21,6 +21,8 @@ import ElderBottomNav from '../ElderBottomNav';
 import PersonalStatistics from '../PersonalStatistics';
 import PrayerRequestsAdmin from '../PrayerRequestsAdmin';
 import MusicDepartment from '../MusicDepartment';
+import VotingManager from '../board/VotingManager'; // New import
+import BoardVoter from '../board/BoardVoter'; // New import
 import { NotificationBell } from '../NotificationSystem';
 import { useAuth } from '../../context/AuthContext';
 import { Menu, LogOut, Loader2 } from 'lucide-react';
@@ -134,8 +136,12 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 )}
 
                 <div className="max-w-7xl mx-auto w-full">
-                    {currentView === 'dashboard' && (role === 'ADMIN' || role === 'BOARD') && (
+                    {currentView === 'dashboard' && (role === 'ADMIN') && (
                         <Dashboard setCurrentView={setCurrentView} role={role} settings={settings} users={users} />
+                    )}
+
+                    {currentView === 'dashboard' && (role === 'BOARD') && user.tenantId && (
+                        <BoardVoter user={user} tenantId={user.tenantId} />
                     )}
 
                     {currentView === 'dashboard' && role === 'ELDER' && (
@@ -146,7 +152,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                         <ServicePlanner tier={currentTenantTier} users={users} />
                     )}
 
-                    {currentView === 'events' && (role === 'ADMIN' || role === 'BOARD') && (
+                    {currentView === 'events' && (role === 'ADMIN') && (
                         <EventsAdmin events={events} tier={currentTenantTier} />
                     )}
 
@@ -194,7 +200,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                         <PrayerRequestsAdmin />
                     )}
 
-                    {currentView === 'statistics' && (role === 'ADMIN' || role === 'BOARD') && (
+                    {currentView === 'statistics' && (role === 'ADMIN') && (
                         <div className="p-8 max-w-full mx-auto">
                             <StatisticsPanel plans={plans} />
                         </div>
@@ -224,6 +230,13 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
 
                     {currentView === 'sermons' && (
                         <SermonManager />
+                    )}
+
+                    {currentView === 'voting_admin' && role === 'ADMIN' && user.tenantId && (
+                        <VotingManager
+                            users={users.filter(u => u.role === 'BOARD')}
+                            tenantId={user.tenantId}
+                        />
                     )}
                 </div>
 

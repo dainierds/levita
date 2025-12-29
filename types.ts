@@ -191,3 +191,34 @@ export interface Invitation {
   createdAt: string;
   createdBy: string;
 }
+
+// --- VOTING MODULE ---
+export interface VoteOption {
+  id: string;
+  label: string;
+  color: string; // 'green' | 'red' | 'blue' | 'gray' etc.
+}
+
+export interface VotingSession {
+  id: string;
+  tenantId: string;
+  title: string;
+  description?: string;
+  status: 'PRE_VOTE' | 'OPEN' | 'CLOSED'; // PRE_VOTE = Setup, OPEN = Voting Live, CLOSED = Revealed
+  options: VoteOption[];
+
+  // Quorum & Participation
+  totalPossibleVoters: number; // e.g. 20
+  presentMemberIds: string[]; // List of User IDs marked as present
+
+  // Voting State
+  totalVotesCast: number; // Counter only
+  votedUserIds: string[]; // To prevent double voting, but separated from choice
+
+  // Results (Only populated/meaningful if status is CLOSED or for internal counting, 
+  // but frontend should NOT show if OPEN)
+  results: Record<string, number>; // optionId -> count
+
+  createdAt: string;
+  closedAt?: string;
+}

@@ -10,6 +10,7 @@ import JoinPage from '../pages/JoinPage';
 import DbSeeder from '../components/DbSeeder';
 import ProtectedApp from '../components/ProtectedApp';
 import ProjectionView from '../pages/visitor-app/views/ProjectionView';
+import BoardProjection from '../pages/visitor-app/views/BoardProjection';
 
 const AppRoutes = () => {
     const { user, isLoading } = useAuth();
@@ -39,8 +40,10 @@ const AppRoutes = () => {
             {/* Invitation Join Route */}
             <Route path="/join" element={<JoinPage />} />
 
-            {/* Projection Route (HDMI Output) */}
+            {/* Projection Route (HDMI Output) - Standard Service */}
             <Route path="/projection/:tenantId" element={<ProjectionView />} />
+            {/* Projection Route (HDMI Output) - Board Voting */}
+            <Route path="/projection/board/:tenantId" element={<BoardProjection />} />
 
             {/* Database Seeder (Remove in Production) */}
             <Route path="/seed" element={<DbSeeder />} />

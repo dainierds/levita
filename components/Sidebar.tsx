@@ -38,6 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
     { id: 'events', label: t('menu.events'), icon: Calendar },
     { id: 'notifications', label: t('menu.notifications'), icon: Bell },
     { id: 'users', label: t('menu.users'), icon: UserPlus },
+    { id: 'voting_admin', label: 'Votación (Admin)', icon: Users }, // New
     { id: 'settings', label: t('menu.settings'), icon: Settings },
   ];
 
@@ -46,14 +47,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
 
   switch (role) {
     case 'ADMIN':
-      allowedIds = ['dashboard', 'planner', 'team', 'music_dept', 'sermons', 'roster', 'prayers', 'statistics', 'events', 'notifications', 'users', 'settings'];
+      allowedIds = ['dashboard', 'planner', 'team', 'music_dept', 'sermons', 'roster', 'prayers', 'statistics', 'events', 'notifications', 'users', 'voting_admin', 'settings'];
       break;
     case 'ELDER':
       allowedIds = ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics'];
       break;
     case 'BOARD':
-      // Board sees Dashboard, Planner, Team, Roster, Statistics, Events
-      allowedIds = ['dashboard', 'planner', 'team', 'roster', 'statistics', 'events'];
+      // Board sees ONLY Dashboard (Voting App)
+      allowedIds = ['dashboard'];
       break;
     case 'AUDIO':
     case 'MUSIC':
