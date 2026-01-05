@@ -17,6 +17,12 @@ const GRADIENTS = [
     { name: 'Naranja-Rojo', class: 'from-orange-400 to-red-500' },
     { name: 'Índigo-Púrpura', class: 'from-indigo-500 to-purple-600' },
     { name: 'Amarillo-Naranja', class: 'from-yellow-400 to-orange-500' },
+    { name: 'Azul-Profundo', class: 'from-blue-600 to-indigo-900' },
+    { name: 'Atardecer', class: 'from-rose-500 to-orange-500' },
+    { name: 'Naturaleza', class: 'from-teal-500 to-emerald-700' },
+    { name: 'Elegante', class: 'from-slate-700 to-slate-900' },
+    { name: 'Medianoche', class: 'from-violet-600 to-indigo-600' },
+    { name: 'Candy', class: 'from-pink-500 to-rose-400' },
 ];
 
 const EMOJIS = ['📅', '🙏', '🎂', '🎤', '📖', '🎵', '☀️', '✨', '🎉', '👨‍👩‍👧‍👦', '🎈', '🎁', '⛪', '✝️', '🕊️', '🏠', '💍', '🔔'];
@@ -448,9 +454,9 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 mb-2">Color</label>
-                                    <div className="flex gap-2 overflow-x-auto pb-2">
-                                        {GRADIENTS.slice(0, 4).map(grad => (
-                                            <button key={grad.name} onClick={() => setNewEvent({ ...newEvent, bannerGradient: grad.class })} className={`w-8 h-8 rounded-full bg-gradient-to-r ${grad.class} ${newEvent.bannerGradient === grad.class ? 'ring-2 ring-slate-400' : ''}`} />
+                                    <div className="flex gap-2 flex-wrap pb-2">
+                                        {GRADIENTS.map(grad => (
+                                            <button key={grad.name} type="button" onClick={() => setNewEvent({ ...newEvent, bannerGradient: grad.class })} className={`w-8 h-8 rounded-full bg-gradient-to-r ${grad.class} ${newEvent.bannerGradient === grad.class ? 'ring-2 ring-slate-400 scale-110' : 'hover:scale-110'} transition-all`} title={grad.name} />
                                         ))}
                                     </div>
                                 </div>
