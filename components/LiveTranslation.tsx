@@ -273,8 +273,8 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
           >
             {/* History Segments */}
             {segments.map((seg, i) => (
-              <div key={i} className={`transition-all duration-500 ${i === segments.length - 1 ? 'opacity-100 scale-100' : 'opacity-80 scale-95 origin-left'}`}>
-                <p className={`text-lg md:text-xl font-bold leading-relaxed ${i === segments.length - 1 ? 'text-indigo-900' : 'text-indigo-900/80'}`}>
+              <div key={i} className={`transition-all duration-500 ${i === segments.length - 1 ? 'opacity-100 scale-100' : 'opacity-60 scale-95 origin-left'}`}>
+                <p className={`text-lg md:text-xl font-bold leading-relaxed ${i === segments.length - 1 ? 'text-indigo-900' : 'text-indigo-900/60'}`}>
                   {targetLang === 'es'
                     ? seg.original
                     : (seg.translation || <span className="opacity-0">...</span>)}
