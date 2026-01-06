@@ -41,13 +41,13 @@ const ProjectionView: React.FC = () => {
             <div className="relative z-10 max-w-[85%] text-center flex flex-col gap-6 md:gap-10">
 
                 {/* Previous context (Ghost text) */}
-                <div className="flex flex-col items-center gap-4 mask-fade-top opacity-60">
+                <div className="flex flex-col items-center gap-4 mask-fade-top">
                     {segments.slice(-3).map((seg, i) => (
                         <p
                             key={i}
-                            className="text-3xl md:text-5xl font-semibold text-slate-500/50 leading-tight transition-all duration-700"
+                            className="text-3xl md:text-5xl font-semibold text-slate-300 leading-tight transition-all duration-700"
                             style={{
-                                opacity: 0.15 + (i * 0.15),
+                                opacity: 0.4 + (i * 0.2), // 0.4, 0.6, 0.8
                                 transform: `scale(${0.9 + (i * 0.02)}) translateY(${10 - (i * 5)}px)`
                             }}
                         >
