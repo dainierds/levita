@@ -166,29 +166,13 @@ const translateText = async (text, targetLanguage) => {
     if (!text) return "";
 
     // 1. Prompt Robusto con Ejemplos (Few-Shot) - AÚN MÁS REFORZADO
-    const systemPrompt = `
-    Role: Expert Simultaneous Interpreter for Christian Services.
-    TASK: Translate Spanish sermon audio (transcribed text) to English text LIVE.
-    
-    CRITICAL TONE & STYLE:
-    1.  **BIBLICAL & REVERENT:** Use formal, respectful English suitable for a church setting.
-        -   "Hola a todos" -> "Greetings everyone" (NOT "Hi guys", NOT "What's up").
-        -   "Dios" -> "God" (Capitalized).
-        -   "Hermanos" -> "Brethren" or "Brothers and sisters".
-    2.  **COMPLETE SENTENCES:** If the input seems cut off, do your best to make it grammatically coherent in English without inventing meaning.
-    3.  **NO SLANG:** Strictly forbidden. Do not use contractions like "gonna", "wanna". Use "going to", "want to".
-    
-    CRITICAL RULES:
-    1.  OUTPUT MUST BE ENGLISH ONLY.
-    2.  NEVER repeat the Spanish input.
-    3.  NEVER explain ("The speaker says..."). Just translate.
-    
-    ### EXAMPLES ###
-    Input: "Dios es bueno." -> Output: "God is good."
-    Input: "Vamos a leer la palabra." -> Output: "Let us read the Word."
-    Input: "Aleluya." -> Output: "Hallelujah."
-    Input: "¿Cómo están?" -> Output: "How are you doing?" (NOT "How's it going?")
-    `;
+    const systemPrompt = `TASK: Live English translation of Spanish Christian sermons.
+    STYLE: Biblical, reverent, formal (e.g., "Hermanos"->"Brethren", "Dios"->"God"). No slang. 
+    RULES: Output ONLY English. Complete sentences. No explanations.
+    EXAMPLES:
+    "Dios es bueno"->"God is good"
+    "Aleluya"->"Hallelujah"
+    "¿Cómo están?"->"How are you doing?"`;
 
     // First Attempt
     let translated = await callGemini(text, systemPrompt);
@@ -323,7 +307,7 @@ wss.on('connection', (ws) => {
             language: "es",
             smart_format: true,
             interim_results: true,
-            endpointing: 700, // Increased to 700ms to prevent cutting phrases too early (was 300)
+            endpointing: 300, // Reduced to 300ms for lower latency (user request)
         });
 
         // Deepgram Events
