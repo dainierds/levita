@@ -282,73 +282,85 @@ wss.on('connection', (ws) => {
     let isSource = false; // Flag to identify if this is the Admin/Mic Source
 
     // Initialize Deepgram Connection
-    try {
-        const deepgram = createClient(DEEPGRAM_KEY);
-        deepgramLive = deepgram.listen.live({
-            model: "nova-3",
-            language: "es",
-            smart_format: true,
-            interim_results: true,
-            endpointing: 300,
-            keepAlive: true, // Prevent immediate closure
-        });
+    const setupDeepgram = () => {
+        try {
+            console.log("Creating new Deepgram connection...");
+            const deepgram = createClient(DEEPGRAM_KEY);
+            deepgramLive = deepgram.listen.live({
+                model: "nova-3",
+                language: "es",
+                smart_format: true,
+                interim_results: true,
+                endpointing: 300,
+                keepAlive: true,
+            });
 
-        // Deepgram Events
-        deepgramLive.on(LiveTranscriptionEvents.Open, () => {
-            console.log("🟢 Deepgram OPEN"); // DEBUG
-        });
+            // Deepgram Events
+            deepgramLive.on(LiveTranscriptionEvents.Open, () => {
+                console.log("🟢 Deepgram OPEN");
+            });
 
-        deepgramLive.on(LiveTranscriptionEvents.Transcript, async (data) => {
-            const transcript = data.channel.alternatives[0].transcript;
+            deepgramLive.on(LiveTranscriptionEvents.Transcript, async (data) => {
+                const transcript = data.channel.alternatives[0].transcript;
 
-            if (transcript && data.is_final) {
-                console.log(`🎤 Transcript: "${transcript}"`); // DEBUG
+                if (transcript && data.is_final) {
+                    console.log(`🎤 Transcript: "${transcript}"`);
 
-                // 1. Send Original Transcript immediately (Broadcast Text)
-                const textMessage = {
-                    type: 'TRANSCRIPTION',
-                    original: transcript,
-                    isFinal: true
-                };
+                    // 1. Send Original Transcript immediately (Broadcast Text)
+                    const textMessage = {
+                        type: 'TRANSCRIPTION',
+                        original: transcript,
+                        isFinal: true
+                    };
 
-                // Translate
-                console.log(`🔄 Translating...`); // DEBUG
-                const translated = await translateText(transcript, 'en');
-                console.log(`✅ Translation: "${translated}"`); // DEBUG
+                    // Translate
+                    console.log(`🔄 Translating...`);
+                    const translated = await translateText(transcript, 'en');
+                    console.log(`✅ Translation: "${translated}"`);
 
-                // If filtered, send a placeholder so UI validates connection
-                textMessage.translation = translated || "[...]";
+                    // If filtered, send a placeholder so UI validates connection
+                    textMessage.translation = translated || "[...]";
 
-                // Broadcast JSON update to everyone (Admin + Visitors)
-                broadcast(JSON.stringify(textMessage));
+                    // Broadcast JSON update to everyone (Admin + Visitors)
+                    broadcast(JSON.stringify(textMessage));
 
-                if (!translated) {
-                    console.warn("⚠️ Translation filtered (Spanish/Echo), sent '[...]' placeholder.");
-                }
+                    if (!translated) {
+                        console.warn("⚠️ Translation filtered (Spanish/Echo), sent '[...]' placeholder.");
+                    }
 
-                // 2. Generate Audio (TTS) -> Broadcast Binary
-                if (translated) {
-                    const audioBuffer = await generateTTS(translated);
-                    if (audioBuffer) {
-                        broadcast(audioBuffer, true);
+                    // 2. Generate Audio (TTS) -> Broadcast Binary
+                    if (translated) {
+                        const audioBuffer = await generateTTS(translated);
+                        if (audioBuffer) {
+                            broadcast(audioBuffer, true);
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        // ... Error handling ...
-        deepgramLive.on(LiveTranscriptionEvents.Error, (err) => {
-            console.error("❌ Deepgram Error (CHISMOSO):", JSON.stringify(err, null, 2));
-        });
-        deepgramLive.on(LiveTranscriptionEvents.Close, (event) => {
-            console.log(`🔴 Deepgram CLOSED. Code: ${event.code}, Reason: ${event.reason}`);
-        });
+            // ... Error handling ...
+            deepgramLive.on(LiveTranscriptionEvents.Error, (err) => {
+                console.error("❌ Deepgram Error (CHISMOSO):", JSON.stringify(err, null, 2));
+            });
+            deepgramLive.on(LiveTranscriptionEvents.Close, (event) => {
+                console.log(`🔴 Deepgram CLOSED. Code: ${event.code}, Reason: ${event.reason}`);
 
-    } catch (err) {
-        console.error("Failed to init Deepgram:", err);
-        ws.close();
-        return;
-    }
+                // AUTO-RECONNECT LOGIC
+                if (ws.readyState === 1) {
+                    console.log("🔄 Client still connected. Reconnecting to Deepgram in 200ms...");
+                    setTimeout(() => setupDeepgram(), 200);
+                }
+            });
+
+        } catch (err) {
+            console.error("Failed to init Deepgram:", err);
+            // Retry instead of closing
+            setTimeout(() => setupDeepgram(), 1000);
+        }
+    };
+
+    // Initial Start
+    setupDeepgram();
 
 
     ws.on('message', (message) => {
