@@ -27,7 +27,7 @@ if (!DEEPGRAM_KEY || !GEMINI_KEY) {
 (async () => {
     console.log("🔍 Testing Gemini API Key & Model Availability...");
     // Strict Test: Only gemini-2.5-flash
-    const models = ["gemini-2.5-flash"];
+    const models = ["gemini-3-flash-preview"];
     const genAI = new GoogleGenerativeAI(GEMINI_KEY);
 
     for (const m of models) {
@@ -81,7 +81,8 @@ const callGemini = async (inputText, systemInstruction) => {
     // List of models to try in order of preference (Strict Mode v1.9.4)
     // ONLY uses gemini-2.5-flash as requested
     const models = [
-        "gemini-2.5-flash"
+        "gemini-3-flash-preview",
+        "gemini-2.0-flash-exp"
     ];
 
     for (const model of models) {
