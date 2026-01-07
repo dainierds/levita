@@ -101,9 +101,8 @@ const callGemini = async (inputText, systemInstruction) => {
             const payload = {
                 contents: [{ parts: [{ text: finalPrompt }] }],
                 generationConfig: {
-                    temperature: 0.0, // Greedy decoding for max speed
-                    topK: 1,          // Deterministic
-                    maxOutputTokens: 100, // Shorter limit for single sentences
+                    temperature: 0.1,
+                    maxOutputTokens: 200,
                 }
             };
 
