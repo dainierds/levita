@@ -19,48 +19,6 @@
     @apply bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all active:scale-95;
   }
 
-  .animate-expand-height {
-    animation: expand-height 0.5s ease-out forwards;
-  }
-}
-
-@keyframes expand-height {
-  0% {
-    max-height: 0;
-    opacity: 0;
-    transform: translateY(10px);
-    margin: 0;
-    padding: 0;
-  }
-
-  100% {
-    max-height: 300px;
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in-up {
-  0% {
-    opacity: 0;
-    transform: translateY(15px);
-    filter: blur(4px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.4s ease-out forwards;
-}
-
-.mask-fade-top {
-  mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
 }
 
 .btn-soft {

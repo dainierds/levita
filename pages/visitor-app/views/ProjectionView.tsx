@@ -42,22 +42,19 @@ const ProjectionView: React.FC = () => {
                 <div className="flex flex-col items-center w-full pb-10">
                     {/* Show last 7 segments for context */}
                     {segments.slice(-7).map((seg, i) => (
-                        <div key={i} className="w-full flex justify-center animate-expand-height origin-bottom shrink-0">
-                            <p
-                                className="text-4xl md:text-6xl font-bold text-slate-200 text-center leading-tight drop-shadow-md py-4"
-                            >
-                                {seg.translation || seg.original}
-                            </p>
-                        </div>
+                        <p
+                            key={i}
+                            className="text-4xl md:text-6xl font-bold text-slate-200 text-center leading-tight drop-shadow-md transition-all duration-500"
+                        >
+                            {seg.translation || seg.original}
+                        </p>
                     ))}
 
                     {/* Current Live Line */}
                     {translation && (
-                        <div className="w-full flex justify-center animate-fade-in-up shrink-0 min-h-[min-content]">
-                            <p className="text-5xl md:text-7xl font-black text-white text-center leading-tight drop-shadow-2xl py-4">
-                                {translation}
-                            </p>
-                        </div>
+                        <p className="text-5xl md:text-7xl font-black text-white text-center leading-tight drop-shadow-2xl animate-fade-in-up">
+                            {translation}
+                        </p>
                     )}
                 </div>
             </div>
