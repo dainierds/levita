@@ -8,6 +8,39 @@ import http from 'http';
 dotenv.config();
 
 const app = express();
+
+const DEEPL_API_KEY = process.env.DEEPL_API_KEY || "c264bdda-8425-4ac2-8a35-485f62d1d9a5:fx";
+
+const callDeepL = async (text, targetLang = 'EN') => {
+    if (!text) return null;
+    try {
+        const params = new URLSearchParams();
+        params.append('text', text);
+        params.append('target_lang', targetLang);
+
+        const response = await fetch('https://api-free.deepl.com/v2/translate', {
+            method: 'POST',
+            headers: {
+                'Authorization': `DeepL-Auth-Key ${DEEPL_API_KEY}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: params
+        });
+
+        if (!response.ok) {
+            console.error(`❌ DeepL Error: ${response.status} ${response.statusText}`);
+            return null;
+        }
+
+        const data = await response.json();
+        const translated = data.translations[0]?.text;
+        console.log(`✅ DeepL: "${translated}"`);
+        return translated;
+    } catch (e) {
+        console.error("❌ DeepL Exception:", e);
+        return null;
+    }
+};
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
@@ -77,76 +110,7 @@ const isSpanishData = (text) => {
     return false; // Always allow content in v1.3
 }
 
-const callGemini = async (inputText, systemInstruction) => {
-    // List of models to try in order of preference (Strict Mode v1.9.4)
-    // ONLY uses gemini-2.5-flash as requested
-    const models = [
-        "gemini-3-flash-preview",
-        "gemini-2.0-flash-exp"
-    ];
 
-    for (const model of models) {
-        try {
-            // ... (rest of loop matches existing code, not replacing strict content here to avoid mismatch, just headers)
-
-            // Construct Prompt
-            const finalPrompt = `
-            ${systemInstruction}
-            
-            <text_to_translate>
-            ${inputText}
-            </text_to_translate>
-            `;
-
-            const payload = {
-                contents: [{ parts: [{ text: finalPrompt }] }],
-                generationConfig: {
-                    temperature: 0.1,
-                    maxOutputTokens: 200,
-                }
-            };
-
-            // Fix: Allow reading VITE_ prefixed key
-            const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errText = await response.text();
-                // If 404 (Not Found) or 429 (Quota), try next model
-                if (response.status === 404 || response.status === 429) {
-                    console.warn(`⚠️ Model ${model} failed (${response.status}). Trying next...`);
-                    continue;
-                }
-                console.error(`❌ Gemini API Error (${model} - ${response.status}):`, errText);
-                return null; // Other errors (400, 401) are fatal
-            }
-
-            const data = await response.json();
-            let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-            if (!text && data.promptFeedback) {
-                console.warn(`⚠️ Safety Block (${model}):`, data.promptFeedback);
-                return null;
-            }
-
-            console.log(`✅ Success with ${model}`); // DEBUG
-            return text.replace(/^(Translation:|Output:|English:|Correction:)/i, "").trim();
-
-        } catch (e) {
-            console.error(`Network Error (${model}):`, e);
-            continue;
-        }
-    }
-
-    console.error("❌ ALL Models failed.");
-    return null;
-};
 
 // Start Commenting out old function body that is now replaced by the loop content above
 /*
@@ -192,7 +156,8 @@ const translateText = async (text, targetLanguage) => {
     `;
 
     // First Attempt
-    let translated = await callGemini(text, systemPrompt);
+    // First Attempt (DeepL)
+    let translated = await callDeepL(text, 'EN');
 
     // Normalización para comparaciones
     const cleanInput = text.trim().toLowerCase();
