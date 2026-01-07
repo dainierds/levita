@@ -141,7 +141,7 @@ const TranslationMaster: React.FC = () => {
                         }
                     });
 
-                    mediaRecorder.start(250); // Send every 250ms
+                    mediaRecorder.start(100); // Send every 100ms
                 };
 
                 socket.onmessage = async (event) => {
