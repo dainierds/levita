@@ -352,10 +352,16 @@ wss.on('connection', (ws) => {
 
 
     ws.on('message', (message) => {
+        // Guard: Zero-length messages close the stream (EOS signal)
+        const size = Buffer.byteLength(message);
+        if (size === 0) {
+            console.warn("⚠️ Ignored 0-byte message (would close Deepgram)");
+            return;
+        }
+
         // Log incoming audio packets (The "Chismoso" part)
         packetCount++;
         if (packetCount % 50 === 0) {
-            const size = Buffer.byteLength(message);
             console.log(`📥 Audio Packet #${packetCount} received (${size} bytes)`);
         }
 
