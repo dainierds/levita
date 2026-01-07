@@ -16,6 +16,7 @@ const TranslationMaster: React.FC = () => {
     const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
     const [permissionError, setPermissionError] = useState('');
     const [lastLog, setLastLog] = useState<string>(''); // DEBUG STATE
+    const [retryCount, setRetryCount] = useState(0); // Auto-reconnect trigger
 
     // Audio Context Refs
     const audioContextRef = useRef<AudioContext | null>(null);
@@ -194,7 +195,13 @@ const TranslationMaster: React.FC = () => {
 
                 socket.onerror = (error) => {
                     console.error("WebSocket Error:", error);
-                    // Optional: setPermissionError('Error de conexión con el servidor de traducción.'); 
+                };
+
+                socket.onclose = (event) => {
+                    if (!event.wasClean) {
+                        console.warn("⚠️ Server Connection Lost. Reconnecting in 2s...");
+                        setTimeout(() => setRetryCount(c => c + 1), 2000);
+                    }
                 };
 
             } catch (err) {
@@ -208,7 +215,7 @@ const TranslationMaster: React.FC = () => {
         return () => {
             cleanupAudio();
         };
-    }, [isActive, inputDevice]);
+    }, [isActive, inputDevice, retryCount]);
 
     const cleanupAudio = () => {
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
