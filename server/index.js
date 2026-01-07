@@ -292,7 +292,7 @@ wss.on('connection', (ws) => {
                 smart_format: true,
                 interim_results: true,
                 endpointing: 300,
-                keepAlive: true,
+                // keepAlive: true (REMOVED: suspected cause of Code 1000 loop)
             });
 
             // Deepgram Events
@@ -364,10 +364,13 @@ wss.on('connection', (ws) => {
 
 
     ws.on('message', (message) => {
-        // Guard: Zero-length messages close the stream (EOS signal)
+        // Guard 1: Zero-length messages close the stream
         const size = Buffer.byteLength(message);
-        if (size === 0) {
-            console.warn("⚠️ Ignored 0-byte message (would close Deepgram)");
+        if (size === 0) return;
+
+        // Guard 2: Only forward Binary Audio to Deepgram
+        // (Prevents text/JSON control messages from triggering Code 1000)
+        if (!Buffer.isBuffer(message)) {
             return;
         }
 
