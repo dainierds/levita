@@ -341,7 +341,7 @@ wss.on('connection', (ws) => {
             console.error("❌ Deepgram Error (CHISMOSO):", JSON.stringify(err, null, 2));
         });
         deepgramLive.on(LiveTranscriptionEvents.Close, (event) => {
-            console.log("🔴 Deepgram CLOSED (CHISMOSO). Data:", event);
+            console.log(`🔴 Deepgram CLOSED. Code: ${event.code}, Reason: ${event.reason}`);
         });
 
     } catch (err) {
