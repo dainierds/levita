@@ -39,36 +39,49 @@ const ProjectionView: React.FC = () => {
 
             {/* Container for Movie Credits Style Scrolling */}
             <div className="relative z-10 w-full max-w-[90%] md:max-w-[80%] h-[85vh] flex flex-col justify-end items-center mask-fade-top">
-                <div className="flex flex-col items-center gap-6 md:gap-8 w-full pb-10">
+                <div className="flex flex-col items-center w-full pb-10">
                     {/* Show last 7 segments for context */}
                     {segments.slice(-7).map((seg, i) => (
-                        <p
-                            key={i}
-                            className="text-4xl md:text-6xl font-bold text-slate-200 text-center leading-tight drop-shadow-md transition-all duration-500"
-                        >
-                            {seg.translation || seg.original}
-                        </p>
+                        <div key={i} className="w-full flex justify-center animate-expand-height origin-bottom shrink-0">
+                            <p
+                                className="text-4xl md:text-6xl font-bold text-slate-200 text-center leading-tight drop-shadow-md py-4"
+                            >
+                                {seg.translation || seg.original}
+                            </p>
+                        </div>
                     ))}
 
                     {/* Current Live Line */}
                     {translation && (
-                        <p className="text-5xl md:text-7xl font-black text-white text-center leading-tight drop-shadow-2xl animate-fade-in-up">
-                            {translation}
-                        </p>
+                        <div className="w-full flex justify-center animate-fade-in-up shrink-0 min-h-[min-content]">
+                            <p className="text-5xl md:text-7xl font-black text-white text-center leading-tight drop-shadow-2xl py-4">
+                                {translation}
+                            </p>
+                        </div>
                     )}
                 </div>
             </div>
 
             <style>{`
                 .mask-fade-top { 
-                    mask-image: linear-gradient(to bottom, transparent 0%, black 100%); 
-                    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 100%); 
+                    mask-image: linear-gradient(to bottom, transparent 0%, black 20%); 
+                    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%); 
                 }
+                
+                @keyframes expand-height {
+                    0% { grid-template-rows: 0fr; opacity: 0; transform: translateY(20px); max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0; }
+                    100% { grid-template-rows: 1fr; opacity: 1; transform: translateY(0); max-height: 300px; }
+                }
+                .animate-expand-height { 
+                    animation: expand-height 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    overflow: hidden;
+                }
+
                 @keyframes fade-in-up {
-                    0% { opacity: 0; transform: translateY(40px) scale(0.95); filter: blur(10px); }
-                    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+                    0% { opacity: 0; transform: translateY(20px); }
+                    100% { opacity: 1; transform: translateY(0); }
                 }
-                .animate-fade-in-up { animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+                .animate-fade-in-up { animation: fade-in-up 0.4s ease-out forwards; }
                 
                 @keyframes pulse-slow {
                     0%, 100% { opacity: 0.5; }
