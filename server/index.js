@@ -321,7 +321,7 @@ wss.on('connection', (ws) => {
     try {
         const deepgram = createClient(DEEPGRAM_KEY);
         deepgramLive = deepgram.listen.live({
-            model: "nova-2",
+            model: "nova-3",
             language: "es",
             smart_format: true,
             interim_results: true,
