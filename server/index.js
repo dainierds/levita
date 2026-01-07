@@ -289,7 +289,8 @@ wss.on('connection', (ws) => {
             language: "es",
             smart_format: true,
             interim_results: true,
-            endpointing: 300, // Reduced to 300ms to improve latency
+            endpointing: 300,
+            keepAlive: true, // Prevent immediate closure
         });
 
         // Deepgram Events
