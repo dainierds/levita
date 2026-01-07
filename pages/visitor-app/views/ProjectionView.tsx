@@ -32,40 +32,31 @@ const ProjectionView: React.FC = () => {
     }, [segments, translation]);
 
     return (
-        <div className="w-screen h-screen overflow-hidden flex items-center justify-center p-[5%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0a0a] to-black text-slate-100 font-sans tracking-tight">
+        <div className="w-screen h-screen overflow-hidden flex items-end justify-center pb-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0a0a] to-black text-slate-100 font-sans tracking-tight">
 
             {/* Ambient Background Glow */}
             <div className="absolute inset-0 bg-blue-500/5 blur-[120px] rounded-full mix-blend-screen pointer-events-none animate-pulse-slow" />
 
-            {/* Container for centered text - Max width constrained for readability */}
-            <div className="relative z-10 max-w-[85%] text-center flex flex-col gap-6 md:gap-10">
-
-                {/* Previous context (Ghost text) */}
-                <div className="flex flex-col items-center gap-4 mask-fade-top">
-                    {segments.slice(-3).map((seg, i) => (
+            {/* Container for Movie Credits Style Scrolling */}
+            <div className="relative z-10 w-full max-w-[90%] md:max-w-[80%] h-[85vh] flex flex-col justify-end items-center mask-fade-top">
+                <div className="flex flex-col items-center gap-6 md:gap-8 w-full pb-10">
+                    {/* Show last 7 segments for context */}
+                    {segments.slice(-7).map((seg, i) => (
                         <p
                             key={i}
-                            className="text-3xl md:text-5xl font-semibold text-slate-300 leading-tight transition-all duration-700"
-                            style={{
-                                opacity: 0.4 + (i * 0.2), // 0.4, 0.6, 0.8
-                                transform: `scale(${0.9 + (i * 0.02)}) translateY(${10 - (i * 5)}px)`
-                            }}
+                            className="text-4xl md:text-6xl font-bold text-slate-200 text-center leading-tight drop-shadow-md transition-all duration-500"
                         >
                             {seg.translation || seg.original}
                         </p>
                     ))}
-                </div>
 
-                {/* Latest Active Segment (Hero Text) */}
-                {translation && (
-                    <div className="relative">
-                        <p className="text-5xl md:text-7xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-300 leading-[1.1] animate-fade-in-up drop-shadow-2xl">
+                    {/* Current Live Line */}
+                    {translation && (
+                        <p className="text-5xl md:text-7xl font-black text-white text-center leading-tight drop-shadow-2xl animate-fade-in-up">
                             {translation}
                         </p>
-                        {/* Subtle glow behind text */}
-                        <div className="absolute inset-0 bg-white/5 blur-2xl -z-10 rounded-full opacity-50" />
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             <style>{`
