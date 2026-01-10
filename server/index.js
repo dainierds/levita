@@ -277,6 +277,7 @@ wss.on('connection', (ws) => {
     console.log('🔌 Client Connected'); // DEBUG
     clients.add(ws);
     let packetCount = 0; // Chismoso counter
+    let audioHeader = null; // Store WebM header for reconnections
 
     let deepgramLive = null;
     let isSource = false; // Flag to identify if this is the Admin/Mic Source
@@ -298,6 +299,11 @@ wss.on('connection', (ws) => {
             // Deepgram Events
             deepgramLive.on(LiveTranscriptionEvents.Open, () => {
                 console.log("🟢 Deepgram OPEN");
+                // Replay Header to ensure new session understands the stream codec
+                if (audioHeader && deepgramLive.getReadyState() === 1) {
+                    console.log("📨 Replaying WebM Header to new session...");
+                    deepgramLive.send(audioHeader);
+                }
             });
 
             deepgramLive.on(LiveTranscriptionEvents.Transcript, async (data) => {
@@ -372,6 +378,12 @@ wss.on('connection', (ws) => {
         // (Prevents text/JSON control messages from triggering Code 1000)
         if (!Buffer.isBuffer(message)) {
             return;
+        }
+
+        // Capture Header (First Packet)
+        if (!audioHeader) {
+            console.log("📦 Captured Audio Header (" + size + " bytes)");
+            audioHeader = message;
         }
 
         // Log incoming audio packets (The "Chismoso" part)
