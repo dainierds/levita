@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { ChurchEvent, EventType } from '../types';
-import { Calendar, Clock, MapPin, Plus, Trash2, X, Check, Image as ImageIcon, LayoutTemplate, Pencil, ChevronLeft, ChevronRight, List } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Trash2, X, Check, Image as ImageIcon, LayoutTemplate, Pencil, ChevronLeft, ChevronRight, List, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
-import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import { parseCSV, parseICS } from '../utils/eventImport';
 
 interface EventsAdminProps {
     events: ChurchEvent[];
@@ -102,6 +103,62 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
             alert("Error al guardar el evento");
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user?.tenantId) return;
+
+        setIsSubmitting(true);
+        try {
+            const text = await file.text();
+            let importedEvents: any[] = []; // Using any to match partial import structure
+
+            if (file.name.endsWith('.csv')) {
+                importedEvents = parseCSV(text);
+            } else if (file.name.endsWith('.ics')) {
+                importedEvents = parseICS(text);
+            } else {
+                alert('Formato no soportado. Use .csv o .ics');
+                setIsSubmitting(false);
+                return;
+            }
+
+            if (importedEvents.length === 0) {
+                alert('No se encontraron eventos válidos.');
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Batch write seems safer/better, but limited to 500. 
+            // Just looping addDoc for simplicity as expected volume is low, or separate batches.
+            // Let's use batch for atomicity if < 500
+            const batch = writeBatch(db);
+            let count = 0;
+
+            importedEvents.forEach(ev => {
+                const docRef = doc(collection(db, 'events'));
+                batch.set(docRef, {
+                    ...ev,
+                    tenantId: user.tenantId,
+                    type: ev.type || 'SERVICE', // Ensure type
+                    activeInBanner: true,
+                    targetAudience: 'PUBLIC'
+                });
+                count++;
+            });
+
+            await batch.commit();
+            alert(`Se han importado ${count} eventos correctamente.`);
+
+        } catch (error) {
+            console.error("Import error:", error);
+            alert("Error al importar el archivo.");
+        } finally {
+            setIsSubmitting(false);
+            // Reset input
+            e.target.value = '';
         }
     };
 
@@ -300,12 +357,19 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                     </button>
                 </div>
 
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center gap-2"
-                >
-                    <Plus size={20} /> Nuevo Evento
-                </button>
+                <div className="flex gap-2">
+                    <label className="bg-slate-800 text-white px-4 py-3 rounded-xl font-bold hover:bg-slate-700 transition-colors shadow-lg cursor-pointer flex items-center gap-2">
+                        <Upload size={20} />
+                        <span className="hidden md:inline">Importar</span>
+                        <input type="file" accept=".csv,.ics" className="hidden" onChange={handleFileUpload} disabled={isSubmitting} />
+                    </label>
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center gap-2"
+                    >
+                        <Plus size={20} /> <span className="hidden md:inline">Nuevo Evento</span>
+                    </button>
+                </div>
             </div>
 
             {viewMode === 'LIST' ? (

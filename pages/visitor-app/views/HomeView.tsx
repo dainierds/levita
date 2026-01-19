@@ -12,8 +12,24 @@ interface HomeViewProps {
 
 export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, events = [], nextPlan, settings }) => {
   // Get upcoming events (limit 5 for carousel)
+  // Get upcoming events (User Request: "automáticamente muestre los próximos 5 eventos")
+  // Automation Logic: 
+  // 1. Filter ALL valid future events (ignore manual toggle for banner selection to ensure automation)
+  // 2. Sort by date
+  // 3. Slice 5
+  // 4. Expiration: "lleguen las 12 de la noche del dia del evento entonces lo elimine" -> Keep if Date >= Today (Midnight start)
+
   const upcomingEvents = events
-    .filter(e => e.activeInBanner && new Date(e.date) >= new Date())
+    .filter(e => {
+      // Parse event date (YYYY-MM-DD)
+      const eventDate = new Date(e.date + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Clear time portion of today for correct Day comparison
+
+      // Keep if event date is today or future
+      // This ensures it survives until the END of the day (since next day > eventDate)
+      return eventDate >= today && e.targetAudience !== 'STAFF_ONLY'; // Basic public filter
+    })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 5);
 
@@ -281,12 +297,26 @@ const CarouselHero: React.FC<{
       return 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900'; // Default Neutral for Main Status
     }
     // Event Slide
+    // Event Slide
     if (activeEvent?.bannerGradient) {
-      // Ensure we have the full gradient string "bg-gradient-to-r from-x to-y" if user only stored "from-x to-y"
-      // But assuming format is "from-green-400 to-blue-500"
       return `bg-gradient-to-br ${activeEvent.bannerGradient}`;
     }
-    return 'bg-gradient-to-br from-blue-500 to-indigo-600'; // Fallback
+
+    // Auto-assign background if missing (User Request: "le asigne automaticamente un fondo de los que ya hay")
+    // Deterministic fallback based on ID length or char code, so it doesn't flicker on re-renders but varies per event
+    const gradients = [
+      'from-purple-500 to-pink-500',
+      'from-blue-500 to-cyan-400',
+      'from-emerald-400 to-green-500',
+      'from-orange-400 to-red-500',
+      'from-indigo-500 to-purple-600',
+      'from-yellow-400 to-orange-500'
+    ];
+    // Fallback ID if event is somehow malformed
+    const seed = activeEvent?.id ? activeEvent.id.charCodeAt(0) + activeEvent.id.length : Math.floor(Math.random() * 10);
+    const grad = gradients[seed % gradients.length];
+
+    return `bg-gradient-to-br ${grad}`;
   };
 
   // Text Color Logic: If it's the main slide (neutral), use dark text. If it's a gradient event, use white.
