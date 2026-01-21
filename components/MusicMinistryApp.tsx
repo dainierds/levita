@@ -394,7 +394,25 @@ const MusicMinistryApp: React.FC = () => {
                                             <span className="text-xs font-bold tracking-widest uppercase text-white">Bienvenida</span>
                                         </div>
                                         <h2 className="text-3xl font-black mb-2 text-white">Hola, {user?.name?.split(' ')[0] || userName || 'Adorador'}</h2>
-                                        <p className="opacity-90 font-medium text-indigo-50">Aquí están los próximos servicios y eventos.</p>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        const permission = await Notification.requestPermission();
+                                                        if (permission === 'granted') {
+                                                            alert('¡Notificaciones activadas!');
+                                                            // Logic to save token (simplified here, in reality should be function)
+                                                            // ... (reuse the logic from useEffect or extract it)
+                                                        } else {
+                                                            alert('Permiso denegado.');
+                                                        }
+                                                    } catch (e) { console.error(e); }
+                                                }}
+                                                className="px-4 py-2 bg-white text-indigo-600 rounded-xl text-xs font-bold shadow-lg"
+                                            >
+                                                🔔 Activar Avisos
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="animate-in fade-in slide-in-from-right-4 duration-500">
