@@ -7,6 +7,13 @@
   <title>LEVITA - Church OS</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
+    // Capture PWA install event immediately to avoid race conditions with React
+    window.deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+    });
+
     tailwind.config = {
       theme: {
         extend: {

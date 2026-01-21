@@ -90,6 +90,7 @@ const MusicMinistryApp: React.FC = () => {
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
             setDeferredPrompt(null);
+            (window as any).deferredPrompt = null;
         }
     };
 
