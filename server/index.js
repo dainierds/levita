@@ -124,6 +124,96 @@ const isSpanishData = (text) => {
     };
 */
 
+// --- FIREBASE ADMIN SETUP (For FCM) ---
+import admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getMessaging } from 'firebase-admin/messaging';
+
+// Check if Service Account is available (Assumes it's in .env or a specific file)
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+        console.log("🔥 Firebase Admin Initialized");
+    } catch (e) {
+        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT", e);
+    }
+}
+
+// Endpoint to trigger "Tomorrow's Shift" Notification
+app.post('/api/notifications/remind-tomorrow', async (req, res) => {
+    try {
+        const db = getFirestore();
+        const messaging = getMessaging();
+
+        // 1. Calculate Tomorrow's Date (YYYY-MM-DD)
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        const dateStr = tomorrow.toISOString().split('T')[0];
+
+        console.log(`🔔 Checking shifts for: ${dateStr}`);
+
+        // 2. Query Tenants (Global Check or Specific Tenant)
+        // For simplicity, let's just query ALL music teams for that date across all tenants (if collectionGroup) 
+        // OR iterate tenants. Let's assume we pass tenantId in body or check all.
+        // Doing a collectionGroup query involves index. Let's do a simple check for known active tenants or just receive tenantId.
+        const { tenantId } = req.body;
+
+        if (!tenantId) return res.status(400).send("TenantId required");
+
+        // Query Music Team for Tomorrow
+        const teamsRef = db.collection(`tenants/${tenantId}/music_teams`);
+        const snapshot = await teamsRef.where('date', '==', dateStr).get();
+
+        if (snapshot.empty) {
+            return res.json({ message: "No music teams found for tomorrow." });
+        }
+
+        let notifyCount = 0;
+
+        for (const doc of snapshot.docs) {
+            const team = doc.data();
+            const memberIds = [...(team.memberIds || []), ...(team.soloist1 || []), ...(team.soloist2 || [])];
+
+            // Get Users
+            for (const uid of memberIds) {
+                const userDoc = await db.collection('users').doc(uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    const tokens = userData.fcmTokens || [];
+
+                    if (tokens.length > 0) {
+                        // Send Notification
+                        const message = {
+                            notification: {
+                                title: '🎵 Recordatorio Musical',
+                                body: `Hola ${userData.name}, te toca cantar mañana (${dateStr}). ¡Prepárate!`
+                            },
+                            tokens: tokens
+                        };
+
+                        try {
+                            const response = await messaging.sendMulticast(message);
+                            notifyCount += response.successCount;
+                        } catch (err) {
+                            console.error(`Failed to send to ${userData.name}`, err);
+                        }
+                    }
+                }
+            }
+        }
+
+        res.json({ success: true, notified: notifyCount });
+
+    } catch (error) {
+        console.error("Notification Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 
 

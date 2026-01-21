@@ -77,6 +77,35 @@ const MusicMinistryApp: React.FC = () => {
     useEffect(() => {
         if (user) {
             setIsAuthenticated(true);
+
+            // Request FCM Token
+            const requestNotificationPermission = async () => {
+                try {
+                    const { messaging } = await import('../services/firebase');
+                    const { getToken } = await import('firebase/messaging');
+
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                        const token = await getToken(messaging, {
+                            vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY // Ensure this is set or hardcoded if public
+                        });
+                        console.log('FCM Token:', token);
+
+                        // Save token to user profile
+                        if (token && user.id) {
+                            const { doc, updateDoc, arrayUnion } = await import('firebase/firestore');
+                            const { db } = await import('../services/firebase');
+                            await updateDoc(doc(db, 'users', user.id), {
+                                fcmTokens: arrayUnion(token)
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error asking for notification permission:", error);
+                }
+            };
+
+            requestNotificationPermission();
         }
     }, [user]);
 
