@@ -426,12 +426,16 @@ const MusicMinistryApp: React.FC = () => {
                                         Activar Avisos
                                     </button>
 
-                                    {/* Install App Option (Conditional) */}
-                                    {deferredPrompt && (
+                                    {/* Install App Option (Persistent) */}
+                                    {!window.matchMedia('(display-mode: standalone)').matches && (
                                         <button
                                             onClick={() => {
                                                 setShowProfileMenu(false);
-                                                handleInstallClick();
+                                                if (deferredPrompt) {
+                                                    handleInstallClick();
+                                                } else {
+                                                    alert('Para instalar la App:\n\n1. Busca los 3 puntos o el botón Compartir en tu navegador.\n2. Selecciona "Instalar aplicación" o "Agregar a Inicio".');
+                                                }
                                             }}
                                             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors text-left"
                                         >
