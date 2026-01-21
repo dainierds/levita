@@ -372,7 +372,7 @@ const MusicMinistryApp: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50 pb-24">
             {/* Header */}
-            <header className="bg-white px-6 pt-12 pb-6 shadow-sm sticky top-0 z-10">
+            <header className="bg-white px-6 pt-12 pb-6 shadow-sm sticky top-0 z-50">
                 <div className="flex justify-between items-center mb-4">
                     <div>
                         <h1 className="text-2xl font-black text-slate-800">
