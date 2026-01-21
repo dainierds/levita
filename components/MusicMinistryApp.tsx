@@ -73,6 +73,25 @@ const MusicMinistryApp: React.FC = () => {
     const [error, setError] = useState('');
     const [debugEventsCount, setDebugEventsCount] = useState(0);
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+    useEffect(() => {
+        const handler = (e: any) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setDeferredPrompt(null);
+        }
+    };
 
     useEffect(() => {
         if (user) {
@@ -346,25 +365,7 @@ const MusicMinistryApp: React.FC = () => {
         );
     }
 
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
-    useEffect(() => {
-        const handler = (e: any) => {
-            e.preventDefault();
-            setDeferredPrompt(e);
-        };
-        window.addEventListener('beforeinstallprompt', handler);
-        return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, []);
-
-    const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            setDeferredPrompt(null);
-        }
-    };
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24">
