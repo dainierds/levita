@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import AppRoutes from './routes/AppRoutes';
 
+// Trigger Vercel Deployment - v2
 const App: React.FC = () => {
   return (
     <Router>
