@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
         manifest: {
           name: 'Levita Church OS',
           short_name: 'Levita',
-          description: 'Sistema Operativo par Iglesias - Gestión de Ministerio de Alabanza',
+          description: 'Sistema Operativo integral para iglesias. Gestiona ministerios, turnos y la experiencia del visitante.',
           theme_color: '#ffffff',
           background_color: '#ffffff',
           display: 'standalone',

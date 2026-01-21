@@ -116,7 +116,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(invitationLink);
+    const roleLabel = ROLES_TO_CREATE.find(r => r.key === formData.role)?.label || formData.role;
+    const message = `Hola, has sido invitado a Levita por ${currentUser.name} como ${roleLabel}. Por favor, completa tu registro para acceder al panel de control: ${invitationLink}`;
+
+    navigator.clipboard.writeText(message);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -284,8 +287,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                   <button
                     onClick={() => {
                       const link = `${window.location.origin}/join?code=${inv.id}`;
-                      navigator.clipboard.writeText(link);
-                      addNotification('success', 'Enlace Copiado', 'Link listo para compartir.');
+                      const roleLabel = ROLES_TO_CREATE.find(r => r.key === inv.role)?.label || inv.role;
+                      const message = `Hola, has sido invitado a Levita por ${currentUser.name} como ${roleLabel}. Por favor, completa tu registro para acceder al panel de control: ${link}`;
+
+                      navigator.clipboard.writeText(message);
+                      addNotification('success', 'Mensaje Copiado', 'Invitación lista para compartir.');
                     }}
                     className="w-full py-1.5 bg-white border border-indigo-100 text-indigo-600 text-xs font-bold rounded-lg hover:bg-indigo-50 flex items-center justify-center gap-1 shadow-sm"
                   >
