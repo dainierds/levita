@@ -346,6 +346,26 @@ const MusicMinistryApp: React.FC = () => {
         );
     }
 
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+    useEffect(() => {
+        const handler = (e: any) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setDeferredPrompt(null);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 pb-24">
             {/* Header */}
@@ -362,6 +382,16 @@ const MusicMinistryApp: React.FC = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
+                        {/* Install Button (Only shows if installable) */}
+                        {deferredPrompt && (
+                            <button
+                                onClick={handleInstallClick}
+                                className="px-3 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-lg animate-pulse whitespace-nowrap"
+                            >
+                                ⬇ Instalar App
+                            </button>
+                        )}
+
                         <button
                             onClick={async () => {
                                 try {
