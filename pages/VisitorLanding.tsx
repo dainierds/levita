@@ -55,6 +55,11 @@ const VisitorLanding: React.FC = () => {
                 return;
             }
 
+            if (ministryContext === 'Audio' && (role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO'))) {
+                navigate('/app/audio'); // Explicit route for Audio Dashboard
+                return;
+            }
+
             // Default Redirects based on Role
             if (role === 'ELDER') navigate('/anciano');
             else if (role === 'MEMBER') navigate('/miembro');

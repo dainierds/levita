@@ -106,6 +106,22 @@ const ProtectedApp: React.FC = () => {
         return <Navigate to="/" replace />;
     }
 
+    // --- SECONDARY ROLE ACCESS (Explicit URL Overrides) ---
+    // Allow users with Secondary Audio role (e.g. Elders) to access the Audio Dashboard
+    const hasAudioAccess = role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO');
+    if (location.pathname.startsWith('/app/audio') && hasAudioAccess) {
+        return (
+            <NotificationProvider allNotifications={notifications} setAllNotifications={setNotifications} currentUserId={user?.id}>
+                <AudioDashboard />
+                <div className="fixed bottom-4 right-4 z-[100] flex gap-2">
+                    <button onClick={logout} className="bg-[#2d313a] border border-slate-700 px-4 py-2 rounded-full shadow-lg text-xs font-bold text-red-400 hover:text-red-300 transition-colors">
+                        Salir
+                    </button>
+                </div>
+            </NotificationProvider>
+        );
+    }
+
     // 0. MUSIC TEAM REDIRECTION
     if (role === 'MUSIC') {
         return <MusicMinistryApp />;
