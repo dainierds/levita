@@ -321,7 +321,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
             // Filter users into groups
             const groupedUsers = ROLE_SECTIONS.map(section => ({
               ...section,
-              users: users.filter(u => u.role === section.key)
+              users: users.filter(u => u.role === section.key || u.secondaryRoles?.includes(section.key as Role))
                 .sort((a, b) => a.name.localeCompare(b.name))
             })).filter(group => group.users.length > 0);
 
