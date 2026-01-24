@@ -262,10 +262,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                     className="w-full px-4 py-3 bg-slate-50 rounded-xl outline-none"
                   >
                     <option value="MEMBER">Sin Permisos Especiales (Solo Lectura)</option>
-                    <option value="TEACHER">Maestros (Editar Roster ES)</option>
-                    <option value="MUSIC">Música (Editar Repertorio)</option>
-                    <option value="AUDIO">Audio (Control de Pantallas)</option>
-                    <option value="ELDER">Anciano (Ver Todo)</option>
+                    <option value="TEACHER">Director de Esc. Sabática (Editar Roster Maestros)</option>
+                    <option value="MUSIC">Director de Música (Editar Dep. Música)</option>
+                    <option value="ELDER">Director de Ancianos (Editar Roster Ancianos)</option>
+                    <option value="AUDIO">Director de Audio (Editar Roster Audio)</option>
                   </select>
                 </div>
               ) : (
