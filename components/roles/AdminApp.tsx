@@ -256,7 +256,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
 
                     {currentView === 'voting_admin' && role === 'ADMIN' && user.tenantId && (
                         <VotingManager
-                            users={users.filter(u => u.role === 'BOARD')}
+                            users={users.filter(u => u.role === 'BOARD' || u.secondaryRoles?.includes('BOARD'))}
                             tenantId={user.tenantId}
                         />
                     )}
