@@ -99,7 +99,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 </div>
 
                 {/* Desktop Top Bar - Hide for Elder Only (Board needs minimal version) */}
-                {role !== 'ELDER' && (
+                {(role !== 'ELDER' || hasBoardAccess) && (
                     <div className="hidden md:flex absolute top-6 right-8 z-50 items-center gap-4">
 
                         {/* Hide Admin Controls for Board */}
@@ -148,8 +148,8 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                     </div>
                 )}
 
-                {/* Elder Header - Show Always for Elder */}
-                {role === 'ELDER' && (
+                {/* Elder Header - Show Always for Elder (unless in Board Mode) */}
+                {role === 'ELDER' && !hasBoardAccess && (
                     <div className="w-full">
                         <ElderHeader user={user} onMenuClick={() => setCurrentView('dashboard')} isMenuOpen={currentView === 'dashboard'} />
                     </div>
@@ -262,7 +262,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
 
             </main>
 
-            {role === 'ELDER' && (
+            {role === 'ELDER' && !hasBoardAccess && (
                 <ElderBottomNav currentView={currentView} setCurrentView={setCurrentView} notificationCount={elderUnreadCount} />
             )}
         </div>
