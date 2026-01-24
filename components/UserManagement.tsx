@@ -22,6 +22,7 @@ const ROLES_TO_CREATE = [
   { key: 'AUDIO', label: 'Audio' },
   { key: 'TEACHER', label: 'Maestro de ES' },
   { key: 'BOARD', label: 'Junta de Iglesia' },
+  { key: 'LEADER', label: 'Líderes / Directores' },
 ];
 
 const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, currentUser }) => {
@@ -316,6 +317,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
               { key: 'AUDIO', label: 'Operadores de Audio', icon: UserIcon, color: 'text-orange-600', bg: 'bg-orange-100' },
               { key: 'TEACHER', label: 'Maestros ES', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-100' },
               { key: 'BOARD', label: 'Junta de Iglesia', icon: Users, color: 'text-slate-600', bg: 'bg-slate-100' },
+              { key: 'LEADER', label: 'Líderes / Directores', icon: Shield, color: 'text-cyan-600', bg: 'bg-cyan-100' },
             ];
 
             // Filter users into groups

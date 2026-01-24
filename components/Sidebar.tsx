@@ -47,6 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
     switch (r) {
       case 'ADMIN': return ['dashboard', 'planner', 'team', 'music_dept', 'sermons', 'roster', 'prayers', 'statistics', 'events', 'notifications', 'users', 'voting_admin', 'settings'];
       case 'ELDER': return ['dashboard', 'planner', 'team', 'sermons', 'roster', 'prayers', 'statistics'];
+      case 'LEADER': return ['dashboard', 'planner', 'team', 'music_dept', 'roster', 'events'];
       case 'BOARD': return ['dashboard'];
       case 'AUDIO':
       case 'MUSIC':

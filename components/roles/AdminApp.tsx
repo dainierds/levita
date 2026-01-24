@@ -158,7 +158,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 )}
 
                 <div className="max-w-7xl mx-auto w-full">
-                    {currentView === 'dashboard' && (role === 'ADMIN') && (
+                    {currentView === 'dashboard' && (role === 'ADMIN' || role === 'LEADER') && (
                         <Dashboard setCurrentView={setCurrentView} role={role} settings={settings} users={users} />
                     )}
 
@@ -171,11 +171,11 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                     )}
 
                     {currentView === 'planner' && (
-                        <ServicePlanner tier={currentTenantTier} users={users} />
+                        <ServicePlanner tier={currentTenantTier} users={users} role={role} />
                     )}
 
-                    {currentView === 'events' && (role === 'ADMIN') && (
-                        <EventsAdmin events={events} tier={currentTenantTier} />
+                    {currentView === 'events' && (role === 'ADMIN' || role === 'LEADER') && (
+                        <EventsAdmin events={events} tier={currentTenantTier} role={role} />
                     )}
 
                     {currentView === 'events' && role === 'ELDER' && (
@@ -243,11 +243,12 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                             plans={plans}
                             savePlan={savePlan}
                             onSaveSettings={handleSaveSettings}
+                            role={role}
                         />
                     )}
 
                     {currentView === 'music_dept' && (
-                        <MusicDepartment users={users} tier={currentTenantTier} />
+                        <MusicDepartment users={users} tier={currentTenantTier} role={role} />
                     )}
 
                     {currentView === 'sermons' && (

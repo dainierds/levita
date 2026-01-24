@@ -390,6 +390,13 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                   </div>
                   <span className="text-sm font-bold text-purple-900">Crear Sermón</span>
                 </button>
+              ) : role === 'LEADER' ? (
+                <button onClick={() => setCurrentView('events')} className="p-4 bg-pink-50 hover:bg-pink-100 transition-colors rounded-3xl text-left">
+                  <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-pink-600 mb-2">
+                    <Calendar size={16} />
+                  </div>
+                  <span className="text-sm font-bold text-pink-900">Ver Calendario</span>
+                </button>
               ) : (
                 <button onClick={() => setCurrentView('events')} className="p-4 bg-pink-50 hover:bg-pink-100 transition-colors rounded-3xl text-left">
                   <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-pink-600 mb-2">

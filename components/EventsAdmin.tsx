@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChurchEvent, EventType } from '../types';
+import { ChurchEvent, EventType, Role } from '../types';
 import { Calendar, Clock, MapPin, Plus, Trash2, X, Check, Image as ImageIcon, LayoutTemplate, Pencil, ChevronLeft, ChevronRight, List, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
@@ -9,6 +9,7 @@ import { parseCSV, parseICS } from '../utils/eventImport';
 interface EventsAdminProps {
     events: ChurchEvent[];
     tier: string;
+    role?: Role;
 }
 
 const GRADIENTS = [
@@ -28,7 +29,8 @@ const GRADIENTS = [
 
 const EMOJIS = ['📅', '🙏', '🎂', '🎤', '📖', '🎵', '☀️', '✨', '🎉', '👨‍👩‍👧‍👦', '🎈', '🎁', '⛪', '✝️', '🕊️', '🏠', '💍', '🔔'];
 
-const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
+const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' }) => {
+    const readOnly = role === 'LEADER';
     const { user } = useAuth();
     const [showModal, setShowModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -358,17 +360,21 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                 </div>
 
                 <div className="flex gap-2">
-                    <label className="bg-slate-800 text-white px-4 py-3 rounded-xl font-bold hover:bg-slate-700 transition-colors shadow-lg cursor-pointer flex items-center gap-2">
-                        <Upload size={20} />
-                        <span className="hidden md:inline">Importar</span>
-                        <input type="file" accept=".csv,.ics" className="hidden" onChange={handleFileUpload} disabled={isSubmitting} />
-                    </label>
-                    <button
-                        onClick={() => setShowModal(true)}
-                        className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center gap-2"
-                    >
-                        <Plus size={20} /> <span className="hidden md:inline">Nuevo Evento</span>
-                    </button>
+                    {!readOnly && (
+                        <>
+                            <label className="bg-slate-800 text-white px-4 py-3 rounded-xl font-bold hover:bg-slate-700 transition-colors shadow-lg cursor-pointer flex items-center gap-2">
+                                <Upload size={20} />
+                                <span className="hidden md:inline">Importar</span>
+                                <input type="file" accept=".csv,.ics" className="hidden" onChange={handleFileUpload} disabled={isSubmitting} />
+                            </label>
+                            <button
+                                onClick={() => setShowModal(true)}
+                                className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center gap-2"
+                            >
+                                <Plus size={20} /> <span className="hidden md:inline">Nuevo Evento</span>
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -378,33 +384,35 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                         <div key={ev.id} className="group relative bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all">
                             {/* Banner Preview Strip */}
                             <div className={`h-24 bg-gradient-to-r ${ev.bannerGradient || 'from-indigo-500 to-purple-500'} p-6 relative`}>
-                                <div className="absolute top-4 right-4 flex gap-2">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleEditEvent(ev);
-                                        }}
-                                        className="p-2 bg-white/20 text-white hover:bg-white/40 backdrop-blur-md rounded-lg transition-all"
-                                    >
-                                        <Pencil size={16} />
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteEvent(ev.id);
-                                        }}
-                                        className={`p-2 backdrop-blur-md rounded-lg transition-all z-50 flex items-center gap-1 ${deleteConfirmation === ev.id
-                                            ? 'bg-red-600 text-white w-auto px-3'
-                                            : 'bg-white/20 text-white hover:bg-red-500'
-                                            }`}
-                                    >
-                                        {deleteConfirmation === ev.id ? (
-                                            <span className="text-xs font-bold">¿Borrar?</span>
-                                        ) : (
-                                            <Trash2 size={16} />
-                                        )}
-                                    </button>
-                                </div>
+                                {!readOnly && (
+                                    <div className="absolute top-4 right-4 flex gap-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEditEvent(ev);
+                                            }}
+                                            className="p-2 bg-white/20 text-white hover:bg-white/40 backdrop-blur-md rounded-lg transition-all"
+                                        >
+                                            <Pencil size={16} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteEvent(ev.id);
+                                            }}
+                                            className={`p-2 backdrop-blur-md rounded-lg transition-all z-50 flex items-center gap-1 ${deleteConfirmation === ev.id
+                                                ? 'bg-red-600 text-white w-auto px-3'
+                                                : 'bg-white/20 text-white hover:bg-red-500'
+                                                }`}
+                                        >
+                                            {deleteConfirmation === ev.id ? (
+                                                <span className="text-xs font-bold">¿Borrar?</span>
+                                            ) : (
+                                                <Trash2 size={16} />
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="p-6 -mt-12 relative z-10">
@@ -422,8 +430,8 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-bold text-slate-400 uppercase">Visible en App</span>
                                     <button
-                                        onClick={() => toggleBannerStatus(ev)}
-                                        className={`w-12 h-7 rounded-full relative transition-colors ${ev.activeInBanner ? 'bg-green-500' : 'bg-slate-200'}`}
+                                        onClick={() => !readOnly && toggleBannerStatus(ev)}
+                                        className={`w-12 h-7 rounded-full relative transition-colors ${ev.activeInBanner ? 'bg-green-500' : 'bg-slate-200'} ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
                                         <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${ev.activeInBanner ? 'translate-x-5' : ''}`} />
                                     </button>
@@ -432,15 +440,17 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier }) => {
                         </div>
                     ))}
 
-                    <button
-                        onClick={() => setShowModal(true)}
-                        className="min-h-[200px] rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all gap-4 group"
-                    >
-                        <div className="w-12 h-12 rounded-full bg-slate-50 group-hover:bg-indigo-50 flex items-center justify-center transition-colors">
-                            <Plus size={24} />
-                        </div>
-                        <span className="font-bold">Crear Nuevo Evento</span>
-                    </button>
+                    {!readOnly && (
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="min-h-[200px] rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all gap-4 group"
+                        >
+                            <div className="w-12 h-12 rounded-full bg-slate-50 group-hover:bg-indigo-50 flex items-center justify-center transition-colors">
+                                <Plus size={24} />
+                            </div>
+                            <span className="font-bold">Crear Nuevo Evento</span>
+                        </button>
+                    )}
                 </div>
             ) : (
                 renderCalendar()

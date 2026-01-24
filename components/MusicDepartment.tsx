@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, MusicTeam, SubscriptionTier } from '../types';
+import { User, MusicTeam, SubscriptionTier, Role } from '../types';
 import { Calendar, Music, Plus, Trash2, User as UserIcon, Save, X, Mic2, Edit, Check } from 'lucide-react';
 import { useNotification } from './NotificationSystem';
 import { db } from '../services/firebase';
@@ -9,9 +9,11 @@ import { useAuth } from '../context/AuthContext';
 interface MusicDepartmentProps {
     users: User[];
     tier: SubscriptionTier;
+    role?: Role;
 }
 
-const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
+const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier, role = 'ADMIN' }) => {
+    const readOnly = role === 'LEADER';
     const { user } = useAuth();
     const { addNotification } = useNotification();
     const [teams, setTeams] = useState<MusicTeam[]>([]);
@@ -159,20 +161,22 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                     </h2>
                     <p className="text-slate-500">Gestión de equipos de alabanza y programación.</p>
                 </div>
-                <button
-                    onClick={() => {
-                        if (!showForm) {
-                            // Reset state when opening for new entry
-                            setEditingTeamId(null);
-                            setFormData({ date: '', selectedMembers: [], note: '', soloist1: [], soloist2: [] });
-                        }
-                        setShowForm(!showForm);
-                    }}
-                    className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-lg"
-                >
-                    {showForm ? <X size={20} /> : <Plus size={20} />}
-                    {showForm ? 'Cancelar' : 'Nuevo Equipo'}
-                </button>
+                {!readOnly && (
+                    <button
+                        onClick={() => {
+                            if (!showForm) {
+                                // Reset state when opening for new entry
+                                setEditingTeamId(null);
+                                setFormData({ date: '', selectedMembers: [], note: '', soloist1: [], soloist2: [] });
+                            }
+                            setShowForm(!showForm);
+                        }}
+                        className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-lg"
+                    >
+                        {showForm ? <X size={20} /> : <Plus size={20} />}
+                        {showForm ? 'Cancelar' : 'Nuevo Equipo'}
+                    </button>
+                )}
             </div>
 
             {/* CREATE FORM */}
@@ -333,49 +337,53 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier }) => {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => {
-                                                setFormData({
-                                                    date: team.date,
-                                                    selectedMembers: team.memberIds,
-                                                    note: team.note || '',
-                                                    soloist1: Array.isArray(team.soloist1) ? team.soloist1 : (typeof team.soloist1 === 'string' && team.soloist1 ? [team.soloist1] : []),
-                                                    soloist2: Array.isArray(team.soloist2) ? team.soloist2 : (typeof team.soloist2 === 'string' && team.soloist2 ? [team.soloist2] : [])
-                                                });
-                                                setEditingTeamId(team.id);
-                                                setShowForm(true);
-                                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                                            }}
-                                            className="text-slate-300 hover:text-indigo-500 transition-colors p-2"
-                                            title="Editar"
-                                        >
-                                            <Edit size={18} />
-                                        </button>
+                                        {!readOnly && (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        setFormData({
+                                                            date: team.date,
+                                                            selectedMembers: team.memberIds,
+                                                            note: team.note || '',
+                                                            soloist1: Array.isArray(team.soloist1) ? team.soloist1 : (typeof team.soloist1 === 'string' && team.soloist1 ? [team.soloist1] : []),
+                                                            soloist2: Array.isArray(team.soloist2) ? team.soloist2 : (typeof team.soloist2 === 'string' && team.soloist2 ? [team.soloist2] : [])
+                                                        });
+                                                        setEditingTeamId(team.id);
+                                                        setShowForm(true);
+                                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                    }}
+                                                    className="text-slate-300 hover:text-indigo-500 transition-colors p-2"
+                                                    title="Editar"
+                                                >
+                                                    <Edit size={18} />
+                                                </button>
 
-                                        {deleteId === team.id ? (
-                                            <div className="flex items-center bg-red-50 rounded-lg p-1 animate-in fade-in slide-in-from-right-4">
-                                                <span className="text-[10px] font-bold text-red-500 mr-2 px-1">¿Borrar?</span>
-                                                <button
-                                                    onClick={() => handleDeleteTeam(team.id)}
-                                                    className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors mr-1"
-                                                >
-                                                    <Check size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={() => setDeleteId(null)}
-                                                    className="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => setDeleteId(team.id)}
-                                                className="text-slate-300 hover:text-red-500 transition-colors p-2"
-                                                title="Eliminar"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                                {deleteId === team.id ? (
+                                                    <div className="flex items-center bg-red-50 rounded-lg p-1 animate-in fade-in slide-in-from-right-4">
+                                                        <span className="text-[10px] font-bold text-red-500 mr-2 px-1">¿Borrar?</span>
+                                                        <button
+                                                            onClick={() => handleDeleteTeam(team.id)}
+                                                            className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors mr-1"
+                                                        >
+                                                            <Check size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteId(null)}
+                                                            className="p-1 bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition-colors"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setDeleteId(team.id)}
+                                                        className="text-slate-300 hover:text-red-500 transition-colors p-2"
+                                                        title="Eliminar"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                 </div>

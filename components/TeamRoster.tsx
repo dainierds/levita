@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, ChurchSettings, ServicePlan, DayOfWeek } from '../types';
+import { User, ChurchSettings, ServicePlan, DayOfWeek, Role } from '../types';
 import { UserCheck, Mic2, Music, Mic, ChevronRight, Calendar, Info, CheckCircle2, BookOpen } from 'lucide-react';
 
 interface TeamRosterProps {
@@ -9,6 +9,7 @@ interface TeamRosterProps {
     plans: ServicePlan[];
     savePlan: (plan: ServicePlan) => Promise<any>;
     onSaveSettings: (settings: ChurchSettings) => Promise<void>;
+    role?: Role;
 }
 
 const ROLES_CONFIG = [
@@ -18,7 +19,8 @@ const ROLES_CONFIG = [
     { key: 'audioOperator', label: 'Operador de Audio', icon: Mic, color: 'text-orange-500 bg-orange-50', border: 'border-orange-100', role: 'AUDIO' },
 ];
 
-const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePlan }) => {
+const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePlan, role = 'ADMIN' }) => {
+    const readOnly = role === 'LEADER';
     // Logic similar to TeamManager: Display ONE card/view per Meeting Day
     const [activeDayIdx, setActiveDayIdx] = useState(0);
     const [upcomingServices, setUpcomingServices] = useState<{ dayName: string; date: Date; plan: ServicePlan | null }[]>([]);
@@ -213,8 +215,8 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
                                             <select
                                                 value={assignedName || ''}
                                                 onChange={(e) => handleAssignmentChange(activeDayIdx, role.key, e.target.value)}
-                                                disabled={loading}
-                                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 font-bold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/20 cursor-pointer hover:bg-slate-100 transition-colors appearance-none"
+                                                disabled={loading || readOnly}
+                                                className={`w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 font-bold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/20 transition-colors appearance-none ${readOnly ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-100'}`}
                                             >
                                                 <option value="">-- Seleccionar --</option>
                                                 {roleUsers.map(u => (

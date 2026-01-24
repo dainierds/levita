@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ServicePlan, SubscriptionTier, User } from '../types';
+import { ServicePlan, SubscriptionTier, User, Role } from '../types';
 import { Plus, Trash2, Music, Mic, Mic2, PlayCircle, Loader2, X, Hand, BookOpen, DollarSign, Megaphone, MessageCircle, Gift, Heart, Star, PenTool, User as UserIcon, GripVertical } from 'lucide-react';
 import { usePlans } from '../hooks/usePlans';
 import WorshipLinksEditor from './WorshipLinksEditor';
@@ -7,11 +7,13 @@ import WorshipLinksEditor from './WorshipLinksEditor';
 interface ServicePlannerProps {
   tier: SubscriptionTier;
   users: User[];
+  role?: Role;
 }
 
-const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
+const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users, role = 'ADMIN' }) => {
   const { plans, loading, savePlan, deletePlan } = usePlans();
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const readOnly = role === 'LEADER';
 
   // Add Item State
   const [showAddItemModal, setShowAddItemModal] = useState(false);
@@ -167,12 +169,14 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
     return (
       <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4">
         <p>No hay planes de servicio creados.</p>
-        <button
-          onClick={handleCreatePlan}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-colors"
-        >
-          <Plus size={20} /> Crear Primer Plan
-        </button>
+        {!readOnly && (
+          <button
+            onClick={handleCreatePlan}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-colors"
+          >
+            <Plus size={20} /> Crear Primer Plan
+          </button>
+        )}
       </div>
     );
   }
@@ -184,7 +188,7 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-slate-800">Orden de Cultos</h2>
-          <p className="text-slate-500">Diseña el flujo del servicio.</p>
+          <p className="text-slate-500">{readOnly ? 'Vista de solo lectura.' : 'Diseña el flujo del servicio.'}</p>
         </div>
 
         <div className="flex items-center gap-2 bg-white p-1 rounded-full border border-slate-200 shadow-sm overflow-x-auto no-scrollbar max-w-[200px] md:max-w-none">
@@ -200,15 +204,17 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
               {plan.title}
             </button>
           ))}
-          <button
-            onClick={handleCreatePlan}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
-          >
-            <Plus size={16} />
-          </button>
+          {!readOnly && (
+            <button
+              onClick={handleCreatePlan}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+            >
+              <Plus size={16} />
+            </button>
+          )}
         </div>
 
-        {selectedPlan && (
+        {selectedPlan && !readOnly && (
           <button
             onClick={async () => {
               if (confirm('¿Estás seguro de eliminar este plan?')) {
@@ -240,6 +246,7 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
               <label className="block text-xs font-bold text-slate-500 mb-2 uppercase">Nombre del Servicio</label>
               <input
                 type="text"
+                disabled={readOnly}
                 defaultValue={selectedPlan.title}
                 key={selectedPlan.id} // Force re-render on plan change
                 onBlur={(e) => {
@@ -247,7 +254,7 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
                     savePlan({ ...selectedPlan, title: e.target.value });
                   }
                 }}
-                className="w-full text-xl font-bold text-slate-800 border-b-2 border-slate-100 focus:border-indigo-500 outline-none py-2 transition-colors"
+                className={`w-full text-xl font-bold text-slate-800 border-b-2 border-slate-100 outline-none py-2 transition-colors ${readOnly ? 'bg-transparent' : 'focus:border-indigo-500'}`}
                 placeholder="Ej. Culto Dominical"
               />
             </div>
@@ -255,15 +262,16 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
               <label className="block text-xs font-bold text-slate-500 mb-2 uppercase">Fecha</label>
               <input
                 type="date"
+                disabled={readOnly}
                 value={selectedPlan.date}
                 onChange={(e) => savePlan({ ...selectedPlan, date: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-50 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500"
+                className="w-full px-4 py-2 bg-slate-50 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 disabled:opacity-75"
               />
             </div>
           </div>
 
           {/* Active Toggle Card (Only Admin/Tech) */}
-          {tier !== 'BASIC' && (
+          {tier !== 'BASIC' && !readOnly && (
             <div className="card-soft p-6 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-slate-800">Estado Oficial</h3>
@@ -286,38 +294,40 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
           {timelineItems.map((item, index) => (
             <div
               key={item.id}
-              draggable
+              draggable={!readOnly}
               onDragStart={(e) => handleDragStart(e, index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDrop={(e) => handleDrop(e, index)}
               className={`group relative card-soft p-6 hover:shadow-md transition-all ${draggedIndex === index ? 'opacity-50 border-2 border-dashed border-indigo-300' : ''}`}
             >
               {/* Drag Handle & Mobile Moving Controls */}
-              <div className="absolute left-3 top-1/2 -mt-8 flex flex-col gap-1 items-center z-10">
-                {index > 0 && (
-                  <button
-                    onClick={() => handleMoveItem(index, -1)}
-                    className="p-1 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-full transition-colors md:hidden"
-                    title="Mover Arriba"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
-                  </button>
-                )}
+              {!readOnly && (
+                <div className="absolute left-3 top-1/2 -mt-8 flex flex-col gap-1 items-center z-10">
+                  {index > 0 && (
+                    <button
+                      onClick={() => handleMoveItem(index, -1)}
+                      className="p-1 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-full transition-colors md:hidden"
+                      title="Mover Arriba"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
+                    </button>
+                  )}
 
-                <div className="text-slate-300 cursor-move hover:text-indigo-400 p-1 hidden md:block">
-                  <GripVertical size={20} />
+                  <div className="text-slate-300 cursor-move hover:text-indigo-400 p-1 hidden md:block">
+                    <GripVertical size={20} />
+                  </div>
+
+                  {index < timelineItems.length - 1 && (
+                    <button
+                      onClick={() => handleMoveItem(index, 1)}
+                      className="p-1 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-full transition-colors md:hidden"
+                      title="Mover Abajo"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                    </button>
+                  )}
                 </div>
-
-                {index < timelineItems.length - 1 && (
-                  <button
-                    onClick={() => handleMoveItem(index, 1)}
-                    className="p-1 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-full transition-colors md:hidden"
-                    title="Mover Abajo"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-                  </button>
-                )}
-              </div>
+              )}
 
               <div className="flex items-start gap-4 pl-6">
                 {/* Time */}
@@ -337,18 +347,20 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
                       </span>
                       <h4 className="text-lg font-bold text-slate-800">{item.title}</h4>
                     </div>
-                    <button
-                      onClick={async () => {
-                        if (!selectedPlan) return;
-                        if (confirm('¿Eliminar este elemento?')) {
-                          const updatedItems = selectedPlan.items.filter(i => i.id !== item.id);
-                          await savePlan({ ...selectedPlan, items: updatedItems });
-                        }
-                      }}
-                      className="text-slate-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    {!readOnly && (
+                      <button
+                        onClick={async () => {
+                          if (!selectedPlan) return;
+                          if (confirm('¿Eliminar este elemento?')) {
+                            const updatedItems = selectedPlan.items.filter(i => i.id !== item.id);
+                            await savePlan({ ...selectedPlan, items: updatedItems });
+                          }
+                        }}
+                        className="text-slate-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
                   </div>
 
                   {/* Item Specifics */}
@@ -367,7 +379,9 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
 
                       <WorshipLinksEditor
                         item={item}
+                        readOnly={readOnly}
                         onUpdate={(updatedItem) => {
+                          if (readOnly) return;
                           const updatedItems = selectedPlan.items.map(i =>
                             i.id === item.id ? updatedItem : i
                           );
@@ -381,9 +395,11 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
                     <div className="mt-4 bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-xs font-bold text-indigo-400 uppercase">Notas & Bosquejo</span>
-                        <div className="text-xs text-slate-400 italic">
-                          Usa la sección "Sermones" para generar contenido con IA.
-                        </div>
+                        {!readOnly && (
+                          <div className="text-xs text-slate-400 italic">
+                            Usa la sección "Sermones" para generar contenido con IA.
+                          </div>
+                        )}
                       </div>
                       <div className="text-sm text-slate-600 whitespace-pre-wrap font-serif">
                         {item.notes || <span className="text-slate-400 italic">No hay notas adjuntas.</span>}
@@ -395,12 +411,14 @@ const ServicePlanner: React.FC<ServicePlannerProps> = ({ tier, users }) => {
             </div>
           ))}
 
-          <button
-            onClick={() => setShowAddItemModal(true)}
-            className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 font-semibold hover:border-indigo-300 hover:text-indigo-500 transition-colors flex items-center justify-center gap-2"
-          >
-            <Plus size={20} /> Añadir Ítem
-          </button>
+          {!readOnly && (
+            <button
+              onClick={() => setShowAddItemModal(true)}
+              className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 font-semibold hover:border-indigo-300 hover:text-indigo-500 transition-colors flex items-center justify-center gap-2"
+            >
+              <Plus size={20} /> Añadir Ítem
+            </button>
+          )}
         </div>
       </div>
 
