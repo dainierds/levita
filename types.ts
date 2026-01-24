@@ -86,6 +86,7 @@ export interface User {
   email: string;
   role: Role;
   secondaryRoles?: Role[]; // Allows multiple permissions without multiple accounts
+  assignedJobIds?: string[]; // IDs of customJobRoles defined in ChurchSettings
   pin?: string; // New field for Member authentication
   tenantId?: string; // For multi-tenancy
   photoUrl?: string;

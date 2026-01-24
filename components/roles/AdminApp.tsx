@@ -224,7 +224,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                     )}
 
                     {currentView === 'users' && (role === 'ADMIN') && (
-                        <UserManagement users={users} setUsers={() => { }} tier={currentTenantTier} currentUser={user} />
+                        <UserManagement users={users} setUsers={() => { }} tier={currentTenantTier} currentUser={user} settings={settings} />
                     )}
 
                     {currentView === 'settings' && (role === 'ADMIN') && (

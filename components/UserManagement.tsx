@@ -5,13 +5,15 @@ import { createInvitation, getPendingInvitations, deleteInvitation } from '../se
 import { useNotification } from './NotificationSystem';
 import { db } from '../services/firebase';
 import { doc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { Invitation } from '../types';
+import { Invitation, ChurchSettings } from '../types';
+import { updateTenantSettings } from '../services/tenantService';
 
 interface UserManagementProps {
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   tier: SubscriptionTier;
   currentUser: User;
+  settings: ChurchSettings;
 }
 
 const ROLES_TO_CREATE = [
@@ -25,8 +27,12 @@ const ROLES_TO_CREATE = [
   { key: 'LEADER', label: 'Líderes / Directores' },
 ];
 
-const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, currentUser }) => {
+const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, currentUser, settings }) => {
   const [formData, setFormData] = useState({ name: '', role: 'ELDER' as Role });
+  // Custom Job State
+  const [jobName, setJobName] = useState('');
+  const [permMapping, setPermMapping] = useState<Role>('MEMBER');
+
   const [isLoading, setIsLoading] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const [copied, setCopied] = useState(false);
@@ -67,11 +73,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
   const handleGenerateInvitation = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check Tier Limits
-    const limit = TIER_LIMITS[tier];
-    if (users.length >= limit) {
-      addNotification('error', 'Límite Alcanzado', `Tu plan ${tier} solo permite hasta ${limit} usuarios.`);
-      return;
+    // Check Tier Limits (Skipped for Role Creation)
+    if (formData.role !== 'LEADER') {
+      const limit = TIER_LIMITS[tier];
+      if (users.length >= limit) {
+        addNotification('error', 'Límite Alcanzado', `Tu plan ${tier} solo permite hasta ${limit} usuarios.`);
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -80,7 +88,30 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
     try {
       const tenantId = currentUser.tenantId || 'default';
 
-      if (['PREACHER', 'TEACHER', 'LEADER'].includes(formData.role)) {
+      // --- CUSTOM ROLE CREATION FLOW ---
+      if (formData.role === 'LEADER') {
+        if (!jobName.trim()) { addNotification('error', 'Falta Nombre', 'Escribe el nombre del cargo.'); setIsLoading(false); return; }
+
+        const newJob = {
+          id: `job-${Math.random().toString(36).substr(2, 9)}`,
+          name: jobName,
+          permissionRole: permMapping
+        };
+
+        const currentJobs = settings.customJobRoles || [];
+        await updateTenantSettings(tenantId, {
+          ...settings,
+          customJobRoles: [...currentJobs, newJob]
+        });
+
+        addNotification('success', 'Cargo Creado', `Se ha creado el cargo "${jobName}" con permisos de "${permMapping}".`);
+        setJobName('');
+        setIsLoading(false);
+        return;
+      }
+
+      // --- USER CREATION FLOW ---
+      if (['PREACHER', 'TEACHER'].includes(formData.role)) {
         const newUserId = `local-${Math.random().toString(36).substr(2, 9)}`;
         const newUser: User = {
           id: newUserId,
@@ -154,11 +185,36 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
     }
   };
 
+  const toggleCustomJob = (jobId: string, permissionRole: Role) => {
+    if (!editingUser) return;
+    const currentJobs = editingUser.assignedJobIds || [];
+    const currentRoles = editingUser.secondaryRoles || [];
+
+    let newJobs = [];
+    let newRoles = [...currentRoles];
+
+    if (currentJobs.includes(jobId)) {
+      // Remove Job
+      newJobs = currentJobs.filter(id => id !== jobId);
+      // NOTE: We don't remove the permission role automatically because user might have another job with same permission. 
+      // Simplication: Keep permission for now.
+    } else {
+      // Add Job
+      newJobs = [...currentJobs, jobId];
+      // Add Permission if missing
+      if (!newRoles.includes(permissionRole) && permissionRole !== 'MEMBER') {
+        newRoles.push(permissionRole);
+      }
+    }
+    setEditingUser({ ...editingUser, assignedJobIds: newJobs, secondaryRoles: newRoles });
+  };
+
   const handleSaveRoles = async () => {
     if (!editingUser) return;
     try {
       await updateDoc(doc(db, 'users', editingUser.id), {
-        secondaryRoles: editingUser.secondaryRoles || []
+        secondaryRoles: editingUser.secondaryRoles || [],
+        assignedJobIds: editingUser.assignedJobIds || []
       });
       addNotification('success', 'Roles Actualizados', `Permisos de ${editingUser.name} guardados.`);
       setEditingUser(null);
@@ -183,21 +239,48 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
         {/* Create Invitation Form */}
         <div className="lg:col-span-1 xl:col-span-1 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 h-fit">
           <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <Link size={20} className="text-indigo-500" /> Invitar Usuario
+            <Link size={20} className="text-indigo-500" /> {formData.role === 'LEADER' ? 'Crear Cargo Dirección' : 'Invitar Usuario'}
           </h3>
 
           {!invitationLink ? (
             <form onSubmit={handleGenerateInvitation} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre Sugerido (Opcional)</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
-                  placeholder="Ej. Baterista"
-                />
-              </div>
+              {formData.role === 'LEADER' ? (
+                // Custom Job Form
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre del Cargo</label>
+                  <input
+                    type="text"
+                    value={jobName}
+                    onChange={e => setJobName(e.target.value)}
+                    className="w-full px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 transition-all font-bold text-indigo-900"
+                    placeholder="Ej. Director de Escuela Sabática"
+                  />
+                  <label className="block text-xs font-bold text-slate-500 uppercase mt-4 mb-1">Permisos de Sistema (Base)</label>
+                  <select
+                    value={permMapping}
+                    onChange={(e) => setPermMapping(e.target.value as Role)}
+                    className="w-full px-4 py-3 bg-slate-50 rounded-xl outline-none"
+                  >
+                    <option value="MEMBER">Sin Permisos Especiales (Solo Lectura)</option>
+                    <option value="TEACHER">Maestros (Editar Roster ES)</option>
+                    <option value="MUSIC">Música (Editar Repertorio)</option>
+                    <option value="AUDIO">Audio (Control de Pantallas)</option>
+                    <option value="ELDER">Anciano (Ver Todo)</option>
+                  </select>
+                </div>
+              ) : (
+                // Normal User Form
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre Sugerido (Opcional)</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
+                    placeholder="Ej. Baterista"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rol Principal</label>
@@ -225,7 +308,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                 className="w-full py-3 mt-4 bg-slate-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isLoading ? 'Procesando...' :
-                  ['PREACHER', 'TEACHER', 'LEADER'].includes(formData.role) ? 'Agregar al Equipo' : 'Generar Link'}
+                  formData.role === 'LEADER' ? 'Crear Cargo' :
+                    ['PREACHER', 'TEACHER'].includes(formData.role) ? 'Agregar al Equipo' : 'Generar Link'}
               </button>
             </form>
           ) : (
@@ -487,6 +571,34 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                 })}
               </div>
             </div>
+
+            {/* Custom Jobs Section */}
+            {settings?.customJobRoles && settings.customJobRoles.length > 0 && (
+              <div className="space-y-3 mt-6 pt-6 border-t border-slate-100">
+                <p className="text-xs font-bold text-slate-400 uppercase">Cargos de Liderazgo (Personalizados)</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {settings.customJobRoles.map((job) => {
+                    const isSelected = editingUser.assignedJobIds?.includes(job.id);
+                    return (
+                      <button
+                        key={job.id}
+                        onClick={() => toggleCustomJob(job.id, job.permissionRole)}
+                        className={`p-3 rounded-xl border flex items-center justify-between transition-all ${isSelected
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-sm'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                      >
+                        <div className="text-left">
+                          <span className="text-sm font-bold block">{job.name}</span>
+                          <span className="text-[10px] text-slate-400">Permiso Base: {job.permissionRole}</span>
+                        </div>
+                        {isSelected && <CheckCircle size={16} className="text-emerald-600" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="mt-8 flex gap-3">
               <button
