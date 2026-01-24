@@ -13,8 +13,10 @@ interface MusicDepartmentProps {
 }
 
 const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier, role = 'ADMIN' }) => {
-    const readOnly = role === 'LEADER';
     const { user } = useAuth();
+    // Allow edit if ADMIN, or if LEADER/BOARD has 'MUSIC' secondary role
+    const hasMusicRole = user?.secondaryRoles?.includes('MUSIC');
+    const readOnly = (role === 'LEADER' || role === 'BOARD') && !hasMusicRole;
     const { addNotification } = useNotification();
     const [teams, setTeams] = useState<MusicTeam[]>([]);
     const [loading, setLoading] = useState(true);

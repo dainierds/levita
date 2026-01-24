@@ -20,7 +20,8 @@ const ROLES_CONFIG = [
 ];
 
 const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePlan, role = 'ADMIN' }) => {
-    const readOnly = role === 'LEADER';
+    const { user: currentUser } = useAuth();
+    const isRestricted = role === 'LEADER' || role === 'BOARD';
     // Logic similar to TeamManager: Display ONE card/view per Meeting Day
     const [activeDayIdx, setActiveDayIdx] = useState(0);
     const [upcomingServices, setUpcomingServices] = useState<{ dayName: string; date: Date; plan: ServicePlan | null }[]>([]);
@@ -196,27 +197,30 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
 
                         {/* Roles Grid */}
                         <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {ROLES_CONFIG.map(role => {
-                                const assignedName = currentService.plan ? (currentService.plan.team as any)[role.key] : '';
-                                const roleUsers = users.filter(u => u.role === role.role || u.secondaryRoles?.includes(role.role as any));
+                            {ROLES_CONFIG.map(roleItem => {
+                                const assignedName = currentService.plan ? (currentService.plan.team as any)[roleItem.key] : '';
+                                const roleUsers = users.filter(u => u.role === roleItem.role || u.secondaryRoles?.includes(roleItem.role as any));
                                 // Sort A-Z
                                 roleUsers.sort((a, b) => a.name.localeCompare(b.name));
 
+                                const canEdit = !isRestricted || currentUser?.secondaryRoles?.includes(roleItem.role as any);
+                                const isDisabled = loading || !canEdit;
+
                                 return (
-                                    <div key={role.key} className={`p-5 rounded-3xl border transition-all hover:shadow-md ${role.border} bg-white group`}>
+                                    <div key={roleItem.key} className={`p-5 rounded-3xl border transition-all hover:shadow-md ${roleItem.border} bg-white group`}>
                                         <div className="flex items-center gap-3 mb-4">
-                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${role.color}`}>
-                                                <role.icon size={20} />
+                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${roleItem.color}`}>
+                                                <roleItem.icon size={20} />
                                             </div>
-                                            <span className="font-bold text-slate-700">{role.label}</span>
+                                            <span className="font-bold text-slate-700">{roleItem.label}</span>
                                         </div>
 
                                         <div className="relative">
                                             <select
                                                 value={assignedName || ''}
-                                                onChange={(e) => handleAssignmentChange(activeDayIdx, role.key, e.target.value)}
-                                                disabled={loading || readOnly}
-                                                className={`w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 font-bold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/20 transition-colors appearance-none ${readOnly ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-100'}`}
+                                                onChange={(e) => handleAssignmentChange(activeDayIdx, roleItem.key, e.target.value)}
+                                                disabled={isDisabled}
+                                                className={`w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 font-bold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/20 transition-colors appearance-none ${isDisabled ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-100'}`}
                                             >
                                                 <option value="">-- Seleccionar --</option>
                                                 {roleUsers.map(u => (

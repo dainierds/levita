@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChurchSettings, ChurchTenant, SubscriptionTier, User, AppNotification } from '../../types';
+import { ChurchSettings, ChurchTenant, SubscriptionTier, User, AppNotification, Role } from '../../types';
 import Sidebar from '../Sidebar';
 import Dashboard from '../Dashboard';
 import ServicePlanner from '../ServicePlanner';
@@ -25,11 +25,12 @@ import VotingManager from '../board/VotingManager'; // New import
 import BoardVoter from '../board/BoardVoter'; // New import
 import { NotificationBell } from '../NotificationSystem';
 import { useAuth } from '../../context/AuthContext';
-import { Menu, LogOut, Loader2 } from 'lucide-react';
+import { Menu, LogOut, Loader2, LayoutGrid } from 'lucide-react';
 import { useEvents } from '../../hooks/useEvents';
 import { usePlans } from '../../hooks/usePlans';
 import { useUsers } from '../../hooks/useUsers'; // Import hook
 import { updateTenantSettings } from '../../services/tenantService';
+import MultiRoleSelection from '../MultiRoleSelection';
 
 
 interface AdminAppProps {
@@ -43,13 +44,27 @@ interface AdminAppProps {
 }
 
 const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, currentTenantTier, elderUnreadCount }) => {
-    const { role, logout } = useAuth();
+    const { role: originalRole, logout } = useAuth();
     const [currentView, setCurrentView] = useState('dashboard');
+    const [contextRole, setContextRole] = useState<Role | null>(null);
+
     const { events, loading: eventsLoading } = useEvents();
     const { plans, loading: plansLoading, savePlan } = usePlans();
 
     // FETCH USERS INTERNALLY (Only runs if AdminApp is mounted)
     const { users } = useUsers(); // Hook used properly here
+
+    // --- MULTI-ROLE LOGIC ---
+    const rawRoles = [originalRole, ...(user.secondaryRoles || [])];
+    // Filter relevant roles for switching context
+    const availableRoles = Array.from(new Set(rawRoles)).filter(r =>
+        ['ADMIN', 'ELDER', 'BOARD', 'LEADER', 'MUSIC', 'AUDIO', 'TEACHER'].includes(r)
+    ) as Role[];
+
+    // Determine active role context
+    const role = contextRole || originalRole;
+
+    const showRoleSelector = availableRoles.length > 1 && !contextRole;
 
     // Determine derived permissions
     const hasBoardAccess = role === 'BOARD' || user.secondaryRoles?.includes('BOARD');
@@ -67,9 +82,23 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
         }
     };
 
+    if (showRoleSelector) {
+        return (
+            <MultiRoleSelection
+                roles={availableRoles}
+                userName={user.name}
+                onSelect={(selected) => {
+                    // Map functional roles to System Roles if needed for Context
+                    if (selected === 'TEACHER') setContextRole('LEADER');
+                    else setContextRole(selected);
+                }}
+            />
+        );
+    }
+
     return (
         <div className="min-h-screen bg-background flex text-slate-800 font-sans selection:bg-indigo-100">
-            {role !== 'ELDER' && role !== 'BOARD' && !hasBoardAccess && (
+            {role !== 'ELDER' && (
                 <Sidebar
                     currentView={currentView}
                     setCurrentView={setCurrentView}
@@ -79,7 +108,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 />
             )}
 
-            <main className={`flex-1 relative ${(role !== 'ELDER' && role !== 'BOARD' && !hasBoardAccess) ? 'md:ml-64' : 'bg-slate-50 min-h-screen'}`}>
+            <main className={`flex-1 relative ${(role !== 'ELDER') ? 'md:ml-64' : 'bg-slate-50 min-h-screen'}`}>
                 {/* Mobile Header - Matches Backup */}
                 <div className="md:hidden p-4 flex justify-between items-center bg-white shadow-sm sticky top-0 z-40">
                     <div className="flex items-center gap-4">
@@ -132,6 +161,15 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                                     <span className="text-sm font-bold text-indigo-600">{settings?.churchName || 'Mi Iglesia'}</span>
                                 </div>
                             </>
+                        )}
+
+                        {availableRoles.length > 1 && (
+                            <button
+                                onClick={() => { setContextRole(null); setCurrentView('dashboard'); }}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-full text-xs font-bold hover:bg-slate-200 transition-colors mr-2"
+                            >
+                                <LayoutGrid size={14} /> <span className="hidden lg:inline">Cambiar Dpto</span>
+                            </button>
                         )}
 
                         <div className="text-xs font-bold text-red-400 hover:text-red-600 cursor-pointer" onClick={logout}>
