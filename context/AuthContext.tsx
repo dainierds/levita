@@ -36,8 +36,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                     if (userDoc.exists()) {
                         const userData = userDoc.data() as User;
-                        console.log("🔥 CHISMOSO (AuthContext): User Data Fetched", userData);
-                        console.log("🎭 Secondary Roles in DB:", userData.secondaryRoles);
+
                         setUser({ ...userData, id: firebaseUser.uid }); // Ensure ID matches Auth UID
                         setRole(userData.role);
                     } else {

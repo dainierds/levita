@@ -49,28 +49,24 @@ const VisitorLanding: React.FC = () => {
     // Redirect authenticated users
     useEffect(() => {
         if (!isLoading && user) {
-            console.log("🕵️ CHISMOSO: Auth Check Triggered");
-            console.log("👤 User:", user.name, "| Role:", role);
-            console.log("🎭 Secondary Roles:", user.secondaryRoles);
-            console.log("🏢 Ministry Context (State):", ministryContext);
-            console.log("💾 Ministry Context (Storage):", sessionStorage.getItem('ministryContext'));
+
 
             // Check for explicit Ministry Context override (Secondary Roles)
             if (ministryContext === 'Junta de Iglesia' && (role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
-                console.log("✅ Redirection Match: Board Context -> /app");
+
                 sessionStorage.removeItem('ministryContext'); // Clean up
                 navigate('/app'); // Board lives in AdminApp
                 return;
             }
 
             if (ministryContext === 'Audio' && (role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO'))) {
-                console.log("✅ Redirection Match: Audio Context -> /app/audio");
+
                 sessionStorage.removeItem('ministryContext'); // Clean up
                 navigate('/app/audio'); // Explicit route for Audio Dashboard
                 return;
             }
 
-            console.log("ℹ️ No Context Match. Using Default Role Redirect.");
+
 
             // Default Redirects based on Role
             if (role === 'ELDER') navigate('/anciano');
