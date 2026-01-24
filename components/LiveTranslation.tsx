@@ -219,7 +219,7 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
       <div className="flex justify-between items-center mb-6">
         <div>
           <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <Globe size={24} className="text-indigo-500" />
+            <img src="/logo.png" className="w-8 h-8 rounded-full shadow-sm" alt="Logo" />
             {targetLang === 'es' ? 'Transcripción' : 'Traducción en Vivo'}
           </h3>
           <p className="text-sm text-slate-500">

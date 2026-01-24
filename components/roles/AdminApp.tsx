@@ -47,11 +47,9 @@ interface AdminAppProps {
 const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, currentTenantTier, elderUnreadCount }) => {
     const { role: originalRole, logout } = useAuth();
     const [currentView, setCurrentView] = useState('dashboard');
-    const [contextRole, setContextRole] = useState<Role | null>(null);
-    const [isContextLocked, setIsContextLocked] = useState(false);
 
-    // Auto-select role based on Visitor Landing choice
-    React.useEffect(() => {
+    // Helper to determine restart context
+    const getInitialContext = (): Role | null => {
         const entryContext = sessionStorage.getItem('ministryContext');
         if (entryContext) {
             let targetRole: Role | null = null;
@@ -59,22 +57,20 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
             if (entryContext === 'Audio') targetRole = 'AUDIO';
             if (entryContext === 'Anciano') targetRole = 'ELDER';
             if (entryContext === 'Administración') targetRole = 'ADMIN';
-
-            // Special handling for Leaders/Teachers
             if (entryContext === 'Líderes') targetRole = 'LEADER';
 
-            // Verify user actually HAS this role or derived role
             const hasRole =
-                originalRole === targetRole ||
+                user.role === targetRole ||
                 user.secondaryRoles?.includes(targetRole!) ||
-                (targetRole === 'LEADER' && (originalRole === 'TEACHER' || user.secondaryRoles?.includes('TEACHER')));
+                (targetRole === 'LEADER' && (user.role === 'TEACHER' || user.secondaryRoles?.includes('TEACHER')));
 
-            if (targetRole && hasRole) {
-                setContextRole(targetRole);
-                setIsContextLocked(true);
-            }
+            if (targetRole && hasRole) return targetRole;
         }
-    }, [user, originalRole]);
+        return null;
+    };
+
+    const [contextRole, setContextRole] = useState<Role | null>(getInitialContext);
+    const [isContextLocked] = useState(() => !!getInitialContext());
 
     const { events, loading: eventsLoading } = useEvents();
     const { plans, loading: plansLoading, savePlan } = usePlans();
