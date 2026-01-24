@@ -13,19 +13,25 @@ const BoardVoter: React.FC<BoardVoterProps> = ({ user, tenantId }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
+    const [confirmingOption, setConfirmingOption] = useState<any>(null);
 
     useEffect(() => {
         const unsubscribe = listenToActiveSession(tenantId, (s) => setSession(s));
         return () => unsubscribe();
     }, [tenantId]);
 
-    const handleVote = async (optionId: string) => {
-        if (!session) return;
+    const handleVoteClick = (option: any) => {
+        setConfirmingOption(option);
+    };
+
+    const confirmVote = async () => {
+        if (!session || !confirmingOption) return;
         setLoading(true);
         setError('');
         try {
-            await castVote(session.id, user.id, optionId);
+            await castVote(session.id, user.id, confirmingOption.id);
             setSuccessMsg("Voto registrado correctamente");
+            setConfirmingOption(null);
         } catch (err: any) {
             console.error(err);
             setError(err.message || "Error al registrar el voto");
@@ -148,12 +154,44 @@ const BoardVoter: React.FC<BoardVoterProps> = ({ user, tenantId }) => {
             </header>
 
             <div className="flex-1 flex flex-col gap-4 w-full justify-center min-h-[50vh]">
-                {session.options.map((opt) => (
-                    <button
-                        key={opt.id}
-                        onClick={() => handleVote(opt.id)}
-                        disabled={loading}
-                        className={`w-full flex-1 rounded-3xl shadow-xl border-b-[12px] transform transition-all duration-75 active:border-b-0 active:translate-y-[12px] active:shadow-none flex flex-col items-center justify-center gap-2 ${(() => {
+                {confirmingOption ? (
+                    // CONFIRMATION VIEW
+                    <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in duration-200">
+                        <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">
+                            ¿Estás seguro que deseas votar <br />
+                            <span className="text-3xl font-black" style={{ color: confirmingOption.color }}>{confirmingOption.label}</span>?
+                        </h3>
+
+                        <button
+                            onClick={confirmVote}
+                            disabled={loading}
+                            className={`w-64 h-64 rounded-full shadow-2xl flex flex-col items-center justify-center transform transition-all active:scale-95 ${(() => {
+                                switch (confirmingOption.color) {
+                                    case 'green': return 'bg-green-500 text-white shadow-green-200 hover:bg-green-600';
+                                    case 'red': return 'bg-red-500 text-white shadow-red-200 hover:bg-red-600';
+                                    default: return 'bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700';
+                                }
+                            })()}`}
+                        >
+                            <span className="text-4xl font-black">{confirmingOption.label}</span>
+                            <span className="text-xs font-bold uppercase mt-2 opacity-80">Tocar para Confirmar</span>
+                        </button>
+
+                        <button
+                            onClick={() => setConfirmingOption(null)}
+                            disabled={loading}
+                            className="mt-8 px-6 py-3 bg-slate-100 text-slate-500 font-bold rounded-full hover:bg-slate-200 transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                ) : (
+                    session.options.map((opt) => (
+                        <button
+                            key={opt.id}
+                            onClick={() => handleVoteClick(opt)}
+                            disabled={loading}
+                            className={`w-full flex-1 rounded-3xl shadow-xl border-b-[12px] transform transition-all duration-75 active:border-b-0 active:translate-y-[12px] active:shadow-none flex flex-col items-center justify-center gap-2 ${(() => {
                                 switch (opt.color) {
                                     case 'green': return 'bg-green-500 border-green-700 text-white shadow-green-200';
                                     case 'red': return 'bg-red-500 border-red-700 text-white shadow-red-200';
@@ -167,15 +205,16 @@ const BoardVoter: React.FC<BoardVoterProps> = ({ user, tenantId }) => {
                                     default: return 'bg-white border-slate-300 text-slate-700';
                                 }
                             })()
-                            }`}
-                    >
-                        <span className="text-5xl font-black tracking-tight drop-shadow-md">{opt.label}</span>
-                        {/* Optional Icon/Text for accessibility */}
-                        <span className="text-sm font-bold opacity-80 uppercase tracking-widest">
-                            {opt.color === 'green' ? 'Confirmar' : opt.color === 'red' ? 'Rechazar' : 'Seleccionar'}
-                        </span>
-                    </button>
-                ))}
+                                }`}
+                        >
+                            <span className="text-5xl font-black tracking-tight drop-shadow-md">{opt.label}</span>
+                            {/* Optional Icon/Text for accessibility */}
+                            <span className="text-sm font-bold opacity-80 uppercase tracking-widest">
+                                {opt.color === 'green' ? 'Confirmar' : opt.color === 'red' ? 'Rechazar' : 'Seleccionar'}
+                            </span>
+                        </button>
+                    ))
+                )}
             </div>
 
             <div className="mt-8 text-center">
