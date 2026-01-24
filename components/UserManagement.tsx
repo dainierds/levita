@@ -209,6 +209,23 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
     setEditingUser({ ...editingUser, assignedJobIds: newJobs, secondaryRoles: newRoles });
   };
 
+  const handleDeleteCustomJob = async (jobId: string) => {
+    const tenantId = currentUser.tenantId || 'default';
+    const currentJobs = settings.customJobRoles || [];
+    const newJobs = currentJobs.filter(j => j.id !== jobId);
+
+    try {
+      await updateTenantSettings(tenantId, {
+        ...settings,
+        customJobRoles: newJobs
+      });
+      addNotification('success', 'Cargo Eliminado', 'El cargo ha sido removido.');
+    } catch (error) {
+      console.error(error);
+      addNotification('error', 'Error', 'No se pudo eliminar el cargo.');
+    }
+  };
+
   const handleSaveRoles = async () => {
     if (!editingUser) return;
     try {
@@ -553,7 +570,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
             <div className="space-y-3">
               <p className="text-xs font-bold text-slate-400 uppercase">Roles Secundarios (Opcional)</p>
               <div className="grid grid-cols-2 gap-3">
-                {ROLES_TO_CREATE.filter(r => r.key !== editingUser.role).map((option) => {
+                {ROLES_TO_CREATE.filter(r => r.key !== editingUser.role && r.key !== 'LEADER').map((option) => {
                   const isSelected = editingUser.secondaryRoles?.includes(option.key as Role);
                   return (
                     <button
@@ -580,20 +597,28 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                   {settings.customJobRoles.map((job) => {
                     const isSelected = editingUser.assignedJobIds?.includes(job.id);
                     return (
-                      <button
-                        key={job.id}
-                        onClick={() => toggleCustomJob(job.id, job.permissionRole)}
-                        className={`p-3 rounded-xl border flex items-center justify-between transition-all ${isSelected
-                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-sm'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                          }`}
-                      >
-                        <div className="text-left">
-                          <span className="text-sm font-bold block">{job.name}</span>
-                          <span className="text-[10px] text-slate-400">Permiso Base: {job.permissionRole}</span>
-                        </div>
-                        {isSelected && <CheckCircle size={16} className="text-emerald-600" />}
-                      </button>
+                      <div key={job.id} className="flex items-center gap-2">
+                        <button
+                          onClick={() => toggleCustomJob(job.id, job.permissionRole)}
+                          className={`flex-1 p-3 rounded-xl border flex items-center justify-between transition-all ${isSelected
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-sm'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                            }`}
+                        >
+                          <div className="text-left">
+                            <span className="text-sm font-bold block">{job.name}</span>
+                            <span className="text-[10px] text-slate-400">Permiso Base: {job.permissionRole}</span>
+                          </div>
+                          {isSelected && <CheckCircle size={16} className="text-emerald-600" />}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCustomJob(job.id)}
+                          className="p-3 bg-white border border-slate-100 text-slate-300 hover:text-red-500 hover:border-red-100 hover:bg-red-50 rounded-xl transition-all"
+                          title="Eliminar Cargo Definitivamente"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
