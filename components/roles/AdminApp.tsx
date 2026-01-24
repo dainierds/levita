@@ -54,6 +54,11 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
     // Determine derived permissions
     const hasBoardAccess = role === 'BOARD' || user.secondaryRoles?.includes('BOARD');
 
+    console.log("🕵️ CHISMOSO (AdminApp): Render Cycle");
+    console.log("👤 User:", user.name, "Role:", role);
+    console.log("🎭 Secondary Roles:", user.secondaryRoles);
+    console.log("🎟️ Has Board Access:", hasBoardAccess);
+
     const handleSaveSettings = async (newSettings: ChurchSettings) => {
         if (user?.tenantId) {
             try {
