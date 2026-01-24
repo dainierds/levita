@@ -87,7 +87,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {role === 'BOARD' && (
+                        {hasBoardAccess && (
                             <button
                                 onClick={logout}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-full text-xs font-bold active:scale-95 transition-transform"
