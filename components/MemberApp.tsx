@@ -2,7 +2,9 @@ import React from 'react';
 import { ChurchEvent, ServicePlan, ChurchSettings } from '../types';
 import { MapPin, Calendar, Clock, Radio, ChevronRight, Share2, Globe, Bell, User, Mic2, Heart, UserCheck, List } from 'lucide-react';
 import LiveTranslation from './LiveTranslation';
+import LiveTranslation from './LiveTranslation';
 import { requestNotificationPermission, subscribeToPush, sendLocalNotification } from '../services/notificationService';
+import PWAInstallButton from './PWAInstallButton';
 
 import { useLanguage } from '../context/LanguageContext';
 
@@ -55,6 +57,7 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
           <p className="text-xs text-slate-400 font-medium">{t('app.tagline')}</p>
         </div>
         <div className="flex items-center gap-3">
+          <PWAInstallButton variant="icon" className="bg-indigo-50 text-indigo-600" />
           {notifPermission !== 'granted' && (
             <button onClick={handleEnableNotifications} className="p-2 bg-indigo-50 text-indigo-600 rounded-full animate-pulse">
               <Bell size={18} />

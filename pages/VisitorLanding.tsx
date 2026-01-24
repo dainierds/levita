@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { Globe, ArrowRight, Heart, User, Lock, Users, Palette, Shield, LogIn } from 'lucide-react';
+import { Globe, ArrowRight, Heart, User, Lock, Users, Palette, Shield, LogIn, BookOpen } from 'lucide-react';
 import VisitorApp from './visitor-app/App';
 import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
@@ -351,6 +351,21 @@ const VisitorLanding: React.FC = () => {
                             <div className="text-left">
                                 <h3 className="text-xl font-bold text-slate-800">Junta de Iglesia</h3>
                                 <p className="text-sm text-slate-400">Acceso a Panel y Reportes</p>
+                            </div>
+                        </button>
+
+                        {/* Leader */}
+                        <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); handleMinistrySelect('Líderes', 'lider@levita.com'); }}
+                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-emerald-200 transition-all flex items-center gap-6"
+                        >
+                            <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                                <BookOpen size={32} />
+                            </div>
+                            <div className="text-left">
+                                <h3 className="text-xl font-bold text-slate-800">Líderes / Directores</h3>
+                                <p className="text-sm text-slate-400">Gestión de Turnos y Departamentos</p>
                             </div>
                         </button>
 

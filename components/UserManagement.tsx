@@ -80,7 +80,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
     try {
       const tenantId = currentUser.tenantId || 'default';
 
-      if (['PREACHER', 'TEACHER'].includes(formData.role)) {
+      if (['PREACHER', 'TEACHER', 'LEADER'].includes(formData.role)) {
         const newUserId = `local-${Math.random().toString(36).substr(2, 9)}`;
         const newUser: User = {
           id: newUserId,
@@ -225,7 +225,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                 className="w-full py-3 mt-4 bg-slate-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isLoading ? 'Procesando...' :
-                  ['PREACHER', 'TEACHER'].includes(formData.role) ? 'Agregar al Equipo' : 'Generar Link'}
+                  ['PREACHER', 'TEACHER', 'LEADER'].includes(formData.role) ? 'Agregar al Equipo' : 'Generar Link'}
               </button>
             </form>
           ) : (

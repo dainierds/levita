@@ -1,6 +1,8 @@
 import React from 'react';
 import { Menu, User as UserIcon, X } from 'lucide-react'; // Added X if needed for toggle state
+import { Menu, User as UserIcon, X } from 'lucide-react'; // Added X if needed for toggle state
 import { User } from '../types';
+import PWAInstallButton from './PWAInstallButton';
 
 interface ElderHeaderProps {
     user: User;
@@ -22,12 +24,15 @@ const ElderHeader: React.FC<ElderHeaderProps> = ({ user, onMenuClick, isMenuOpen
                 </div>
             </div>
 
-            <button
-                onClick={onMenuClick}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            >
-                {isMenuOpen ? <X className="text-white" size={24} /> : <Menu className="text-white" size={24} />}
-            </button>
+            <div className="flex items-center gap-2">
+                <PWAInstallButton variant="icon" className="bg-white/10 text-white hover:bg-white/20" />
+                <button
+                    onClick={onMenuClick}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                    {isMenuOpen ? <X className="text-white" size={24} /> : <Menu className="text-white" size={24} />}
+                </button>
+            </div>
         </div>
     );
 };

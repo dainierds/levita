@@ -13,6 +13,7 @@ import { PrayerView } from './views/PrayerView';
 
 import { Bell, Moon, Sun, Search, User, ArrowLeft, LogOut } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
+import PWAInstallButton from '../../components/PWAInstallButton';
 
 const SimpleView: React.FC<{ title: string }> = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400 animate-in fade-in">
@@ -193,6 +194,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
         </div>
 
         <div className="flex items-center space-x-4 md:space-x-6">
+          <PWAInstallButton variant="icon" />
           {/* Desktop User Avatar */}
           <button onClick={() => setActiveView(ViewState.PROFILE)} className="hidden lg:flex items-center space-x-3 px-4 py-2 rounded-xl shadow-neu dark:shadow-neu-dark hover:text-brand-500 transition-all active:shadow-neu-pressed">
             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">M</div>

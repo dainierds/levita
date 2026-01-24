@@ -31,6 +31,7 @@ import { usePlans } from '../../hooks/usePlans';
 import { useUsers } from '../../hooks/useUsers'; // Import hook
 import { updateTenantSettings } from '../../services/tenantService';
 import MultiRoleSelection from '../MultiRoleSelection';
+import PWAInstallButton from '../PWAInstallButton';
 
 
 interface AdminAppProps {
@@ -125,6 +126,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                                 <span>Salir</span>
                             </button>
                         )}
+                        <PWAInstallButton variant="icon" className="bg-slate-50 text-slate-600" />
                         <NotificationBell />
                     </div>
                 </div>
@@ -176,6 +178,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                             Salir
                         </div>
 
+                        <PWAInstallButton variant="icon" className="bg-white text-slate-400 hover:text-indigo-600 border border-slate-100 shadow-sm" />
                         <NotificationBell />
                     </div>
                 )}
