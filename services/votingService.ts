@@ -11,7 +11,8 @@ import {
     onSnapshot,
     serverTimestamp,
     runTransaction,
-    getDoc
+    getDoc,
+    deleteDoc
 } from 'firebase/firestore';
 import { VotingSession, VoteOption } from '../types';
 
@@ -92,6 +93,12 @@ export const closeVotingSession = async (sessionId: string) => {
         status: 'CLOSED',
         closedAt: new Date().toISOString()
     });
+};
+
+// 5.5 Delete Session (For cancelling drafts)
+export const deleteVotingSession = async (sessionId: string) => {
+    const docRef = doc(db, SESSIONS_COL, sessionId);
+    await deleteDoc(docRef);
 };
 
 // 6. Listen to Active Session for a Tenant

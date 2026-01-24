@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, VotingSession, VoteOption } from '../../types';
-import { createVotingSession, updateSessionQuorum, openVotingSession, closeVotingSession, listenToActiveSession } from '../../services/votingService';
+import { createVotingSession, updateSessionQuorum, openVotingSession, closeVotingSession, listenToActiveSession, deleteVotingSession } from '../../services/votingService';
 import { Users, CheckCircle, Lock, Play, BarChart2, Plus, X, Hand, AlertTriangle } from 'lucide-react';
 
 interface VotingManagerProps {
@@ -89,6 +89,19 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
         setLoading(true);
         await closeVotingSession(activeSession.id);
         setLoading(false);
+    };
+
+    const handleDelete = async () => {
+        if (!activeSession) return;
+        if (!window.confirm('¿Seguro que deseas cancelar esta votación?')) return;
+        setLoading(true);
+        try {
+            await deleteVotingSession(activeSession.id);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Option Management
@@ -370,13 +383,22 @@ const VotingManager: React.FC<VotingManagerProps> = ({ users, tenantId }) => {
                     {/* ACTIONS */}
                     <div className="flex gap-4 border-t border-slate-100 pt-6">
                         {isSetup && (
-                            <button
-                                onClick={handleStart}
-                                disabled={loading}
-                                className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:bg-indigo-700 hover:scale-[1.02] transition-all flex justify-center items-center gap-2"
-                            >
-                                <Play size={20} fill="currentColor" /> INICIAR VOTACIÓN
-                            </button>
+                            <>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={loading}
+                                    className="px-6 py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl hover:bg-red-50 hover:text-red-500 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleStart}
+                                    disabled={loading}
+                                    className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:bg-indigo-700 hover:scale-[1.02] transition-all flex justify-center items-center gap-2"
+                                >
+                                    <Play size={20} fill="currentColor" /> INICIAR VOTACIÓN
+                                </button>
+                            </>
                         )}
 
                         {isOpen && (
