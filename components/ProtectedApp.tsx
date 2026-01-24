@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { ChurchTenant, SubscriptionTier, AppNotification } from '../types';
 import { Shield } from 'lucide-react';
 import { NotificationProvider } from './NotificationSystem';
@@ -39,6 +39,7 @@ import PerfilMiembro from '../pages/miembro/PerfilMiembro';
 const ProtectedApp: React.FC = () => {
     const { role, user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const { settings } = useTenantSettings();
     const { tenants, setTenants } = useTenants(); // Real Data
 
@@ -80,7 +81,8 @@ const ProtectedApp: React.FC = () => {
 
 
     // ELDER ROUTER
-    if (role === 'ELDER') {
+    // Only capture if NOT trying to access Admin App (e.g. for Secondary Roles)
+    if (role === 'ELDER' && !location.pathname.startsWith('/app')) {
         return (
             <Routes>
                 <Route element={<AncianoLayout />}>

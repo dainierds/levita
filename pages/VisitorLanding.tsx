@@ -39,15 +39,29 @@ const VisitorLanding: React.FC = () => {
     const [settings, setSettings] = useState<ChurchSettings | null>(null);
     const [tenantId, setTenantId] = useState<string | undefined>(undefined);
 
+    // New State for Ministry Flow (Hoisted)
+    const [ministryContext, setMinistryContext] = useState<string>('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [loginError, setLoginError] = useState('');
+
     // Redirect authenticated users
     useEffect(() => {
         if (!isLoading && user) {
+            // Check for explicit Ministry Context override (Secondary Roles)
+            if (ministryContext === 'Junta de Iglesia' && (role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
+                navigate('/app'); // Board lives in AdminApp
+                return;
+            }
+
+            // Default Redirects based on Role
             if (role === 'ELDER') navigate('/anciano');
             else if (role === 'MEMBER') navigate('/miembro');
             else if (role === 'MUSIC') navigate('/musica');
             else navigate('/app');
         }
-    }, [user, role, navigate, isLoading]);
+    }, [user, role, navigate, isLoading, ministryContext]);
 
     if (isLoading) {
         return (
@@ -62,12 +76,7 @@ const VisitorLanding: React.FC = () => {
         );
     }
 
-    // New State for Ministry Flow
-    const [ministryContext, setMinistryContext] = useState<string>('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loginLoading, setLoginLoading] = useState(false);
-    const [loginError, setLoginError] = useState('');
+
 
     const handleMinistrySelect = (context: string, demoEmail?: string) => {
         setMinistryContext(context);

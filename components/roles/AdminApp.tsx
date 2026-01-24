@@ -51,6 +51,9 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
     // FETCH USERS INTERNALLY (Only runs if AdminApp is mounted)
     const { users } = useUsers(); // Hook used properly here
 
+    // Determine derived permissions
+    const hasBoardAccess = role === 'BOARD' || user.secondaryRoles?.includes('BOARD');
+
     const handleSaveSettings = async (newSettings: ChurchSettings) => {
         if (user?.tenantId) {
             try {
@@ -157,11 +160,11 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                         <Dashboard setCurrentView={setCurrentView} role={role} settings={settings} users={users} />
                     )}
 
-                    {currentView === 'dashboard' && (role === 'BOARD') && user.tenantId && (
+                    {currentView === 'dashboard' && hasBoardAccess && user.tenantId && (
                         <BoardVoter user={user} tenantId={user.tenantId} />
                     )}
 
-                    {currentView === 'dashboard' && role === 'ELDER' && (
+                    {currentView === 'dashboard' && role === 'ELDER' && !hasBoardAccess && (
                         <ElderDashboard setCurrentView={setCurrentView} user={user} settings={settings} notificationCount={elderUnreadCount} />
                     )}
 
