@@ -69,7 +69,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
 
     return (
         <div className="min-h-screen bg-background flex text-slate-800 font-sans selection:bg-indigo-100">
-            {role !== 'ELDER' && role !== 'BOARD' && (
+            {role !== 'ELDER' && role !== 'BOARD' && !hasBoardAccess && (
                 <Sidebar
                     currentView={currentView}
                     setCurrentView={setCurrentView}
@@ -79,7 +79,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 />
             )}
 
-            <main className={`flex-1 relative ${role !== 'ELDER' && role !== 'BOARD' ? 'md:ml-64' : 'bg-slate-50 min-h-screen'}`}>
+            <main className={`flex-1 relative ${(role !== 'ELDER' && role !== 'BOARD' && !hasBoardAccess) ? 'md:ml-64' : 'bg-slate-50 min-h-screen'}`}>
                 {/* Mobile Header - Matches Backup */}
                 <div className="md:hidden p-4 flex justify-between items-center bg-white shadow-sm sticky top-0 z-40">
                     <div className="flex items-center gap-4">
