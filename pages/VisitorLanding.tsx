@@ -40,7 +40,7 @@ const VisitorLanding: React.FC = () => {
     const [tenantId, setTenantId] = useState<string | undefined>(undefined);
 
     // New State for Ministry Flow (Hoisted)
-    const [ministryContext, setMinistryContext] = useState<string>('');
+    const [ministryContext, setMinistryContext] = useState<string>(() => sessionStorage.getItem('ministryContext') || '');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loginLoading, setLoginLoading] = useState(false);
@@ -51,11 +51,13 @@ const VisitorLanding: React.FC = () => {
         if (!isLoading && user) {
             // Check for explicit Ministry Context override (Secondary Roles)
             if (ministryContext === 'Junta de Iglesia' && (role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
+                sessionStorage.removeItem('ministryContext'); // Clean up
                 navigate('/app'); // Board lives in AdminApp
                 return;
             }
 
             if (ministryContext === 'Audio' && (role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO'))) {
+                sessionStorage.removeItem('ministryContext'); // Clean up
                 navigate('/app/audio'); // Explicit route for Audio Dashboard
                 return;
             }
@@ -85,6 +87,7 @@ const VisitorLanding: React.FC = () => {
 
     const handleMinistrySelect = (context: string, demoEmail?: string) => {
         setMinistryContext(context);
+        sessionStorage.setItem('ministryContext', context);
         if (demoEmail) setEmail(demoEmail);
         setStep('ministry_login');
         setLoginError('');
