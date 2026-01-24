@@ -123,12 +123,12 @@ const ProtectedApp: React.FC = () => {
     }
 
     // 0. MUSIC TEAM REDIRECTION
-    if (role === 'MUSIC') {
+    if (role === 'MUSIC' && !location.pathname.startsWith('/app')) {
         return <MusicMinistryApp />;
     }
 
     // 0.5 NO INTERFACE ROLES
-    if (role === 'PREACHER') {
+    if (role === 'PREACHER' && !location.pathname.startsWith('/app')) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
                 <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
@@ -150,7 +150,7 @@ const ProtectedApp: React.FC = () => {
     }
 
     // 1.5 AUDIO View
-    if (role === 'AUDIO') {
+    if (role === 'AUDIO' && !location.pathname.startsWith('/app')) {
         return (
             <NotificationProvider allNotifications={notifications} setAllNotifications={setNotifications} currentUserId={user?.id}>
                 <AudioDashboard />
@@ -164,7 +164,7 @@ const ProtectedApp: React.FC = () => {
     }
 
     // 2. MEMBER View (Router)
-    if (role === 'MEMBER') {
+    if (role === 'MEMBER' && !location.pathname.startsWith('/app')) {
         return (
             <NotificationProvider allNotifications={notifications} setAllNotifications={setNotifications} currentUserId={user?.id}>
                 <Routes>
