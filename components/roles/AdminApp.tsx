@@ -48,6 +48,33 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
     const { role: originalRole, logout } = useAuth();
     const [currentView, setCurrentView] = useState('dashboard');
     const [contextRole, setContextRole] = useState<Role | null>(null);
+    const [isContextLocked, setIsContextLocked] = useState(false);
+
+    // Auto-select role based on Visitor Landing choice
+    React.useEffect(() => {
+        const entryContext = sessionStorage.getItem('ministryContext');
+        if (entryContext) {
+            let targetRole: Role | null = null;
+            if (entryContext === 'Junta de Iglesia') targetRole = 'BOARD';
+            if (entryContext === 'Audio') targetRole = 'AUDIO';
+            if (entryContext === 'Anciano') targetRole = 'ELDER';
+            if (entryContext === 'Administración') targetRole = 'ADMIN';
+
+            // Special handling for Leaders/Teachers
+            if (entryContext === 'Líderes') targetRole = 'LEADER';
+
+            // Verify user actually HAS this role or derived role
+            const hasRole =
+                originalRole === targetRole ||
+                user.secondaryRoles?.includes(targetRole!) ||
+                (targetRole === 'LEADER' && (originalRole === 'TEACHER' || user.secondaryRoles?.includes('TEACHER')));
+
+            if (targetRole && hasRole) {
+                setContextRole(targetRole);
+                setIsContextLocked(true);
+            }
+        }
+    }, [user, originalRole]);
 
     const { events, loading: eventsLoading } = useEvents();
     const { plans, loading: plansLoading, savePlan } = usePlans();
@@ -165,7 +192,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                             </>
                         )}
 
-                        {availableRoles.length > 1 && (
+                        {availableRoles.length > 1 && !isContextLocked && (
                             <button
                                 onClick={() => { setContextRole(null); setCurrentView('dashboard'); }}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-full text-xs font-bold hover:bg-slate-200 transition-colors mr-2"
