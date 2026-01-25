@@ -55,7 +55,7 @@ const VisitorLanding: React.FC = () => {
             if (ministryContext === 'Junta de Iglesia' && (role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
 
                 sessionStorage.removeItem('ministryContext'); // Clean up
-                navigate('/app'); // Board lives in AdminApp
+                navigate('/app/board'); // Board lives in AdminApp but needs specific URL
                 return;
             }
 
