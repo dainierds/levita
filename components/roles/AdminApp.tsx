@@ -24,6 +24,7 @@ import MusicDepartment from '../MusicDepartment';
 import VotingManager from '../board/VotingManager'; // New import
 import BoardVoter from '../board/BoardVoter'; // New import
 import { NotificationBell } from '../NotificationSystem';
+import UserProfileMenu from '../UserProfileMenu';
 import { useAuth } from '../../context/AuthContext';
 import { Menu, LogOut, Loader2, LayoutGrid } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
@@ -225,14 +226,12 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                             </>
                         )}
 
-                        {/* Removed 'Cambiar Dpto' button as per user request */}
-
-                        <div className="text-xs font-bold text-red-400 hover:text-red-600 cursor-pointer" onClick={logout}>
-                            Salir
-                        </div>
-
-                        <PWAInstallButton variant="icon" className="bg-white text-slate-400 hover:text-indigo-600 border border-slate-100 shadow-sm" />
-                        <NotificationBell />
+                        {/* User Menu (Replaces old buttons) */}
+                        <UserProfileMenu
+                            user={user}
+                            roleLabel={role === 'BOARD' ? 'Junta Oficial' : role === 'AUDIO' ? 'Multimedia' : role === 'LEADER' ? 'Líder' : 'Administrador'}
+                            variant="full"
+                        />
                     </div>
                 )}
 

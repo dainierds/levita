@@ -14,6 +14,7 @@ import { PrayerView } from './views/PrayerView';
 import { Bell, Moon, Sun, Search, User, ArrowLeft, LogOut } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 import PWAInstallButton from '../../components/PWAInstallButton';
+import UserProfileMenu from '../../components/UserProfileMenu';
 
 const SimpleView: React.FC<{ title: string }> = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400 animate-in fade-in">
@@ -194,13 +195,6 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
         </div>
 
         <div className="flex items-center space-x-4 md:space-x-6">
-          <PWAInstallButton variant="icon" />
-          {/* Desktop User Avatar */}
-          <button onClick={() => setActiveView(ViewState.PROFILE)} className="hidden lg:flex items-center space-x-3 px-4 py-2 rounded-xl shadow-neu dark:shadow-neu-dark hover:text-brand-500 transition-all active:shadow-neu-pressed">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">M</div>
-            <span className="text-sm font-bold">Mi Perfil</span>
-          </button>
-
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={`w-12 h-7 md:w-14 md:h-8 rounded-full shadow-neu-pressed dark:shadow-neu-dark-pressed flex items-center px-1 transition-all duration-300 ${isDarkMode ? 'justify-end' : 'justify-start'}`}
@@ -210,16 +204,13 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
             </div>
           </button>
 
-
-          <button
-            onClick={() => {/* Toggle Notification View - To be implemented or just clear count */ }}
-            className="p-3 md:p-4 rounded-full text-gray-500 shadow-neu dark:shadow-neu-dark active:shadow-neu-pressed dark:active:shadow-neu-dark-pressed transition-all relative"
-          >
-            <Bell size={20} />
-            {unreadCount > 0 && (
-              <span className="absolute top-3 right-3 md:top-3 md:right-4 w-2 h-2 bg-red-500 rounded-full border-2 border-neu-base dark:border-neu-base-dark"></span>
-            )}
-          </button>
+          <UserProfileMenu
+            user={{ name: 'Visitante', email: 'Modo Invitado', role: 'Visitante' }}
+            roleLabel="Visitante"
+            variant="full"
+            onLogout={onExit}
+            className="shadow-neu dark:shadow-neu-dark rounded-full bg-neu-base dark:bg-neu-base-dark"
+          />
         </div>
       </header>
 

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
     Home, Video, List, Heart, User, Menu, X, Bell, Calendar, LogOut
 } from 'lucide-react';
+import UserProfileMenu from '../UserProfileMenu';
 
 const MiembroLayout: React.FC = () => {
     const { user, logout } = useAuth();
@@ -54,18 +55,12 @@ const MiembroLayout: React.FC = () => {
                 <h1 className="text-lg font-bold">{getTitulo()}</h1>
 
                 <div className="flex items-center gap-3">
-                    <button className="relative p-2 hover:bg-white/10 rounded-lg transition-colors">
-                        <Bell className="w-6 h-6" />
-                        {notificaciones > 0 && (
-                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                                {notificaciones}
-                            </span>
-                        )}
-                    </button>
-
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg border border-white/20">
-                        {user?.name?.charAt(0).toUpperCase()}
-                    </div>
+                    <UserProfileMenu
+                        user={user}
+                        roleLabel="Miembro"
+                        variant="full"
+                        className="text-slate-800"
+                    />
                 </div>
             </header>
 

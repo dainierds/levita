@@ -5,6 +5,7 @@ import { ChurchTenant, MusicTeam, ShiftTeam, ChurchEvent } from '../types';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs, orderBy, onSnapshot, doc } from 'firebase/firestore';
 import { Music, Calendar, Mic2, User, Home, Users, Clock, MapPin, LogOut, Mic, Bell, Download, ChevronDown } from 'lucide-react';
+import UserProfileMenu from './UserProfileMenu';
 import { MOCK_TENANTS } from '../constants';
 
 // Helper to get tenant
@@ -385,80 +386,15 @@ const MusicMinistryApp: React.FC = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-3 relative">
-                        {/* Profile Dropdown Trigger */}
-                        <button
-                            onClick={() => setShowProfileMenu(!showProfileMenu)}
-                            className="flex items-center gap-2 bg-slate-100 rounded-full pl-1 pr-3 py-1 hover:bg-slate-200 transition-colors"
-                        >
-                            <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center font-bold text-slate-700">
-                                {user?.name?.charAt(0) || userName.charAt(0) || 'U'}
-                            </div>
-                            <ChevronDown size={14} className={`text-slate-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {/* Dropdown Menu */}
-                        {showProfileMenu && (
-                            <div className="absolute top-12 right-0 bg-white rounded-2xl shadow-xl shadow-slate-200 border border-slate-100 p-2 min-w-[220px] animate-in fade-in slide-in-from-top-2 z-50">
-                                {/* Header Info */}
-                                <div className="px-4 py-3 border-b border-slate-50 mb-2">
-                                    <p className="text-sm font-bold text-slate-800 truncate">{user?.name || userName || 'Usuario'}</p>
-                                    <p className="text-xs text-slate-400">Adorador</p>
-                                </div>
-
-                                {/* Actions */}
-                                <div className="space-y-1">
-                                    <button
-                                        onClick={async () => {
-                                            setShowProfileMenu(false);
-                                            try {
-                                                const permission = await Notification.requestPermission();
-                                                if (permission === 'granted') {
-                                                    alert('¡Notificaciones activadas!');
-                                                    // Logic to save token would go here
-                                                } else {
-                                                    alert('Permiso denegado.');
-                                                }
-                                            } catch (e) { console.error(e); }
-                                        }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors text-left"
-                                    >
-                                        <Bell size={16} />
-                                        Activar Avisos
-                                    </button>
-
-                                    {/* Install App Option (Persistent) */}
-                                    {!window.matchMedia('(display-mode: standalone)').matches && (
-                                        <button
-                                            onClick={() => {
-                                                setShowProfileMenu(false);
-                                                if (deferredPrompt) {
-                                                    handleInstallClick();
-                                                } else {
-                                                    alert('Para instalar la App:\n\n1. Busca los 3 puntos o el botón Compartir en tu navegador.\n2. Selecciona "Instalar aplicación" o "Agregar a Inicio".');
-                                                }
-                                            }}
-                                            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors text-left"
-                                        >
-                                            <Download size={16} />
-                                            Instalar App
-                                        </button>
-                                    )}
-
-                                    <div className="h-px bg-slate-50 my-1" />
-
-                                    <button
-                                        onClick={() => {
-                                            setShowProfileMenu(false);
-                                            setIsAuthenticated(false);
-                                        }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors text-left"
-                                    >
-                                        <LogOut size={16} />
-                                        Cerrar Sesión
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                        <UserProfileMenu
+                            user={user || { name: userName || 'Invitado' }}
+                            roleLabel="Adorador"
+                            variant="full"
+                            onLogout={() => {
+                                setIsAuthenticated(false);
+                                setShowProfileMenu(false);
+                            }}
+                        />
                     </div>
                 </div>
             </header>

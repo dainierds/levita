@@ -1,8 +1,9 @@
 import React from 'react';
-import { Menu, User as UserIcon, X } from 'lucide-react'; // Added X if needed for toggle state
-import { Menu, User as UserIcon, X } from 'lucide-react'; // Added X if needed for toggle state
+
+import { Menu, User as UserIcon, X, Bell } from 'lucide-react';
 import { User } from '../types';
 import PWAInstallButton from './PWAInstallButton';
+import UserProfileMenu from './UserProfileMenu';
 
 interface ElderHeaderProps {
     user: User;
@@ -14,10 +15,12 @@ const ElderHeader: React.FC<ElderHeaderProps> = ({ user, onMenuClick, isMenuOpen
     return (
         <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-4 sticky top-0 z-50 shadow-lg text-white flex items-center justify-between">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm border border-white/10">
-                    {/* Use Avatar or Icon */}
-                    <UserIcon size={20} className="text-white" />
-                </div>
+                <UserProfileMenu
+                    user={user}
+                    roleLabel="Anciano"
+                    variant="simple"
+                    className="text-slate-800"
+                />
                 <div>
                     <h1 className="font-bold text-base leading-tight">{user.name}</h1>
                     <p className="text-indigo-200 text-xs font-medium uppercase tracking-wide">Anciano</p>
