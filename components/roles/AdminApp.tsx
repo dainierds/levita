@@ -66,11 +66,13 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
         const entryContext = sessionStorage.getItem('ministryContext');
         if (entryContext) {
             let targetRole: Role | null = null;
-            if (entryContext === 'Junta de Iglesia') targetRole = 'BOARD';
-            if (entryContext === 'Audio') targetRole = 'AUDIO';
-            if (entryContext === 'Anciano') targetRole = 'ELDER';
-            if (entryContext === 'Administración') targetRole = 'ADMIN';
-            if (entryContext === 'Líderes') targetRole = 'LEADER';
+            // Support both Readable Names and Role IDs
+            if (entryContext === 'Junta de Iglesia' || entryContext === 'BOARD') targetRole = 'BOARD';
+            if (entryContext === 'Audio' || entryContext === 'AUDIO') targetRole = 'AUDIO';
+            if (entryContext === 'Anciano' || entryContext === 'ELDER') targetRole = 'ELDER';
+            if (entryContext === 'Administración' || entryContext === 'ADMIN') targetRole = 'ADMIN';
+            if (entryContext === 'Líderes' || entryContext === 'LEADER') targetRole = 'LEADER';
+            if (entryContext === 'MUSIC') targetRole = 'MUSIC';
 
             const hasRole =
                 user.role === targetRole ||
@@ -90,8 +92,10 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
         const path = location.pathname.toLowerCase();
         if (path.includes('/app/board') && (user.role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
             setContextRole('BOARD');
+            sessionStorage.setItem('ministryContext', 'BOARD');
         } else if (path.includes('/app/audio') && (user.role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO'))) {
             setContextRole('AUDIO');
+            sessionStorage.setItem('ministryContext', 'AUDIO');
         }
     }, [location.pathname, user.role, user.secondaryRoles]);
 
@@ -136,8 +140,9 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 userName={user.name}
                 onSelect={(selected) => {
                     // Map functional roles to System Roles if needed for Context
-                    if (selected === 'TEACHER') setContextRole('LEADER');
-                    else setContextRole(selected);
+                    const target = selected === 'TEACHER' ? 'LEADER' : selected;
+                    setContextRole(target);
+                    sessionStorage.setItem('ministryContext', target); // PERSIST SELECTION
                 }}
             />
         );
