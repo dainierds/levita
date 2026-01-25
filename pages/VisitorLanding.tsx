@@ -183,7 +183,7 @@ const VisitorLanding: React.FC = () => {
                 <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
                     <div className="text-center mb-10">
                         <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl shadow-xl shadow-indigo-200 flex items-center justify-center text-white mb-6 mx-auto overflow-hidden">
-                            <img src="/logo-levita-hd.jpg" alt="Logo" className="w-full h-full object-cover" />
+                            <img src="/logo-levita-v3.jpg" alt="Logo" className="w-full h-full object-cover" />
                         </div>
                         <h1 className="text-2xl font-black text-slate-900 mb-2">LEVITA</h1>
                         <p className="text-slate-500">Church Operating System</p>
@@ -397,7 +397,7 @@ const VisitorLanding: React.FC = () => {
 
                     <div className="text-center mb-8 mt-4">
                         <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl shadow-xl shadow-indigo-200 flex items-center justify-center text-white mx-auto mb-6 overflow-hidden">
-                            <img src="/logo-levita-hd.jpg" alt="Logo" className="w-full h-full object-cover" />
+                            <img src="/logo-levita-v3.jpg" alt="Logo" className="w-full h-full object-cover" />
                         </div>
                         <h2 className="text-2xl font-bold text-slate-800">Login</h2>
                         <p className="text-slate-400 text-sm mt-2">
