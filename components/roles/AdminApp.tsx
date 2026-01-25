@@ -26,6 +26,7 @@ import BoardVoter from '../board/BoardVoter'; // New import
 import { NotificationBell } from '../NotificationSystem';
 import { useAuth } from '../../context/AuthContext';
 import { Menu, LogOut, Loader2, LayoutGrid } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useEvents } from '../../hooks/useEvents';
 import { usePlans } from '../../hooks/usePlans';
 import { useUsers } from '../../hooks/useUsers'; // Import hook
@@ -48,10 +49,12 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
     const { role: originalRole, logout } = useAuth();
     const [currentView, setCurrentView] = useState('dashboard');
 
+    const location = useLocation();
+
     // Helper to determine restart context
     const getInitialContext = (): Role | null => {
         // 1. Check URL for explicit overrides
-        const path = window.location.pathname;
+        const path = window.location.pathname.toLowerCase();
         if (path.includes('/app/board') && (user.role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
             return 'BOARD';
         }
@@ -76,11 +79,21 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
 
             if (targetRole && hasRole) return targetRole;
         }
-        return null;
+        return null; // Force Selector if no clear context
     };
 
     const [contextRole, setContextRole] = useState<Role | null>(getInitialContext);
     const [isContextLocked] = useState(() => !!getInitialContext());
+
+    // Sync Context with URL changes (Client-side navigation)
+    React.useEffect(() => {
+        const path = location.pathname.toLowerCase();
+        if (path.includes('/app/board') && (user.role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
+            setContextRole('BOARD');
+        } else if (path.includes('/app/audio') && (user.role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO'))) {
+            setContextRole('AUDIO');
+        }
+    }, [location.pathname, user.role, user.secondaryRoles]);
 
     const { events, loading: eventsLoading } = useEvents();
     const { plans, loading: plansLoading, savePlan } = usePlans();
