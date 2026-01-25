@@ -50,6 +50,16 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
 
     // Helper to determine restart context
     const getInitialContext = (): Role | null => {
+        // 1. Check URL for explicit overrides
+        const path = window.location.pathname;
+        if (path.includes('/app/board') && (user.role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
+            return 'BOARD';
+        }
+        if (path.includes('/app/audio') && (user.role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO'))) {
+            return 'AUDIO';
+        }
+
+        // 2. Check Session Storage
         const entryContext = sessionStorage.getItem('ministryContext');
         if (entryContext) {
             let targetRole: Role | null = null;

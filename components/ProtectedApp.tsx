@@ -122,6 +122,18 @@ const ProtectedApp: React.FC = () => {
         );
     }
 
+    // Allow users with Secondary Board role to access the Board Dashboard directly
+    const hasBoardAccess = role === 'BOARD' || user.secondaryRoles?.includes('BOARD');
+    if (location.pathname.startsWith('/app/board') && hasBoardAccess) {
+         // We pass a special prop or context to AdminApp, OR we can just rely on AdminApp reading the URL
+         // But since AdminApp handles the Board logic internally, we can just let it fall through to AdminApp
+         // However, AdminApp needs to know to skip the selector.
+         // Effectively, just "falling through" to AdminApp is enough IF AdminApp respects the URL.
+         // BUT, to be safe and consistent with "Direct Access", let's ensure we don't inadvertently trigger other logic.
+         // Actually, AdminApp IS the container for the Board view (via 'voting_admin' or 'dashboard' + rights).
+         // The BoardVoter component is inside AdminApp.
+    }
+
     // 0. MUSIC TEAM REDIRECTION
     if (role === 'MUSIC' && !location.pathname.startsWith('/app')) {
         return <MusicMinistryApp />;
