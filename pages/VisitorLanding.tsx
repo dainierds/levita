@@ -53,15 +53,13 @@ const VisitorLanding: React.FC = () => {
 
             // Check for explicit Ministry Context override (Secondary Roles)
             if (ministryContext === 'Junta de Iglesia' && (role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
-
-                sessionStorage.removeItem('ministryContext'); // Clean up
-                navigate('/app/board'); // Board lives in AdminApp but needs specific URL
+                // Keep session storage for AdminApp persistence
+                navigate('/app/board'); // Explicit URL
                 return;
             }
 
             if (ministryContext === 'Audio' && (role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO'))) {
-
-                sessionStorage.removeItem('ministryContext'); // Clean up
+                // Keep session storage
                 navigate('/app/audio'); // Explicit route for Audio Dashboard
                 return;
             }
