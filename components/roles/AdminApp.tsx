@@ -186,10 +186,9 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 {(role !== 'ELDER' || hasBoardAccess) && (
                     <div className="hidden md:flex absolute top-6 right-8 z-50 items-center gap-4">
 
-                        {/* Hide Admin Controls for Board */}
+                        {/* LIVE TOGGLE */}
                         {role !== 'BOARD' && (
                             <>
-                                {/* LIVE TOGGLE */}
                                 <button
                                     onClick={async () => {
                                         if (user?.tenantId) {
@@ -216,14 +215,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                             </>
                         )}
 
-                        {availableRoles.length > 1 && !isContextLocked && (
-                            <button
-                                onClick={() => { setContextRole(null); setCurrentView('dashboard'); }}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-full text-xs font-bold hover:bg-slate-200 transition-colors mr-2"
-                            >
-                                <LayoutGrid size={14} /> <span className="hidden lg:inline">Cambiar Dpto</span>
-                            </button>
-                        )}
+                        {/* Removed 'Cambiar Dpto' button as per user request */}
 
                         <div className="text-xs font-bold text-red-400 hover:text-red-600 cursor-pointer" onClick={logout}>
                             Salir
