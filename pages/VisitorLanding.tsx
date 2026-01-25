@@ -182,8 +182,8 @@ const VisitorLanding: React.FC = () => {
             <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
                 <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
                     <div className="text-center mb-10">
-                        <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl shadow-xl shadow-indigo-200 flex items-center justify-center text-white mb-6 mx-auto overflow-hidden">
-                            <img src="/logo-levita-v3.jpg" alt="Logo" className="w-full h-full object-cover" />
+                        <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Globe size={32} />
                         </div>
                         <h1 className="text-2xl font-black text-slate-900 mb-2">LEVITA</h1>
                         <p className="text-slate-500">Church Operating System</p>
@@ -396,8 +396,8 @@ const VisitorLanding: React.FC = () => {
                     </button>
 
                     <div className="text-center mb-8 mt-4">
-                        <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl shadow-xl shadow-indigo-200 flex items-center justify-center text-white mx-auto mb-6 overflow-hidden">
-                            <img src="/logo-levita-v3.jpg" alt="Logo" className="w-full h-full object-cover" />
+                        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 mx-auto mb-6">
+                            <LogIn size={32} />
                         </div>
                         <h2 className="text-2xl font-bold text-slate-800">Login</h2>
                         <p className="text-slate-400 text-sm mt-2">
