@@ -176,7 +176,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                 <div className="md:hidden p-4 flex justify-between items-center bg-white shadow-sm sticky top-0 z-40">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white overflow-hidden">
-                            <img src="/logo-levita.jpg" alt="Logo" className="w-full h-full object-cover" />
+                            <img src="/logo-levita-hd.jpg" alt="Logo" className="w-full h-full object-cover" />
                         </div>
                         <h1 className="font-bold text-xl text-slate-800">LEVITA</h1>
                     </div>

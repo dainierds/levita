@@ -182,7 +182,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
 
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-200 overflow-hidden">
-              <img src="/logo-levita.jpg" alt="Logo" className="w-full h-full object-cover" />
+              <img src="/logo-levita-hd.jpg" alt="Logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <h1 className="text-2xl font-black text-slate-800 dark:text-slate-200">LEVITA</h1>
