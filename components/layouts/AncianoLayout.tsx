@@ -6,6 +6,7 @@ import {
     Home, Calendar, ClipboardList, User, BarChart3,
     Bell, Menu, X, BookOpen, Settings, LogOut
 } from 'lucide-react';
+import UserProfileMenu from '../UserProfileMenu';
 
 const AncianoLayout: React.FC = () => {
     const { user, logout } = useAuth();

@@ -8,6 +8,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import TranslationMaster from './TranslationMaster';
 import VisitorTranslationMonitor from './VisitorTranslationMonitor';
+import UserProfileMenu from './UserProfileMenu';
 
 const AudioDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -68,45 +69,12 @@ const AudioDashboard: React.FC = () => {
                     <p className="text-slate-500 text-sm">Control de Transmisión y Monitoreo</p>
                 </div>
                 <div className="relative">
-                    <button
-                        onClick={() => setShowNotifPanel(!showNotifPanel)}
-                        className="p-2 rounded-full hover:bg-slate-800 transition-colors relative"
-                    >
-                        <Bell className={`cursor-pointer ${unreadCount > 0 ? 'text-white' : 'text-slate-400'}`} />
-                        {unreadCount > 0 && (
-                            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#1a1c23]"></span>
-                        )}
-                    </button>
-
-                    {/* Notification Dropdown */}
-                    {showNotifPanel && (
-                        <div className="absolute right-0 top-12 w-80 bg-[#2d313a] border border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in zoom-in-95 duration-200">
-                            <div className="p-4 border-b border-slate-700 flex justify-between items-center">
-                                <h3 className="font-bold text-white text-sm">Notificaciones</h3>
-                                <button onClick={() => setShowNotifPanel(false)}><X size={14} /></button>
-                            </div>
-                            <div className="max-h-64 overflow-y-auto">
-                                {notifications.length === 0 ? (
-                                    <div className="p-8 text-center text-slate-500 text-xs">Sin notificaciones nuevas</div>
-                                ) : (
-                                    notifications.map(n => (
-                                        <div
-                                            key={n.id}
-                                            className={`p-4 border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${!n.read ? 'bg-indigo-500/10' : ''}`}
-                                            onClick={() => markAsRead(n.id)}
-                                        >
-                                            <div className="flex justify-between items-start mb-1">
-                                                <h4 className={`text-sm font-bold ${!n.read ? 'text-white' : 'text-slate-400'}`}>{n.title}</h4>
-                                                {!n.read && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
-                                            </div>
-                                            <p className="text-xs text-slate-400">{n.message}</p>
-                                            <span className="text-[10px] text-slate-600 mt-2 block">{n.timestamp.toLocaleDateString()}</span>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    )}
+                    <UserProfileMenu
+                        user={user}
+                        roleLabel="Audio / Multimedia"
+                        variant="full"
+                        className="text-slate-800"
+                    />
                 </div>
             </div>
 
