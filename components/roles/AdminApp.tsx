@@ -53,28 +53,18 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
 
     // Helper to determine restart context
     const getInitialContext = (): Role | null => {
-        // CHISMOSO START
-        console.group("🕵️ CHISMOSO: getInitialContext");
-        const path = window.location.pathname.toLowerCase();
-        const sessionContext = sessionStorage.getItem('ministryContext');
-        console.log("📍 URL Path:", path);
-        console.log("💾 Session Context:", sessionContext);
-        console.log("👤 User Roles:", { primary: user.role, secondary: user.secondaryRoles });
-        // CHISMOSO END
-
         // 1. Check URL for explicit overrides
+        const path = window.location.pathname.toLowerCase();
+
         if (path.includes('/app/board') && (user.role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
-            console.log("✅ Match found via URL: BOARD");
-            console.groupEnd();
             return 'BOARD';
         }
         if (path.includes('/app/audio') && (user.role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO'))) {
-            console.log("✅ Match found via URL: AUDIO");
-            console.groupEnd();
             return 'AUDIO';
         }
 
         // 2. Check Session Storage
+        const sessionContext = sessionStorage.getItem('ministryContext');
         if (sessionContext) {
             let targetRole: Role | null = null;
             // Support both Readable Names and Role IDs
