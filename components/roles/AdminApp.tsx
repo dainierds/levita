@@ -53,34 +53,54 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
 
     // Helper to determine restart context
     const getInitialContext = (): Role | null => {
-        // 1. Check URL for explicit overrides
+        // CHISMOSO START
+        console.group("🕵️ CHISMOSO: getInitialContext");
         const path = window.location.pathname.toLowerCase();
+        const sessionContext = sessionStorage.getItem('ministryContext');
+        console.log("📍 URL Path:", path);
+        console.log("💾 Session Context:", sessionContext);
+        console.log("👤 User Roles:", { primary: user.role, secondary: user.secondaryRoles });
+        // CHISMOSO END
+
+        // 1. Check URL for explicit overrides
         if (path.includes('/app/board') && (user.role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
+            console.log("✅ Match found via URL: BOARD");
+            console.groupEnd();
             return 'BOARD';
         }
         if (path.includes('/app/audio') && (user.role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO'))) {
+            console.log("✅ Match found via URL: AUDIO");
+            console.groupEnd();
             return 'AUDIO';
         }
 
         // 2. Check Session Storage
-        const entryContext = sessionStorage.getItem('ministryContext');
-        if (entryContext) {
+        if (sessionContext) {
             let targetRole: Role | null = null;
             // Support both Readable Names and Role IDs
-            if (entryContext === 'Junta de Iglesia' || entryContext === 'BOARD') targetRole = 'BOARD';
-            if (entryContext === 'Audio' || entryContext === 'AUDIO') targetRole = 'AUDIO';
-            if (entryContext === 'Anciano' || entryContext === 'ELDER') targetRole = 'ELDER';
-            if (entryContext === 'Administración' || entryContext === 'ADMIN') targetRole = 'ADMIN';
-            if (entryContext === 'Líderes' || entryContext === 'LEADER') targetRole = 'LEADER';
-            if (entryContext === 'MUSIC') targetRole = 'MUSIC';
+            if (sessionContext === 'Junta de Iglesia' || sessionContext === 'BOARD') targetRole = 'BOARD';
+            if (sessionContext === 'Audio' || sessionContext === 'AUDIO') targetRole = 'AUDIO';
+            if (sessionContext === 'Anciano' || sessionContext === 'ELDER') targetRole = 'ELDER';
+            if (sessionContext === 'Administración' || sessionContext === 'ADMIN') targetRole = 'ADMIN';
+            if (sessionContext === 'Líderes' || sessionContext === 'LEADER') targetRole = 'LEADER';
+            if (sessionContext === 'MUSIC') targetRole = 'MUSIC';
 
             const hasRole =
                 user.role === targetRole ||
                 user.secondaryRoles?.includes(targetRole!) ||
                 (targetRole === 'LEADER' && (user.role === 'TEACHER' || user.secondaryRoles?.includes('TEACHER')));
 
-            if (targetRole && hasRole) return targetRole;
+            console.log("🧐 Checking Session Role:", targetRole, "Has Role?", hasRole);
+
+            if (targetRole && hasRole) {
+                console.log("✅ Restoring from Session:", targetRole);
+                console.groupEnd();
+                return targetRole;
+            }
         }
+
+        console.log("❌ No context found. Showing Selector.");
+        console.groupEnd();
         return null; // Force Selector if no clear context
     };
 
