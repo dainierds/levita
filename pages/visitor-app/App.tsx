@@ -180,17 +180,14 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
             </div>
           </div>
 
-          <div className="">
-            <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 dark:text-gray-200 tracking-tight">
-              {activeView === ViewState.HOME && 'Dashboard'}
-              {activeView === ViewState.LIVE && 'En Vivo'}
-              {activeView === ViewState.EVENTS && 'Eventos'}
-              {activeView === ViewState.ORDER && 'Orden del Culto'}
-              {activeView === ViewState.PRAYER && 'Oración'}
-              {activeView === ViewState.PROFILE && 'Perfil'}
-              {activeView === ViewState.TRANSLATION && 'Traducción'}
-            </h1>
-            <p className="text-xs md:text-sm text-gray-400 font-medium hidden sm:block">Modo Visitante</p>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-200 overflow-hidden">
+              <img src="/logo-levita.jpg" alt="Logo" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-slate-800 dark:text-slate-200">LEVITA</h1>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{settings?.churchName || 'Cargando...'}</p>
+            </div>
           </div>
         </div>
 

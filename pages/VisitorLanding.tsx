@@ -396,8 +396,8 @@ const VisitorLanding: React.FC = () => {
                     </button>
 
                     <div className="text-center mb-8 mt-4">
-                        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 mx-auto mb-6">
-                            <LogIn size={32} />
+                        <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl shadow-xl shadow-indigo-200 flex items-center justify-center text-white mx-auto mb-6 overflow-hidden">
+                            <img src="/logo-levita.jpg" alt="Logo" className="w-full h-full object-cover" />
                         </div>
                         <h2 className="text-2xl font-bold text-slate-800">Login</h2>
                         <p className="text-slate-400 text-sm mt-2">
