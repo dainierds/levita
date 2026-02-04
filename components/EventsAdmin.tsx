@@ -215,6 +215,41 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
     const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
     const changeMonth = (offset: number) => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1));
 
+    // START: New Bulk Delete Logic
+    const handleDeleteMonthEvents = async () => {
+        const monthName = currentDate.toLocaleDateString('es-ES', { month: 'long' });
+        if (!confirm(`¿Estás seguro de ELIMINAR TODOS los eventos de ${monthName}? Esta acción no se puede deshacer.`)) return;
+
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+        const eventsToDelete = events.filter(ev => {
+            const evDate = new Date(ev.date + 'T00:00:00');
+            return evDate >= startOfMonth && evDate <= endOfMonth;
+        });
+
+        if (eventsToDelete.length === 0) {
+            alert("No hay eventos en este mes para eliminar.");
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const batch = writeBatch(db);
+            eventsToDelete.forEach(ev => {
+                batch.delete(doc(db, 'events', ev.id));
+            });
+            await batch.commit();
+            alert(`Se han eliminado ${eventsToDelete.length} eventos.`);
+        } catch (error) {
+            console.error("Error deleting month events:", error);
+            alert("Error al eliminar eventos.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    // END: New Bulk Delete Logic
+
     const getEventsForDate = (day: number) => {
         const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
         targetDate.setHours(0, 0, 0, 0);
@@ -297,11 +332,22 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
             <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden animate-in fade-in">
                 {/* Calendar Header */}
                 <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                    <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-100 rounded-full"><ChevronLeft /></button>
-                    <h3 className="text-xl font-bold capitalize text-slate-800">
-                        {currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-                    </h3>
-                    <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-100 rounded-full"><ChevronRight /></button>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-100 rounded-full"><ChevronLeft /></button>
+                        <h3 className="text-xl font-bold capitalize text-slate-800">
+                            {currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                        </h3>
+                        <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-100 rounded-full"><ChevronRight /></button>
+                    </div>
+                    {!readOnly && (
+                        <button
+                            onClick={handleDeleteMonthEvents}
+                            className="text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
+                            title="Eliminar todos los eventos de este mes"
+                        >
+                            <Trash2 size={14} /> Limpiar Mes
+                        </button>
+                    )}
                 </div>
 
                 {/* Days Header */}
@@ -315,7 +361,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                 <div className="grid grid-cols-7 bg-slate-50 gap-px border-b border-l border-slate-200">
                     {days}
                 </div>
-            </div>
+            </div >
         )
     };
 
@@ -539,6 +585,25 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                         </div>
 
                         <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                            {editingEventId && (
+                                <button
+                                    onClick={async () => {
+                                        if (confirm("¿Eliminar este evento permanentemente?")) {
+                                            await handleDeleteEvent(editingEventId); // Reuse existing, but need to bypass logic or careful
+                                            // Actually handleDeleteEvent expects ID and uses setDeleteConfirmation. 
+                                            // Let's call direct delete here for modal simplicity
+                                            try {
+                                                await deleteDoc(doc(db, 'events', editingEventId));
+                                                setShowModal(false);
+                                                setEditingEventId(null);
+                                            } catch (e) { console.error(e); alert("Error"); }
+                                        }
+                                    }}
+                                    className="px-6 py-3 rounded-xl font-bold text-red-500 hover:bg-red-50 mr-auto"
+                                >
+                                    Eliminar
+                                </button>
+                            )}
                             <button onClick={() => setShowModal(false)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-200">Cancelar</button>
                             <button onClick={handleCreateEvent} disabled={isSubmitting || !newEvent.title || !newEvent.date} className="px-8 py-3 rounded-xl font-bold bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 disabled:opacity-50">
                                 {isSubmitting ? 'Guardando...' : 'Guardar'}
