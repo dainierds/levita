@@ -63,7 +63,7 @@ const EventStoryCard: React.FC<{ event: ChurchEvent, index: number }> = ({ event
   const imgUrl = `https://images.unsplash.com/photo-${index % 2 === 0 ? '1470225620780-dba8ba36b745' : '1438232992991-995b7058bbb3'}?auto=format&fit=crop&q=80&w=400`;
 
   return (
-    <div className={`relative w-40 h-64 rounded-[1.5rem] overflow-hidden flex-shrink-0 bg-slate-900 snap-start shadow-md group`}>
+    <div className={`relative w-36 h-56 rounded-[1.5rem] overflow-hidden flex-shrink-0 bg-slate-900 snap-start shadow-md group`}>
       <div className="absolute inset-0 bg-slate-900 animate-pulse"></div>
       <img src={imgUrl} alt="" className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-110" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
