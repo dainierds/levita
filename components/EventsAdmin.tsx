@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { ChurchEvent, EventType, Role } from '../types';
-import { Calendar, Clock, MapPin, Plus, Trash2, X, Check, Image as ImageIcon, LayoutTemplate, Pencil, ChevronLeft, ChevronRight, List, Upload } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Trash2, X, Check, Image as ImageIcon, LayoutTemplate, Pencil, ChevronLeft, ChevronRight, List, Upload, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import { storage } from '../services/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { parseCSV, parseICS } from '../utils/eventImport';
 
 interface EventsAdminProps {
@@ -53,7 +55,9 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
         bannerGradient: 'from-purple-500 to-pink-500',
         targetAudience: 'PUBLIC',
         placeName: '',
-        address: ''
+        address: '',
+        imageUrl: '',
+        storyStyle: 'poster'
     });
 
     const [selectedEmoji, setSelectedEmoji] = useState('📅');
@@ -164,6 +168,24 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
         }
     };
 
+    const handleImageUploadForEvent = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsSubmitting(true);
+        try {
+            const storageRef = ref(storage, `events/images/${Date.now()}_${file.name}`);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+            setNewEvent(prev => ({ ...prev, imageUrl: url }));
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            alert("Error al subir la imagen");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const [deleteConfirmation, setDeleteConfirmation] = useState<string | null>(null);
 
     const handleDeleteEvent = async (eventId: string) => {
@@ -205,7 +227,9 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
             bannerGradient: ev.bannerGradient || 'from-purple-500 to-pink-500',
             targetAudience: ev.targetAudience || 'PUBLIC',
             placeName: ev.placeName || '',
-            address: ev.address || ''
+            address: ev.address || '',
+            imageUrl: ev.imageUrl || '',
+            storyStyle: ev.storyStyle || 'poster'
         });
         setShowModal(true);
     };
@@ -523,6 +547,82 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                     <div className="relative z-10">
                                         <h4 className="text-2xl font-bold">{newEvent.title || 'Título'}</h4>
                                         <p className="opacity-80 text-sm truncate">{newEvent.description || 'Descripción...'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* IMAGE & STYLE SECTION */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
+                                {/* Image Upload */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Imagen de Historia (Vertical)</label>
+                                    <div className="flex items-start gap-4">
+                                        <div className="relative group aspect-[9/16] w-24 rounded-2xl overflow-hidden bg-slate-100 border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-colors cursor-pointer flex-shrink-0">
+                                            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 z-20 cursor-pointer" onChange={handleImageUploadForEvent} disabled={isSubmitting} />
+                                            {newEvent.imageUrl ? (
+                                                <img src={newEvent.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
+                                                    <ImageIcon size={20} />
+                                                    <span className="text-[10px] font-bold mt-1">Subir</span>
+                                                </div>
+                                            )}
+                                            {isSubmitting && <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-30"><Loader2 className="animate-spin text-indigo-600" /></div>}
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[10px] text-slate-400 mb-2">Recomendado: 1080x1920px (9:16)</p>
+                                            {newEvent.imageUrl && (
+                                                <button onClick={() => setNewEvent(prev => ({ ...prev, imageUrl: '' }))} className="text-red-500 text-xs font-bold hover:underline">Eliminar Imagen</button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Style Selector */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Estilo de Fecha</label>
+                                    <div className="flex gap-3">
+                                        {/* Poster Style */}
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, storyStyle: 'poster' })}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'poster' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            <div className="w-12 h-16 bg-slate-800 rounded-lg relative overflow-hidden shadow-sm">
+                                                <div className="absolute top-1 left-1 leading-none text-white">
+                                                    <span className="text-[8px] block font-bold">12</span>
+                                                    <span className="text-[5px] opacity-70">OCT</span>
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] font-bold text-slate-500 mt-1 block">Poster</span>
+                                        </button>
+
+                                        {/* Pill Style */}
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, storyStyle: 'pill' })}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'pill' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            <div className="w-12 h-16 bg-orange-100 rounded-lg relative overflow-hidden shadow-sm">
+                                                <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=100&q=80" className="w-full h-full object-cover opacity-80" />
+                                                <div className="absolute top-1 left-1 px-1 py-0.5 bg-white/90 rounded-full text-[4px] font-bold backdrop-blur-sm text-slate-900">
+                                                    Sáb, 5
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] font-bold text-slate-500 mt-1 block">Pastilla</span>
+                                        </button>
+
+                                        {/* Ribbon Style */}
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, storyStyle: 'ribbon' })}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'ribbon' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            <div className="w-12 h-16 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm">
+                                                <img src="https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=100&q=80" className="w-full h-full object-cover opacity-60" />
+                                                <div className="absolute top-2 left-[-2px] bg-red-600 text-white text-[4px] px-1 py-0.5 font-bold shadow-sm">
+                                                    24 DIC
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] font-bold text-slate-500 mt-1 block">Cinta</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>

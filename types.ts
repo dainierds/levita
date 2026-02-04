@@ -16,6 +16,8 @@ export interface ChurchEvent {
   description: string;
   address?: string;
   placeName?: string;
+  imageUrl?: string;
+  storyStyle?: 'poster' | 'pill' | 'ribbon';
 }
 
 export interface PrayerRequest {

@@ -11,7 +11,7 @@ import { TranslationView } from './views/TranslationView';
 import { PrayerView } from './views/PrayerView';
 
 import {
-  Home, Video, List, Heart, User, Calendar, LogOut,
+  Home, Video, List, Heart, User, Calendar, LogOut, Globe,
   Signal, Wifi, Battery, Share, Bell, Search
 } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -205,10 +205,10 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
           </button>
 
           <TabIcon
-            icon={List}
-            label="Orden"
-            active={activeView === ViewState.ORDER}
-            onClick={() => setActiveView(ViewState.ORDER)}
+            icon={Globe}
+            label="Traducción"
+            active={activeView === ViewState.TRANSLATION}
+            onClick={() => setActiveView(ViewState.TRANSLATION)}
           />
           <TabIcon
             icon={User}
