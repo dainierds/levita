@@ -24,9 +24,9 @@ const HybridDemo = ({ onExit }: { onExit: () => void }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            {/* Phone Frame Simulator */}
-            <div className="w-full max-w-[400px] h-[850px] bg-white rounded-[3rem] overflow-hidden shadow-2xl relative border-[8px] border-slate-900 ring-4 ring-slate-800">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center lg:p-4">
+            {/* Phone Frame Simulator - Responsive: Full Screen on Mobile/Tablet, Framed on Desktop */}
+            <div className="w-full h-full lg:w-full lg:max-w-[400px] lg:h-[850px] bg-white lg:rounded-[3rem] overflow-hidden shadow-2xl relative lg:border-[8px] lg:border-slate-900 lg:ring-4 ring-slate-800">
 
                 {/* --- NATIVE LAYER: STATUS BAR --- */}
                 <div className="h-12 bg-white flex justify-between items-center px-8 absolute top-0 left-0 right-0 z-50 select-none">
@@ -86,7 +86,7 @@ const HybridDemo = ({ onExit }: { onExit: () => void }) => {
                 {/* Exit Button for Demo */}
                 <button
                     onClick={onExit}
-                    className="absolute top-6 left-1/2 -translate-x-1/2 z-[60] bg-black/50 hover:bg-black/70 text-white px-4 py-1 rounded-full text-xs font-bold backdrop-blur-md transition-colors"
+                    className="absolute top-6 left-1/2 -translate-x-1/2 z-[60] bg-black/50 hover:bg-black/70 text-white px-4 py-1 rounded-full text-xs font-bold backdrop-blur-md transition-colors shadow-xl"
                 >
                     Salir de Demo
                 </button>
@@ -122,7 +122,7 @@ const SkeletonLoader = () => (
 // --- WEB CONTENT COMPONENTS ---
 
 const QuickActionsGrid = () => (
-    <div className="grid grid-cols-2 gap-4 px-6 mb-8">
+    <div className="grid grid-cols-2 lg:grid-cols-2 md:grid-cols-4 gap-4 px-6 mb-8">
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
             <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center">
                 <Globe size={24} />
