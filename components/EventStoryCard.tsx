@@ -16,6 +16,28 @@ const EventStoryCard: React.FC<EventStoryCardProps> = ({ event, index, onClick }
 
     const renderBadge = () => {
         switch (event.storyStyle) {
+            case 'poster':
+                return (
+                    <div className="absolute top-4 left-4 text-white leading-none drop-shadow-md z-10 font-sans">
+                        <span className="text-4xl font-bold block tracking-tighter shadow-black/20">{day}</span>
+                        <span className="text-[10px] font-bold opacity-90 uppercase tracking-widest">{month} • {event.time}</span>
+                    </div>
+                );
+            case 'ribbon':
+                return (
+                    <div className="absolute top-6 left-0 bg-[#D32F2F] text-white px-3 py-1 font-bold text-[10px] shadow-lg uppercase tracking-wider z-10 rounded-r-md">
+                        {dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).toUpperCase()} | {event.time}
+                    </div>
+                );
+            case 'banner':
+                return (
+                    <div className="absolute top-6 left-0 right-0 bg-white/95 backdrop-blur-sm py-2 flex justify-center items-center z-10 shadow-sm border-y border-white/50">
+                        <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mr-2 animate-pulse" />
+                        <span className="text-[11px] font-black text-slate-900 tracking-widest uppercase">
+                            {dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '')} • {event.time}
+                        </span>
+                    </div>
+                );
             case 'diagonal':
                 return (
                     <div className="absolute top-0 left-0 w-32 h-32 overflow-hidden z-20 pointer-events-none">
@@ -67,8 +89,8 @@ const EventStoryCard: React.FC<EventStoryCardProps> = ({ event, index, onClick }
             <div className="absolute inset-0 bg-slate-900 animate-pulse"></div>
             <img src={imgUrl} alt="" className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-110" />
             <div className={`absolute inset-0 flex flex-col justify-end p-4 z-10 ${event.storyStyle === 'bottom' ? 'bg-gradient-to-t from-black/95 via-black/40 to-transparent' :
-                    event.storyStyle === 'boxed' ? 'bg-gradient-to-t from-black/90 via-transparent to-transparent' :
-                        'bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80'
+                event.storyStyle === 'boxed' ? 'bg-gradient-to-t from-black/90 via-transparent to-transparent' :
+                    'bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80'
                 }`} />
 
             {renderBadge()}

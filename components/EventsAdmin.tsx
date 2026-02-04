@@ -753,17 +753,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                 </div>
                             </div>
 
-                            {/* Simple Pickers for brevity */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 mb-2">Color</label>
-                                    <div className="flex gap-2 flex-wrap pb-2">
-                                        {GRADIENTS.map(grad => (
-                                            <button key={grad.name} type="button" onClick={() => setNewEvent({ ...newEvent, bannerGradient: grad.class })} className={`w-8 h-8 rounded-full bg-gradient-to-r ${grad.class} ${newEvent.bannerGradient === grad.class ? 'ring-2 ring-slate-400 scale-110' : 'hover:scale-110'} transition-all`} title={grad.name} />
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+
 
                         </div>
 
