@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { Globe, ArrowRight, Heart, User, Lock, Users, Palette, Shield, LogIn, BookOpen } from 'lucide-react';
+import { Globe, ArrowRight, Heart, User, Lock, Users, Palette, Shield, LogIn, BookOpen, Smartphone } from 'lucide-react';
+import HybridDemo from '../components/sandbox/HybridDemo';
 import VisitorApp from './visitor-app/App';
 import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
@@ -33,6 +34,7 @@ const VisitorLanding: React.FC = () => {
     const { plans } = usePlans();
     const navigate = useNavigate();
 
+    const [showHybridDemo, setShowHybridDemo] = useState(false);
     const [step, setStep] = useState<'language' | 'role_selection' | 'app' | 'ministry_selection' | 'ministry_login'>('language');
     const [selectedLang, setSelectedLang] = useState<string>('es');
     const [showMemberLogin, setShowMemberLogin] = useState(false);
@@ -209,8 +211,25 @@ const VisitorLanding: React.FC = () => {
                         ))}
                     </div>
 
+                    {/* Hybrid Architecture Demo Trigger */}
+                    <div className="mt-8 pt-8 border-t border-slate-100">
+                        <button
+                            onClick={() => setShowHybridDemo(true)}
+                            className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
+                        >
+                            <Smartphone size={18} />
+                            <span>Probar Arquitectura Híbrida 2024</span>
+                        </button>
+                        <p className="text-center text-xs text-slate-400 mt-2">
+                            Native Shell + WebView Bridge Concept
+                        </p>
+                    </div>
 
                 </div>
+                {/* Render Hybrid Sandbox Overlay */}
+                {showHybridDemo && (
+                    <HybridDemo onExit={() => setShowHybridDemo(false)} />
+                )}
             </div>
         );
     }
