@@ -4,14 +4,23 @@ import { ChurchEvent } from '../../../types';
 
 interface EventsViewProps {
   events?: ChurchEvent[];
+  selectedEventId?: string | null;
 }
 
 type ViewMode = 'LIST' | 'CALENDAR';
 
-export const EventsView: React.FC<EventsViewProps> = ({ events = [] }) => {
+export const EventsView: React.FC<EventsViewProps> = ({ events = [], selectedEventId }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('LIST');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<ChurchEvent | null>(null);
+
+  // Sync selectedEvent with selectedEventId from props
+  React.useEffect(() => {
+    if (selectedEventId && events.length > 0) {
+      const found = events.find(e => e.id === selectedEventId);
+      if (found) setSelectedEvent(found);
+    }
+  }, [selectedEventId, events]);
 
   // Sort events by date and filter active + future only (Synced with Member Logic)
   // For Calendar, we might want to show past events of the current month too? 

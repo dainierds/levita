@@ -5,6 +5,7 @@ import { Globe, Gift, List, Heart, MapPin, ChevronRight, UserCheck, Radio, Calen
 
 interface HomeViewProps {
   onNavigate: (view: ViewState) => void;
+  onEventSelect?: (eventId: string) => void;
   events?: ChurchEvent[];
   nextPlan?: ServicePlan | null;
   settings?: ChurchSettings | null;
@@ -14,7 +15,7 @@ interface HomeViewProps {
 
 const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({ onNavigate }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 mb-8">
+    <div className="grid grid-cols-2 gap-4 px-6 mb-8">
       <button
         onClick={() => onNavigate(ViewState.TRANSLATION)}
         className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform"
@@ -59,7 +60,7 @@ const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({
 };
 
 const EventStoryCard: React.FC<{ event: ChurchEvent, index: number }> = ({ event, index }) => {
-  // Generate a deterministic random-like image based on index
+  // ... (EventStoryCard implementation remains unchanged) ...
   const imgUrl = `https://images.unsplash.com/photo-${index % 2 === 0 ? '1470225620780-dba8ba36b745' : '1438232992991-995b7058bbb3'}?auto=format&fit=crop&q=80&w=400`;
 
   return (
@@ -89,9 +90,9 @@ const EventStoryCard: React.FC<{ event: ChurchEvent, index: number }> = ({ event
   );
 };
 
-export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, events = [], nextPlan, settings }) => {
+export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, events = [], nextPlan, settings }) => {
 
-  // Logic to determine display data
+  // ... (Data logic remains unchanged) ...
   const upcomingEvents = events
     .filter(e => {
       const eventDate = new Date(e.date + 'T00:00:00');
@@ -104,8 +105,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, events = [], nex
 
   const address = settings?.address;
   const globalActiveTeam = settings?.teams?.find(t => t.id === settings.activeTeamId);
-
-  // Use settings team or plan team, fallback to defaults
   const displayTeam = globalActiveTeam ? {
     teamName: globalActiveTeam.name,
     preacher: globalActiveTeam.members.preacher,
@@ -121,13 +120,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, events = [], nex
       {/* Stories Carousel Section */}
       <div className="mb-6">
         <div className="flex items-center justify-between px-6 mb-4">
-          <h3 className="font-bold text-slate-900 text-lg tracking-tight">Historias Destacadas</h3>
+          <h3 className="font-bold text-slate-900 text-lg tracking-tight">Próximos Eventos</h3>
           <span onClick={() => onNavigate(ViewState.EVENTS)} className="text-indigo-600 text-xs font-bold cursor-pointer">Ver todo</span>
         </div>
 
         <div className="flex gap-4 overflow-x-auto px-6 pb-4 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
           {upcomingEvents.length > 0 ? upcomingEvents.map((event, i) => (
-            <EventStoryCard key={event.id} event={event} index={i} />
+            <div key={event.id} onClick={() => onEventSelect && onEventSelect(event.id)} className="cursor-pointer">
+              <EventStoryCard event={event} index={i} />
+            </div>
           )) : (
             <div className="w-full text-center py-10 text-slate-400 text-sm font-bold bg-slate-50 rounded-3xl mx-6 border-dashed border-2 border-slate-200">
               No hay historias

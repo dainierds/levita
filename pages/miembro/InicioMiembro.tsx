@@ -159,13 +159,15 @@ const InicioMiembro: React.FC = () => {
             {/* Stories Carousel */}
             <div className="mb-6">
                 <div className="flex items-center justify-between px-6 mb-4">
-                    <h3 className="font-bold text-slate-900 text-lg tracking-tight">Historias Destacadas</h3>
+                    <h3 className="font-bold text-slate-900 text-lg tracking-tight">Próximos Eventos</h3>
                     <span onClick={() => navigate('/miembro/eventos')} className="text-indigo-600 text-xs font-bold cursor-pointer">Ver todo</span>
                 </div>
 
                 <div className="flex gap-4 overflow-x-auto px-6 pb-4 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
                     {activeEvents.length > 0 ? activeEvents.map((event, i) => (
-                        <EventStoryCard key={event.id} event={event} index={i} />
+                        <div key={event.id} onClick={() => navigate('/miembro/eventos', { state: { eventId: event.id } })} className="cursor-pointer">
+                            <EventStoryCard event={event} index={i} />
+                        </div>
                     )) : (
                         <div className="w-full text-center py-10 text-slate-400 text-sm font-bold bg-slate-50 rounded-3xl mx-6 border-dashed border-2 border-slate-200">
                             No hay historias

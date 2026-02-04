@@ -1,12 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useEvents } from '../../hooks/useEvents';
 import { Calendar, Clock, MapPin, ChevronLeft, ChevronRight, X, LayoutGrid, List } from 'lucide-react';
 
 const EventosMiembro: React.FC = () => {
     const { events } = useEvents();
+    const location = useLocation();
     const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedEvent, setSelectedEvent] = useState<any>(null);
+
+    // Deep linking logic from Stories
+    useEffect(() => {
+        if (location.state?.eventId && events.length > 0) {
+            const linkedEvent = events.find(e => e.id === location.state.eventId);
+            if (linkedEvent) {
+                setSelectedEvent(linkedEvent);
+            }
+        }
+    }, [location.state, events]);
 
     // Filter active events
     const allEvents = events.filter(e => e.activeInBanner);

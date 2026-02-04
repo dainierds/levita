@@ -108,14 +108,28 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
   }, [initialTenantId, initialSettings]);
 
 
+  // State for deep linking to events
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
   const renderContent = () => {
     switch (activeView) {
       case ViewState.HOME:
-        return <HomeView onNavigate={setActiveView} events={events} nextPlan={nextPlan} settings={settings} />;
+        return (
+          <HomeView
+            onNavigate={setActiveView}
+            onEventSelect={(id: string) => {
+              setSelectedEventId(id);
+              setActiveView(ViewState.EVENTS);
+            }}
+            events={events}
+            nextPlan={nextPlan}
+            settings={settings}
+          />
+        );
       case ViewState.LIVE:
         return <LiveView tenantId={initialTenantId} />;
       case ViewState.EVENTS:
-        return <EventsView events={events} />;
+        return <EventsView events={events} selectedEventId={selectedEventId} />;
       case ViewState.ORDER:
         return <OrderView servicePlan={nextPlan} settings={settings} />;
       case ViewState.PRAYER:
@@ -159,7 +173,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
 
         {/* --- CONTENT AREA --- */}
         <div
-          className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-32 pb-24 scroll-smooth"
+          className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-24 pb-24 scroll-smooth"
           onScroll={handleScroll}
           ref={scrollRef}
           style={{ WebkitOverflowScrolling: 'touch' }}
