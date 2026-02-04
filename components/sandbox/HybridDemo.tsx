@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Share, Bell, Home, Calendar, Book, User, ArrowLeft, Battery, Wifi, Signal } from 'lucide-react';
+import { Share, Bell, Home, Calendar, Book, User, ArrowLeft, Battery, Wifi, Signal, Plus, Globe, Gift, List, Heart, Play } from 'lucide-react';
 
 const HybridDemo = ({ onExit }: { onExit: () => void }) => {
     const [showNativeHeader, setShowNativeHeader] = useState(true);
@@ -119,119 +119,183 @@ const SkeletonLoader = () => (
     </div>
 );
 
-const WebContent = () => (
-    <div className="px-6 space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+// --- WEB CONTENT COMPONENTS ---
 
-        {/* Web Hero Banner */}
-        <div className="relative w-full h-[460px] rounded-[2.5rem] overflow-hidden shadow-2xl shadow-indigo-900/20 group">
-            <img
-                src="https://images.unsplash.com/photo-1510936111840-65e151ad71bb?q=80&w=1000&auto=format&fit=crop"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                alt="Worship"
+const QuickActionsGrid = () => (
+    <div className="grid grid-cols-2 gap-4 px-6 mb-8">
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+            <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center">
+                <Globe size={24} />
+            </div>
+            <span className="text-xs font-bold text-slate-700">Traducción</span>
+        </div>
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
+                <Gift size={24} />
+            </div>
+            <span className="text-xs font-bold text-slate-700">Donaciones</span>
+        </div>
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+            <div className="w-12 h-12 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
+                <List size={24} />
+            </div>
+            <span className="text-xs font-bold text-slate-700">Programa</span>
+        </div>
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+            <div className="w-12 h-12 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center">
+                <Heart size={24} />
+            </div>
+            <span className="text-xs font-bold text-slate-700">Oración</span>
+        </div>
+    </div>
+);
+
+const StoryCardType1 = ({ img, title, avatar }: { img: string, title: string, avatar?: string }) => (
+    <div className="relative w-32 h-52 rounded-2xl overflow-hidden flex-shrink-0 shadow-md snap-start">
+        <img src={img} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        {avatar && (
+            <div className="absolute top-2 left-2 p-0.5 bg-blue-500 rounded-full">
+                <div className="w-7 h-7 rounded-full border-2 border-white overflow-hidden">
+                    <img src={avatar} alt="" className="w-full h-full object-cover" />
+                </div>
+            </div>
+        )}
+        <p className="absolute bottom-3 left-3 right-3 text-white text-xs font-bold leading-tight drop-shadow-md">
+            {title}
+        </p>
+    </div>
+);
+
+const StoryCardType2 = ({ img, title }: { img: string, title: string }) => (
+    <div className="relative w-32 h-52 rounded-2xl overflow-hidden flex-shrink-0 shadow-lg shadow-indigo-500/20 snap-start group">
+        <img src={img} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+        <div className="absolute bottom-3 left-3 right-3 bg-white/10 backdrop-blur-md rounded-xl p-2 border border-white/20">
+            <p className="text-white text-[10px] font-bold text-center leading-tight">
+                {title}
+            </p>
+        </div>
+    </div>
+);
+
+const StoryCardType3 = ({ img, title, label }: { img: string, title: string, label: string }) => (
+    <div className="relative w-32 h-52 rounded-2xl overflow-hidden flex-shrink-0 bg-slate-900 snap-start border border-slate-800">
+        <img src={img} alt="" className="w-full h-full object-cover opacity-60 mix-blend-overlay" />
+        <div className="absolute top-0 right-0 bg-indigo-500 text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg">
+            {label}
+        </div>
+        <div className="absolute inset-0 flex flex-col justify-end p-3">
+            <div className="w-6 h-1 bg-indigo-500 mb-2 rounded-full"></div>
+            <p className="text-white text-sm font-black leading-none uppercase tracking-tighter">
+                {title}
+            </p>
+        </div>
+    </div>
+);
+
+const StoriesCarousel = () => (
+    <div className="mb-6 pt-4">
+        <div className="flex items-center justify-between px-6 mb-3">
+            <h3 className="font-bold text-slate-800 text-lg">Historias Destacadas</h3>
+            <span className="text-indigo-500 text-xs font-bold">Ver todo</span>
+        </div>
+        <div className="flex gap-3 overflow-x-auto px-6 pb-4 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
+            {/* Create Story */}
+            <div className="relative w-32 h-52 rounded-2xl overflow-hidden flex-shrink-0 bg-slate-100 flex flex-col snap-start border border-slate-200">
+                <div className="h-2/3 bg-slate-200 relative">
+                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200" className="w-full h-full object-cover opacity-80" />
+                </div>
+                <div className="flex-1 bg-white relative">
+                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-blue-500 rounded-full border-4 border-white flex items-center justify-center text-white shadow-sm">
+                        <Plus size={20} />
+                    </div>
+                    <p className="mt-6 text-center text-[10px] font-bold text-slate-700">Crear Historia</p>
+                </div>
+            </div>
+
+            <StoryCardType1
+                img="https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&q=80&w=400"
+                avatar="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100"
+                title="Culto Joven"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent flex flex-col justify-end p-8 pb-10">
-                <span className="bg-indigo-500/90 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-xs font-black w-fit mb-4 shadow-lg uppercase tracking-wider">
-                    Domingo de Ramos
-                </span>
-                <h2 className="text-4xl font-black text-white leading-[1.1] mb-3 tracking-tight">
-                    Una Fe <br /> <span className="text-indigo-400">Inquebrantable</span>
-                </h2>
-                <p className="text-slate-200 font-medium text-lg max-w-[80%] leading-relaxed">
-                    Descubre cómo mantenerte firme en medio de la tormenta.
-                </p>
-                <button className="mt-6 w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-lg active:scale-95 transition-transform shadow-lg">
-                    Ver Transmisión
-                </button>
-            </div>
+
+            <StoryCardType2
+                img="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=400"
+                title="Clase de Música"
+            />
+
+            <StoryCardType3
+                img="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=400"
+                title="NOCHE ADORACIÓN"
+                label="HOY 7PM"
+            />
+
+            <StoryCardType1
+                img="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=400"
+                avatar="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100"
+                title="Charla de Salud"
+            />
         </div>
+    </div>
+);
 
-        {/* Horizontal Scroll Section: Events */}
-        <div className="relative">
-            <div className="flex justify-between items-center mb-6 px-1">
-                <h3 className="text-2xl font-black text-slate-800 tracking-tight">Próximos Eventos</h3>
-                <span className="text-indigo-600 font-bold text-sm bg-indigo-50 px-3 py-1 rounded-full">Ver todos</span>
+const WebContent = () => (
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+
+        <StoriesCarousel />
+
+        <QuickActionsGrid />
+
+        <div className="px-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-slate-800 text-lg">Próximos Eventos</h3>
             </div>
-            {/* Scrollable Container with simulated snap */}
-            <div className="flex gap-4 overflow-x-auto pb-8 -mx-6 px-6 snap-x mandatory hide-scrollbar" style={{ scrollPaddingLeft: '24px' }}>
-                {[
-                    { day: '12', month: 'OCT', title: 'Retiro de Jóvenes', img: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=500&q=80', color: 'orange' },
-                    { day: '15', month: 'OCT', title: 'Noche de Adoración', img: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80', color: 'purple' },
-                    { day: '20', month: 'OCT', title: 'Bautismos', img: 'https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=500&q=80', color: 'blue' }
-                ].map((item, i) => (
-                    <div key={i} className="snap-center shrink-0 w-72 h-96 bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 p-6 flex flex-col justify-between relative overflow-hidden group">
-                        <div className="absolute inset-0">
-                            <img src={item.img} className="w-full h-full object-cover opacity-100 transition-transform duration-500 group-hover:scale-110" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                        </div>
-
-                        <div className="relative z-10 flex justify-between items-start">
-                            <div className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl flex flex-col items-center justify-center text-white shadow-lg">
-                                <span className="text-[10px] font-bold uppercase">{item.month}</span>
-                                <span className="text-xl font-black">{item.day}</span>
-                            </div>
-                        </div>
-
-                        <div className="relative z-10">
-                            <h4 className="text-2xl font-black text-white mb-2 leading-tight">{item.title}</h4>
-                            <button className="w-full py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white font-bold text-sm hover:bg-white hover:text-slate-900 transition-all">
-                                Registrarme
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-
-        {/* Vertical List: Reading Plan */}
-        <div>
-            <h3 className="text-2xl font-black text-slate-800 mb-6 px-1 tracking-tight">Tu Lectura Diaria</h3>
+            {/* Event List */}
             <div className="space-y-4">
-                {[
-                    { title: 'Salmo 23', subtitle: 'El Señor es mi pastor', progress: 100 },
-                    { title: 'Mateo 5', subtitle: 'Las bienaventuranzas', progress: 60 },
-                    { title: 'Proverbios 3', subtitle: 'Sabiduría y obediencia', progress: 0 }
-                ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-5 p-5 bg-white rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow active:scale-98">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm ${item.progress === 100 ? 'bg-green-100 text-green-600' : 'bg-indigo-50 text-indigo-600'}`}>
-                            <Book size={24} />
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4">
+                        <div className="w-16 h-16 rounded-xl bg-slate-100 flex-shrink-0 overflow-hidden">
+                            <img src={`https://images.unsplash.com/photo-${i === 1 ? '1543165365' : i === 2 ? '1504609773096' : '1507643179173'}-07a786f67f1f?auto=format&fit=crop&q=80&w=200`} className="w-full h-full object-cover" />
                         </div>
-                        <div className="flex-1">
-                            <h4 className="font-bold text-slate-800 text-lg">{item.title}</h4>
-                            <p className="text-sm text-slate-500 font-medium">{item.subtitle}</p>
+                        <div>
+                            <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">Domingo, 10:00 AM</span>
+                            <h4 className="font-bold text-slate-800">Servicio de Adoración</h4>
+                            <p className="text-xs text-slate-500 mt-1 line-clamp-1">Una experiencia transformadora para toda la familia.</p>
                         </div>
-                        {item.progress > 0 && (
-                            <div className="w-12 h-12 relative flex items-center justify-center">
-                                <svg className="transform -rotate-90 w-12 h-12">
-                                    <circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-100" />
-                                    <circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="4" fill="transparent" className={`${item.progress === 100 ? 'text-green-500' : 'text-indigo-500'}`} strokeDasharray={113} strokeDashoffset={113 - (113 * item.progress) / 100} strokeLinecap="round" />
-                                </svg>
-                            </div>
-                        )}
                     </div>
                 ))}
             </div>
         </div>
 
-        {/* Featured Podcast Card */}
-        <div className="bg-slate-900 rounded-[2.5rem] p-8 relative overflow-hidden text-white shadow-2xl shadow-indigo-900/30">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-[80px] opacity-30 -translate-y-1/2 translate-x-1/2"></div>
-            <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-4 text-indigo-300 font-bold uppercase text-xs tracking-widest">
-                    <Signal size={12} />
-                    Nuevo Episodio
+        {/* Podcast Section */}
+        <div className="px-6 mb-8">
+            <h3 className="font-bold text-slate-800 text-lg mb-4">Podcast Reciente</h3>
+            <div className="bg-slate-900 rounded-[2rem] p-6 text-white relative overflow-hidden">
+                <div className="relative z-10 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md">
+                        <Play size={20} fill="white" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-lg">Fe en Tiempos Modernos</h4>
+                        <p className="text-slate-400 text-sm">Episodio 4 • 24 min</p>
+                    </div>
                 </div>
-                <h3 className="text-2xl font-black mb-4">Liderazgo en Tiempos de Cambio</h3>
-                <p className="text-slate-400 mb-6 font-medium">Con Pastor Carlos | 45 min</p>
-                <div className="flex items-center gap-4">
-                    <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-900 hover:scale-105 transition-transform">
-                        <svg className="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                    </button>
-                    <span className="font-bold">Escuchar ahora</span>
+
+                {/* Visualizer bars */}
+                <div className="flex items-end gap-1 h-8 mt-6 opacity-50">
+                    {[...Array(20)].map((_, i) => (
+                        <div key={i}
+                            className="w-1.5 bg-indigo-500 rounded-t-full animate-pulse"
+                            style={{
+                                height: `${Math.random() * 100}%`,
+                                animationDelay: `${i * 0.1}s`
+                            }}
+                        />
+                    ))}
                 </div>
             </div>
         </div>
-
-        <div className="h-12"></div>
+        <div className="h-24"></div>
     </div>
 );
 
