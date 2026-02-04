@@ -550,7 +550,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                         <div className="overflow-y-auto p-6 space-y-8">
                             {/* LIVE PREVIEW (Omitted for brevity, kept structure) */}
                             {/* IMAGE & STYLE SECTION */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
+                            <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 pb-6 border-b border-slate-100">
                                 {/* Image Upload */}
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 mb-2">Imagen de Historia (Vertical)</label>
@@ -579,11 +579,11 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                 {/* Style Selector */}
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 mb-2">Estilo de Story</label>
-                                    <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                                    <div className="grid grid-cols-3 gap-2">
                                         {/* Poster Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'poster' })}
-                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'poster' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'poster' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
                                             <div className="w-20 h-28 bg-slate-800 rounded-lg relative overflow-hidden shadow-sm">
                                                 <div className="absolute top-2 left-2 leading-none text-white">
@@ -597,7 +597,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                         {/* Pill Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'pill' })}
-                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'pill' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'pill' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
                                             <div className="w-20 h-28 bg-orange-100 rounded-lg relative overflow-hidden shadow-sm">
                                                 <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=100&q=80" className="w-full h-full object-cover opacity-80" />
@@ -611,7 +611,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                         {/* Ribbon Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'ribbon' })}
-                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'ribbon' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'ribbon' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
                                             <div className="w-20 h-28 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm">
                                                 <img src="https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=100&q=80" className="w-full h-full object-cover opacity-60" />
@@ -625,7 +625,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                         {/* Banner Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'banner' })}
-                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'banner' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'banner' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
                                             <div className="w-20 h-28 bg-slate-100 rounded-lg relative overflow-hidden shadow-sm">
                                                 <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=100&q=80" className="w-full h-full object-cover opacity-80" />
@@ -640,7 +640,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                         {/* Bottom Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'bottom' })}
-                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'bottom' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'bottom' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
                                             <div className="w-20 h-28 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm flex flex-col justify-end">
                                                 <img src="https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=100&q=80" className="absolute inset-0 w-full h-full object-cover opacity-60" />
@@ -654,7 +654,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                         {/* Diagonal Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'diagonal' })}
-                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'diagonal' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'diagonal' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
                                             <div className="w-20 h-28 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm">
                                                 <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=100&q=80" className="w-full h-full object-cover opacity-60" />
@@ -668,7 +668,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                         {/* Centered Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'centered' })}
-                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'centered' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'centered' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
                                             <div className="w-20 h-28 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm flex flex-col items-center justify-center">
                                                 <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&q=80" className="absolute inset-0 w-full h-full object-cover opacity-60" />
@@ -681,7 +681,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                         {/* Glass Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'glass' })}
-                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'glass' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'glass' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
                                             <div className="w-20 h-28 bg-slate-100 rounded-lg relative overflow-hidden shadow-sm flex flex-col justify-end">
                                                 <img src="https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=100&q=80" className="absolute inset-0 w-full h-full object-cover opacity-80" />
@@ -695,7 +695,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                         {/* Boxed Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'boxed' })}
-                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'boxed' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'boxed' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
                                             <div className="w-20 h-28 bg-slate-800 rounded-lg relative overflow-hidden shadow-sm">
                                                 <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=100&q=80" className="absolute inset-0 w-full h-full object-cover opacity-60" />
