@@ -194,7 +194,7 @@ END:VCALENDAR`;
                                 {/* Image Header */}
                                 <div className="relative h-48 rounded-2xl overflow-hidden bg-gray-100">
                                     <img
-                                        src={`https://api.dicebear.com/9.x/shapes/svg?seed=${event.id}&backgroundColor=f3f4f6,e5e7eb,d1d5db`}
+                                        src={event.imageUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${event.id}&backgroundColor=f3f4f6,e5e7eb,d1d5db`}
                                         alt="Cover"
                                         className="object-cover w-full h-full opacity-90 hover:scale-110 transition-transform duration-700"
                                     />
@@ -297,7 +297,7 @@ END:VCALENDAR`;
                         <div className="mb-6">
                             <div className="w-full h-40 rounded-2xl bg-slate-100 mb-4 overflow-hidden relative">
                                 <img
-                                    src={`https://api.dicebear.com/9.x/shapes/svg?seed=${selectedEvent.id}&backgroundColor=f3f4f6,e5e7eb,d1d5db`}
+                                    src={selectedEvent.imageUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${selectedEvent.id}&backgroundColor=f3f4f6,e5e7eb,d1d5db`}
                                     alt="Cover"
                                     className="w-full h-full object-cover"
                                 />

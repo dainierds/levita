@@ -134,7 +134,7 @@ END:VCALENDAR`;
         {/* Image Container */}
         <div className="relative h-48 rounded-[2rem] overflow-hidden shadow-neu-pressed dark:shadow-neu-dark-pressed p-1 bg-gray-100 dark:bg-gray-800">
           <img
-            src={`https://api.dicebear.com/9.x/shapes/svg?seed=${event.id}&backgroundColor=f3f4f6,e5e7eb,d1d5db`}
+            src={event.imageUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${event.id}&backgroundColor=f3f4f6,e5e7eb,d1d5db`}
             alt={event.title}
             className={`w-full h-full object-cover rounded-[1.8rem] opacity-90 transition-transform duration-700 ${!isModal && 'group-hover:scale-110'}`}
           />
