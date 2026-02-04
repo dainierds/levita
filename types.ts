@@ -17,7 +17,7 @@ export interface ChurchEvent {
   address?: string;
   placeName?: string;
   imageUrl?: string;
-  storyStyle?: 'poster' | 'pill' | 'ribbon' | 'banner' | 'bottom';
+  storyStyle?: 'poster' | 'pill' | 'ribbon' | 'banner' | 'bottom' | 'diagonal' | 'centered' | 'glass' | 'boxed';
 }
 
 export interface PrayerRequest {

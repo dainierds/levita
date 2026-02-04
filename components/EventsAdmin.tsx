@@ -72,19 +72,28 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                 titleToSave = `${selectedEmoji} ${newEvent.title}`;
             }
 
-            const eventData = {
-                ...newEvent,
-                title: titleToSave,
-                tenantId: user.tenantId,
-                activeInBanner: newEvent.activeInBanner ?? true,
-                // Ensure endDate is stored, if empty make it undefined or null
-                endDate: newEvent.endDate || null
-            };
+            // 1. CLEAN DATA: Remove any undefined values and the 'id' field
+            const cleanData: any = {};
+            const fields = [
+                'title', 'description', 'date', 'endDate', 'time', 'type',
+                'location', 'activeInBanner', 'bannerGradient', 'targetAudience',
+                'placeName', 'address', 'imageUrl', 'storyStyle', 'tenantId'
+            ];
+
+            fields.forEach(f => {
+                const val = (newEvent as any)[f];
+                if (f === 'title') cleanData[f] = titleToSave;
+                else if (f === 'tenantId') cleanData[f] = user.tenantId;
+                else if (f === 'activeInBanner') cleanData[f] = newEvent.activeInBanner ?? true;
+                else if (f === 'endDate') cleanData[f] = newEvent.endDate || null;
+                else if (val !== undefined) cleanData[f] = val;
+                else cleanData[f] = ''; // Fallback for everything else
+            });
 
             if (editingEventId) {
-                await updateDoc(doc(db, 'events', editingEventId), eventData);
+                await updateDoc(doc(db, 'events', editingEventId), cleanData);
             } else {
-                await addDoc(collection(db, 'events'), eventData);
+                await addDoc(collection(db, 'events'), cleanData);
             }
 
             setShowModal(false);
@@ -216,14 +225,14 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
     const handleEditEvent = (ev: ChurchEvent) => {
         setEditingEventId(ev.id);
         setNewEvent({
-            title: ev.title,
-            description: ev.description,
-            date: ev.date,
+            title: ev.title || '',
+            description: ev.description || '',
+            date: ev.date || '',
             endDate: ev.endDate || '',
-            time: ev.time,
-            type: ev.type,
-            location: ev.location,
-            activeInBanner: ev.activeInBanner,
+            time: ev.time || '',
+            type: ev.type || 'SERVICE',
+            location: ev.location || '',
+            activeInBanner: ev.activeInBanner ?? true,
             bannerGradient: ev.bannerGradient || 'from-purple-500 to-pink-500',
             targetAudience: ev.targetAudience || 'PUBLIC',
             placeName: ev.placeName || '',
@@ -540,17 +549,6 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
 
                         <div className="overflow-y-auto p-6 space-y-8">
                             {/* LIVE PREVIEW (Omitted for brevity, kept structure) */}
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-3">Vista Previa</label>
-                                <div className={`w-full aspect-[3/1] rounded-3xl bg-gradient-to-r ${newEvent.bannerGradient} p-6 md:p-8 flex flex-col justify-center text-white shadow-lg relative overflow-hidden`}>
-                                    <div className="absolute top-0 right-0 p-8 opacity-10"><ImageIcon size={120} /></div>
-                                    <div className="relative z-10">
-                                        <h4 className="text-2xl font-bold">{newEvent.title || 'Título'}</h4>
-                                        <p className="opacity-80 text-sm truncate">{newEvent.description || 'Descripción...'}</p>
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* IMAGE & STYLE SECTION */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
                                 {/* Image Upload */}
@@ -580,77 +578,133 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
 
                                 {/* Style Selector */}
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 mb-2">Estilo de Fecha</label>
-                                    <div className="flex gap-3">
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Estilo de Story</label>
+                                    <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                                         {/* Poster Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'poster' })}
-                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'poster' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'poster' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
-                                            <div className="w-12 h-16 bg-slate-800 rounded-lg relative overflow-hidden shadow-sm">
-                                                <div className="absolute top-1 left-1 leading-none text-white">
-                                                    <span className="text-[8px] block font-bold">12</span>
-                                                    <span className="text-[5px] opacity-70">OCT</span>
+                                            <div className="w-20 h-28 bg-slate-800 rounded-lg relative overflow-hidden shadow-sm">
+                                                <div className="absolute top-2 left-2 leading-none text-white">
+                                                    <span className="text-xl block font-bold">12</span>
+                                                    <span className="text-[8px] opacity-70">OCT</span>
                                                 </div>
                                             </div>
-                                            <span className="text-[9px] font-bold text-slate-500 mt-1 block">Poster</span>
+                                            <span className="text-[10px] font-bold text-slate-500 mt-1 block">Poster</span>
                                         </button>
 
                                         {/* Pill Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'pill' })}
-                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'pill' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'pill' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
-                                            <div className="w-12 h-16 bg-orange-100 rounded-lg relative overflow-hidden shadow-sm">
+                                            <div className="w-20 h-28 bg-orange-100 rounded-lg relative overflow-hidden shadow-sm">
                                                 <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=100&q=80" className="w-full h-full object-cover opacity-80" />
-                                                <div className="absolute top-1 left-1 px-1 py-0.5 bg-white/90 rounded-full text-[4px] font-bold backdrop-blur-sm text-slate-900">
+                                                <div className="absolute top-2 left-2 px-2 py-1 bg-white/90 rounded-full text-[6px] font-bold backdrop-blur-sm text-slate-900">
                                                     Sáb, 5
                                                 </div>
                                             </div>
-                                            <span className="text-[9px] font-bold text-slate-500 mt-1 block">Pastilla</span>
+                                            <span className="text-[10px] font-bold text-slate-500 mt-1 block">Pastilla</span>
                                         </button>
 
                                         {/* Ribbon Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'ribbon' })}
-                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'ribbon' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'ribbon' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
-                                            <div className="w-12 h-16 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm">
+                                            <div className="w-20 h-28 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm">
                                                 <img src="https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=100&q=80" className="w-full h-full object-cover opacity-60" />
-                                                <div className="absolute top-2 left-[-2px] bg-red-600 text-white text-[4px] px-1 py-0.5 font-bold shadow-sm">
+                                                <div className="absolute top-4 left-[-4px] bg-red-600 text-white text-[8px] px-2 py-1 font-bold shadow-sm">
                                                     24 DIC
                                                 </div>
                                             </div>
-                                            <span className="text-[9px] font-bold text-slate-500 mt-1 block">Cinta</span>
+                                            <span className="text-[10px] font-bold text-slate-500 mt-1 block">Cinta</span>
                                         </button>
 
                                         {/* Banner Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'banner' })}
-                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'banner' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'banner' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
-                                            <div className="w-12 h-16 bg-slate-100 rounded-lg relative overflow-hidden shadow-sm">
+                                            <div className="w-20 h-28 bg-slate-100 rounded-lg relative overflow-hidden shadow-sm">
                                                 <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=100&q=80" className="w-full h-full object-cover opacity-80" />
-                                                <div className="absolute top-1 left-0 right-0 bg-white py-1 flex justify-center items-center">
-                                                    <div className="w-1 h-1 bg-indigo-500 rounded-full mr-0.5" />
-                                                    <span className="text-[3px] font-bold text-indigo-900">SÁB, 5 NOV</span>
+                                                <div className="absolute top-2 left-0 right-0 bg-white py-2 flex justify-center items-center">
+                                                    <div className="w-2 h-2 bg-indigo-500 rounded-full mr-1" />
+                                                    <span className="text-[6px] font-bold text-indigo-900">SÁB, 5 NOV</span>
                                                 </div>
                                             </div>
-                                            <span className="text-[9px] font-bold text-slate-500 mt-1 block">Banner</span>
+                                            <span className="text-[10px] font-bold text-slate-500 mt-1 block">Banner</span>
                                         </button>
 
                                         {/* Bottom Style */}
                                         <button
                                             onClick={() => setNewEvent({ ...newEvent, storyStyle: 'bottom' })}
-                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'bottom' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'bottom' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
                                         >
-                                            <div className="w-12 h-16 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm flex flex-col justify-end">
+                                            <div className="w-20 h-28 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm flex flex-col justify-end">
                                                 <img src="https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=100&q=80" className="absolute inset-0 w-full h-full object-cover opacity-60" />
-                                                <div className="relative p-1 bg-gradient-to-t from-black/80 to-transparent">
-                                                    <div className="text-white text-[4px] font-bold uppercase">DOM 18 ENE</div>
+                                                <div className="relative p-2 bg-gradient-to-t from-black/80 to-transparent">
+                                                    <div className="text-white text-[6px] font-bold uppercase">DOM 18 ENE</div>
                                                 </div>
                                             </div>
-                                            <span className="text-[9px] font-bold text-slate-500 mt-1 block">Inferior</span>
+                                            <span className="text-[10px] font-bold text-slate-500 mt-1 block">Inferior</span>
+                                        </button>
+
+                                        {/* Diagonal Style */}
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, storyStyle: 'diagonal' })}
+                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'diagonal' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            <div className="w-20 h-28 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm">
+                                                <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=100&q=80" className="w-full h-full object-cover opacity-60" />
+                                                <div className="absolute top-0 left-0 w-12 h-12 overflow-hidden">
+                                                    <div className="absolute top-0 left-0 bg-red-600 text-white w-[180%] text-[5px] py-1 font-bold -rotate-45 -translate-x-1/4 translate-y-2">12 OCT</div>
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-500 mt-1 block">Diagonal</span>
+                                        </button>
+
+                                        {/* Centered Style */}
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, storyStyle: 'centered' })}
+                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'centered' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            <div className="w-20 h-28 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm flex flex-col items-center justify-center">
+                                                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&q=80" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                                                <span className="text-2xl font-black text-white relative leading-none">24</span>
+                                                <span className="text-[5px] font-bold text-white relative uppercase opacity-80 mt-1">DIC | 8 PM</span>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-500 mt-1 block">Impacto</span>
+                                        </button>
+
+                                        {/* Glass Style */}
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, storyStyle: 'glass' })}
+                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'glass' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            <div className="w-20 h-28 bg-slate-100 rounded-lg relative overflow-hidden shadow-sm flex flex-col justify-end">
+                                                <img src="https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=100&q=80" className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                                                <div className="relative bg-white/40 backdrop-blur-sm border-t border-white/20 p-2 flex justify-center">
+                                                    <div className="text-slate-900 text-[5px] font-black uppercase">Sáb, 5 Nov</div>
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-500 mt-1 block">Cristal</span>
+                                        </button>
+
+                                        {/* Boxed Style */}
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, storyStyle: 'boxed' })}
+                                            className={`p-2 rounded-xl border-2 transition-all flex-shrink-0 ${newEvent.storyStyle === 'boxed' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            <div className="w-20 h-28 bg-slate-800 rounded-lg relative overflow-hidden shadow-sm">
+                                                <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=100&q=80" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                                                <div className="absolute top-2 right-2 bg-white/20 backdrop-blur-md border border-white/10 rounded-lg p-1.5 flex flex-col items-center">
+                                                    <span className="text-[4px] font-bold text-white opacity-60 uppercase">DOM</span>
+                                                    <span className="text-sm font-black text-white leading-none">18</span>
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-500 mt-1 block">Tarjeta</span>
                                         </button>
                                     </div>
                                 </div>
