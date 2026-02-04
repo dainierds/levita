@@ -10,29 +10,29 @@ const QuickActionsGrid = () => {
   const navigate = useNavigate();
   return (
     <div className="grid grid-cols-2 lg:grid-cols-2 md:grid-cols-4 gap-4 px-6 mb-8">
-      <button className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
-        <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center">
-          <Globe size={24} />
+      <button className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform">
+        <div className="w-14 h-14 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center">
+          <Globe size={26} strokeWidth={2} />
         </div>
-        <span className="text-xs font-bold text-slate-700">Traducción</span>
+        <span className="text-sm font-bold text-slate-600">Traducción</span>
       </button>
-      <button className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
-        <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
-          <Gift size={24} />
+      <button className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform">
+        <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
+          <Gift size={26} strokeWidth={2} />
         </div>
-        <span className="text-xs font-bold text-slate-700">Donaciones</span>
+        <span className="text-sm font-bold text-slate-600">Donaciones</span>
       </button>
-      <button onClick={() => navigate('/miembro/liturgia')} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
-        <div className="w-12 h-12 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
-          <List size={24} />
+      <button onClick={() => navigate('/miembro/liturgia')} className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform">
+        <div className="w-14 h-14 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
+          <List size={26} strokeWidth={2} />
         </div>
-        <span className="text-xs font-bold text-slate-700">Programa</span>
+        <span className="text-sm font-bold text-slate-600">Programa</span>
       </button>
-      <button onClick={() => navigate('/miembro/oracion')} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
-        <div className="w-12 h-12 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center">
-          <Heart size={24} />
+      <button onClick={() => navigate('/miembro/oracion')} className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform">
+        <div className="w-14 h-14 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center">
+          <Heart size={26} strokeWidth={2} />
         </div>
-        <span className="text-xs font-bold text-slate-700">Oración</span>
+        <span className="text-sm font-bold text-slate-600">Oración</span>
       </button>
     </div>
   );
@@ -41,28 +41,27 @@ const QuickActionsGrid = () => {
 const EventStoryCard = ({ event, index }: { event: ChurchEvent, index: number }) => {
   const colors = ["bg-indigo-600", "bg-pink-600", "bg-orange-500", "bg-emerald-500", "bg-purple-600", "bg-blue-600"];
   const color = colors[index % colors.length];
-  const dateLabel = new Date(event.date).toLocaleDateString('es-ES', { weekday: 'short', hour: '2-digit', minute: '2-digit' }).toUpperCase();
+  // Removed uppercase to match refined look if needed, but keeping for now.
+  // The screenshot shows "Culto Joven", "Clase de Mú...". Not entirely uppercase. 
+  // Adjusting formatting.
 
   return (
-    <div className={`relative w-36 h-60 rounded-[1.5rem] overflow-hidden flex-shrink-0 bg-slate-900 snap-start border border-slate-800 shadow-xl shadow-slate-200/50 group`}>
+    <div className={`relative w-40 h-64 rounded-[1.5rem] overflow-hidden flex-shrink-0 bg-slate-900 snap-start shadow-md group`}>
       <div className="absolute inset-0 bg-slate-900 animate-pulse"></div>
-      {/* Use placeholder image since ChurchEvent has no imageUrl */}
-      <img src={`https://images.unsplash.com/photo-${index % 2 === 0 ? '1470225620780-dba8ba36b745' : '1438232992991-995b7058bbb3'}?auto=format&fit=crop&q=80&w=400`} alt="" className="w-full h-full object-cover opacity-80 mix-blend-overlay transition-transform duration-700 group-hover:scale-110" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+      <img src={`https://images.unsplash.com/photo-${index % 2 === 0 ? '1470225620780-dba8ba36b745' : '1438232992991-995b7058bbb3'}?auto=format&fit=crop&q=80&w=400`} alt="" className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-110" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-      {/* Label Badge */}
-      <div className={`absolute top-0 right-0 ${color} text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-2xl shadow-lg z-10`}>
-        {dateLabel}
+      {/* Circle Badge (Like Instagram Story) */}
+      <div className="absolute top-3 left-3 p-[2px] rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500">
+        <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden">
+          <img src={`https://images.unsplash.com/photo-${index % 2 === 0 ? '1470225620780-dba8ba36b745' : '1438232992991-995b7058bbb3'}?auto=format&fit=crop&q=80&w=100`} className="w-full h-full object-cover" />
+        </div>
       </div>
 
       {/* Content */}
-      <div className="absolute inset-0 flex flex-col justify-end p-4 z-10">
-        <div className={`w-8 h-1 ${color.replace('bg-', 'bg-')} mb-3 rounded-full shadow-[0_0_10px_currentColor] opacity-80`}></div>
-        <p className="text-white text-xl font-black leading-[0.9] uppercase tracking-tighter drop-shadow-lg mb-1 line-clamp-3">
+      <div className="absolute inset-0 flex flex-col justify-end p-4">
+        <p className="text-white text-lg font-bold leading-tight drop-shadow-md mb-1 line-clamp-2">
           {event.title}
-        </p>
-        <p className="text-slate-300 text-[10px] font-bold tracking-widest uppercase opacity-80">
-          {event.location || 'Santuario'}
         </p>
       </div>
     </div>
@@ -81,11 +80,11 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  // Filter events (Public + Members Only)
+  // Filter events
   const activeEvents = events.filter(e => e.activeInBanner && (e.targetAudience === 'PUBLIC' || e.targetAudience === 'MEMBERS_ONLY'));
   const address = settings?.address;
 
-  // Determine Active Team
+  // Global Team
   const globalActiveTeam = settings?.teams?.find(t => t.id === settings.activeTeamId);
   const displayTeam = globalActiveTeam ? {
     teamName: globalActiveTeam.name,
@@ -96,27 +95,27 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
   } : (activePlan?.team || null);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 pt-2">
 
       {/* Stories Carousel */}
-      <div className="mb-8 pt-6">
+      <div className="mb-6">
         <div className="flex items-center justify-between px-6 mb-4">
-          <h3 className="font-bold text-slate-800 text-xl tracking-tight">Próximos Eventos</h3>
-          <span onClick={() => navigate('/miembro/eventos')} className="text-indigo-600 text-xs font-black tracking-widest uppercase bg-indigo-50 px-3 py-1 rounded-full cursor-pointer">Ver Todo</span>
+          <h3 className="font-bold text-slate-900 text-lg tracking-tight">Historias Destacadas</h3>
+          <span onClick={() => navigate('/miembro/eventos')} className="text-indigo-600 text-xs font-bold cursor-pointer">Ver todo</span>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto px-6 pb-8 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
+        <div className="flex gap-4 overflow-x-auto px-6 pb-4 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
           {activeEvents.length > 0 ? activeEvents.map((event, i) => (
             <EventStoryCard key={event.id} event={event} index={i} />
           )) : (
             <div className="w-full text-center py-10 text-slate-400 text-sm font-bold bg-slate-50 rounded-3xl mx-6 border-dashed border-2 border-slate-200">
-              No hay eventos próximos
+              No hay historias
             </div>
           )}
         </div>
       </div>
 
-      <QuickActionsGrid navigate={navigate} />
+      <QuickActionsGrid />
 
       <div className="px-6 space-y-6">
         {/* Live Stream Card */}
@@ -226,4 +225,4 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
   );
 };
 
-export default MemberApp;
+
