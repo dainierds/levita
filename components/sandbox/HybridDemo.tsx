@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Share, Bell, Home, Calendar, Book, User, ArrowLeft, Battery, Wifi, Signal, Plus, Globe, Gift, List, Heart, Play } from 'lucide-react';
+import { Share, Bell, Home, Calendar, Book, User, ArrowLeft, Battery, Wifi, Signal, Plus, Globe, Gift, List, Heart, Play, Radio, MapPin, ChevronRight, UserCheck, Mic2, Music } from 'lucide-react';
 
 const HybridDemo = ({ onExit }: { onExit: () => void }) => {
     const [showNativeHeader, setShowNativeHeader] = useState(true);
@@ -246,54 +246,82 @@ const WebContent = () => (
 
         <QuickActionsGrid />
 
-        <div className="px-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-slate-800 text-lg">Próximos Eventos</h3>
-            </div>
-            {/* Event List */}
-            <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                    <div key={i} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4">
-                        <div className="w-16 h-16 rounded-xl bg-slate-100 flex-shrink-0 overflow-hidden">
-                            <img src={`https://images.unsplash.com/photo-${i === 1 ? '1543165365' : i === 2 ? '1504609773096' : '1507643179173'}-07a786f67f1f?auto=format&fit=crop&q=80&w=200`} className="w-full h-full object-cover" />
-                        </div>
-                        <div>
-                            <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">Domingo, 10:00 AM</span>
-                            <h4 className="font-bold text-slate-800">Servicio de Adoración</h4>
-                            <p className="text-xs text-slate-500 mt-1 line-clamp-1">Una experiencia transformadora para toda la familia.</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
+
 
         {/* Podcast Section */}
-        <div className="px-6 mb-8">
-            <h3 className="font-bold text-slate-800 text-lg mb-4">Podcast Reciente</h3>
-            <div className="bg-slate-900 rounded-[2rem] p-6 text-white relative overflow-hidden">
-                <div className="relative z-10 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md">
-                        <Play size={20} fill="white" />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-lg">Fe en Tiempos Modernos</h4>
-                        <p className="text-slate-400 text-sm">Episodio 4 • 24 min</p>
-                    </div>
+        <div className="px-6 space-y-6 pb-20">
+            {/* Live Stream Card */}
+            <div className="w-full bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200 aspect-video relative group">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+                    <Radio size={32} className="mb-2 opacity-50" />
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-600">Transmisión Offline</p>
                 </div>
-
-                {/* Visualizer bars */}
-                <div className="flex items-end gap-1 h-8 mt-6 opacity-50">
-                    {[...Array(20)].map((_, i) => (
-                        <div key={i}
-                            className="w-1.5 bg-indigo-500 rounded-t-full animate-pulse"
-                            style={{
-                                height: `${Math.random() * 100}%`,
-                                animationDelay: `${i * 0.1}s`
-                            }}
-                        />
-                    ))}
+                <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-white text-[10px] font-bold">
+                    OFFLINE
                 </div>
             </div>
+
+            {/* Address Card */}
+            <div className="bg-white p-4 rounded-3xl border border-slate-100 flex items-center gap-4 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer">
+                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 flex-shrink-0">
+                    <MapPin size={24} />
+                </div>
+                <div className="flex-1">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ubicación</p>
+                    <p className="font-bold text-slate-800 text-sm">Av. Principal 123, Ciudad</p>
+                </div>
+                <ChevronRight size={20} className="text-slate-300" />
+            </div>
+
+            {/* Team Info Card */}
+            <div className="bg-white rounded-[2.5rem] p-6 shadow-lg shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full translate-x-10 -translate-y-10 opacity-50" />
+
+                <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 relative z-10">
+                    <UserCheck size={20} className="text-indigo-600" />
+                    <span className="text-lg">Equipo de Hoy</span>
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4 relative z-10">
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Predicador</p>
+                        <p className="font-bold text-slate-800 text-sm">Pr. Yohan</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Anciano</p>
+                        <p className="font-bold text-slate-800 text-sm">Anciano 1</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Música</p>
+                        <p className="font-bold text-slate-800 text-sm">Jennifer</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Audio</p>
+                        <p className="font-bold text-slate-800 text-sm">Técnico 1</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Prayer Request Card */}
+            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[2.5rem] p-6 text-white shadow-xl shadow-indigo-500/30 relative overflow-hidden">
+                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                            <Heart className="text-white fill-white" size={20} />
+                        </div>
+                        <h3 className="font-bold text-lg">Petición de Oración</h3>
+                    </div>
+                    <p className="text-indigo-100 text-sm mb-6 leading-relaxed opacity-90">
+                        ¿Necesitas apoyo espiritual? Envíanos tu petición y nuestro equipo orará por ti.
+                    </p>
+                    <button className="w-full py-4 bg-white text-indigo-600 rounded-2xl font-bold text-sm shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
+                        <span>Enviar Petición</span>
+                        <ArrowLeft size={16} className="rotate-180" />
+                    </button>
+                </div>
+            </div>
+
         </div>
         <div className="h-24"></div>
     </div>
