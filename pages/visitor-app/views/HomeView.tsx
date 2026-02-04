@@ -1,7 +1,7 @@
 import React from 'react';
-import { PlayCircle, Calendar, ArrowRight, List, Heart, MapPin, Facebook, Instagram, Youtube, Clock, Globe, Gift } from 'lucide-react';
 import { ViewState } from '../types';
 import { ChurchEvent, ServicePlan, ChurchSettings } from '../../../types';
+import { Globe, Gift, List, Heart, MapPin, ChevronRight, UserCheck, Radio, Calendar, Clock, Facebook, Instagram, Youtube } from 'lucide-react';
 
 interface HomeViewProps {
   onNavigate: (view: ViewState) => void;
@@ -10,416 +10,224 @@ interface HomeViewProps {
   settings?: ChurchSettings | null;
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, events = [], nextPlan, settings }) => {
-  // Get upcoming events (limit 5 for carousel)
-  // Get upcoming events (User Request: "automáticamente muestre los próximos 5 eventos")
-  // Automation Logic: 
-  // 1. Filter ALL valid future events (ignore manual toggle for banner selection to ensure automation)
-  // 2. Sort by date
-  // 3. Slice 5
-  // 4. Expiration: "lleguen las 12 de la noche del dia del evento entonces lo elimine" -> Keep if Date >= Today (Midnight start)
+// --- SUB-COMPONENTS (Copied & Adapted from MemberApp to maintain consistency) ---
 
-  const upcomingEvents = events
-    .filter(e => {
-      // Parse event date (YYYY-MM-DD)
-      const eventDate = new Date(e.date + 'T00:00:00');
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Clear time portion of today for correct Day comparison
+const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({ onNavigate }) => {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 mb-8">
+      <button
+        onClick={() => onNavigate(ViewState.TRANSLATION)}
+        className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform"
+      >
+        <div className="w-14 h-14 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center">
+          <Globe size={26} strokeWidth={2} />
+        </div>
+        <span className="text-sm font-bold text-slate-600">Traducción</span>
+      </button>
 
-      // Keep if event date is today or future
-      // This ensures it survives until the END of the day (since next day > eventDate)
-      return eventDate >= today && e.targetAudience !== 'STAFF_ONLY'; // Basic public filter
-    })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 5);
+      <button
+        onClick={() => window.open('https://adventistgiving.org/donate/ANTBRS', '_blank')}
+        className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform"
+      >
+        <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
+          <Gift size={26} strokeWidth={2} />
+        </div>
+        <span className="text-sm font-bold text-slate-600">Donaciones</span>
+      </button>
 
-  /* Logic for Hero Data */
-  const checkIsToday = (dateString?: string) => {
-    if (!dateString) return false;
-    const date = new Date(dateString);
-    const today = new Date();
-    const dateWithOffset = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
-    return dateWithOffset.toDateString() === today.toDateString();
-  };
+      <button
+        onClick={() => onNavigate(ViewState.ORDER)}
+        className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform"
+      >
+        <div className="w-14 h-14 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
+          <List size={26} strokeWidth={2} />
+        </div>
+        <span className="text-sm font-bold text-slate-600">Programa</span>
+      </button>
 
-  const checkIsMeetingDay = () => {
-    if (!settings?.meetingDays) return false;
-    const dayOrder = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    const todayName = dayOrder[new Date().getDay()];
-    return settings.meetingDays.includes(todayName as any);
-  };
+      <button
+        onClick={() => onNavigate(ViewState.PRAYER)}
+        className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform"
+      >
+        <div className="w-14 h-14 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center">
+          <Heart size={26} strokeWidth={2} />
+        </div>
+        <span className="text-sm font-bold text-slate-600">Oración</span>
+      </button>
+    </div>
+  );
+};
 
-  // Live if Active AND (It's the specific Date OR It's a recurring Meeting Day)
-  // OR if Manual "Go Live" override is on
-  const isLive = settings?.isLive || ((nextPlan?.isActive && (checkIsToday(nextPlan.date) || checkIsMeetingDay())) || false);
-
-  // Date rendering
-  let heroDate = 'Domingo';
-  let heroTime = '10:00 AM';
-
-  if (settings?.meetingTimes) {
-    const days = Object.keys(settings.meetingTimes);
-    if (days.length > 0) {
-      const dayOrder = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-      const today = new Date();
-      const currentDayIndex = today.getDay();
-
-      let nextMeetingDayName = null;
-
-      for (let i = 0; i < dayOrder.length; i++) {
-        const checkIndex = (currentDayIndex + i) % 7;
-        const dayName = dayOrder[checkIndex];
-        if (days.includes(dayName)) {
-          nextMeetingDayName = dayName;
-          break;
-        }
-      }
-
-      if (nextMeetingDayName) {
-        heroDate = nextMeetingDayName;
-        heroTime = settings.meetingTimes[nextMeetingDayName];
-      } else {
-        heroDate = days[0];
-        heroTime = settings.meetingTimes[days[0]];
-      }
-    }
-  } else if (nextPlan) {
-    const dateObj = new Date(nextPlan.date);
-    const userTimezoneOffset = dateObj.getTimezoneOffset() * 60000;
-    const adjustedDate = new Date(dateObj.getTime() + userTimezoneOffset);
-    heroDate = adjustedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-    heroTime = nextPlan.startTime;
-  }
-
-  // Preacher rendering
-  let preacherName = 'Pastor Principal';
-
-  if (nextPlan?.team?.preacher) {
-    preacherName = nextPlan.team.preacher;
-  } else if (settings?.pastorName) {
-    preacherName = settings.pastorName;
-  } else if (settings?.pastorName) {
-    preacherName = settings.pastorName;
-  }
+const EventStoryCard: React.FC<{ event: ChurchEvent, index: number }> = ({ event, index }) => {
+  // Generate a deterministic random-like image based on index
+  const imgUrl = `https://images.unsplash.com/photo-${index % 2 === 0 ? '1470225620780-dba8ba36b745' : '1438232992991-995b7058bbb3'}?auto=format&fit=crop&q=80&w=400`;
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className={`relative w-40 h-64 rounded-[1.5rem] overflow-hidden flex-shrink-0 bg-slate-900 snap-start shadow-md group`}>
+      <div className="absolute inset-0 bg-slate-900 animate-pulse"></div>
+      <img src={imgUrl} alt="" className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-110" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-      {!settings && (
-        <div className="bg-red-500 text-white p-4 rounded-xl font-bold text-center animate-pulse">
-          ⚠️ ERROR: NO SETTINGS LOADED
+      {/* Circle Badge (Like Instagram Story) */}
+      <div className="absolute top-3 left-3 p-[2px] rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500">
+        <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden">
+          <img src={imgUrl} className="w-full h-full object-cover" />
         </div>
-      )}
+      </div>
 
-      {/* Hero Section Carousel */}
-      <CarouselHero
-        isLive={isLive}
-        heroDate={heroDate}
-        heroTime={heroTime}
-        preacherName={preacherName}
-        onNavigate={onNavigate}
-        upcomingEvents={upcomingEvents}
-      />
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-
-        {/* Card: Traducción en Vivo */}
-        <div
-          onClick={() => onNavigate(ViewState.TRANSLATION)}
-          className="bg-neu-base dark:bg-neu-base-dark p-8 rounded-[2rem] shadow-neu dark:shadow-neu-dark hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
-        >
-          <div className="w-14 h-14 rounded-2xl bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex items-center justify-center text-indigo-500 mb-6 group-hover:text-indigo-600">
-            <Globe size={28} />
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-200 mb-2">Traducción en Vivo</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-            Escucha el servicio traducido a tu idioma en tiempo real con IA.
-          </p>
-          <button className="flex items-center text-indigo-500 font-bold text-sm hover:opacity-80 transition-opacity">
-            INICIAR TRADUCCIÓN <ArrowRight size={16} className="ml-2" />
-          </button>
+      {/* Content */}
+      <div className="absolute inset-0 flex flex-col justify-end p-4">
+        <p className="text-white text-lg font-bold leading-tight drop-shadow-md mb-1 line-clamp-2">
+          {event.title}
+        </p>
+        <div className="flex items-center gap-1 text-white/80 text-[10px] uppercase font-bold tracking-wider mt-1">
+          <Calendar size={10} />
+          {new Date(event.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })}
         </div>
-
-        {/* Card: Donaciones / Ofrendas */}
-        <div
-          onClick={() => window.open('https://adventistgiving.org/donate/ANTBRS', '_blank')}
-          className="bg-neu-base dark:bg-neu-base-dark p-8 rounded-[2rem] shadow-neu dark:shadow-neu-dark hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
-        >
-          <div className="w-14 h-14 rounded-2xl bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex items-center justify-center text-emerald-500 mb-6 group-hover:text-emerald-600">
-            <Gift size={28} />
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-200 mb-2">Donativos</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-            Contribuye a la misión y ministerios de nuestra iglesia de forma segura.
-          </p>
-          <button className="flex items-center text-emerald-500 font-bold text-sm hover:opacity-80 transition-opacity">
-            DONAR AHORA <ArrowRight size={16} className="ml-2" />
-          </button>
-        </div>
-
-        {/* Card 1: Orden de Culto */}
-        <div
-          onClick={() => onNavigate(ViewState.ORDER)}
-          className="bg-neu-base dark:bg-neu-base-dark p-8 rounded-[2rem] shadow-neu dark:shadow-neu-dark hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
-        >
-          <div className="w-14 h-14 rounded-2xl bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex items-center justify-center text-orange-500 mb-6 group-hover:text-orange-600">
-            <List size={28} />
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-200 mb-2">Orden de Culto</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-            Sigue la liturgia y el programa del servicio de hoy.
-          </p>
-          <button className="flex items-center text-orange-500 font-bold text-sm hover:opacity-80 transition-opacity">
-            VER ORDEN <ArrowRight size={16} className="ml-2" />
-          </button>
-        </div>
-
-
-
-        {/* Card 3: Petición de Oración (Full Width) */}
-        <div
-          onClick={() => onNavigate(ViewState.PRAYER)}
-          className="col-span-1 md:col-span-2 lg:col-span-3 relative bg-brand-500 p-8 md:p-10 rounded-[2rem] shadow-neu dark:shadow-neu-dark hover:-translate-y-2 transition-transform duration-300 overflow-hidden cursor-pointer flex flex-col md:flex-row items-center justify-between gap-6 group"
-        >
-          {/* Decorative circles */}
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
-          <div className="absolute bottom-10 -left-10 w-40 h-40 bg-indigo-900 opacity-20 rounded-full blur-2xl"></div>
-
-          <div className="relative z-10 flex items-center gap-6">
-            <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-white shrink-0">
-              <Heart size={32} fill="currentColor" />
-            </div>
-            <div>
-              <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">¿Necesitas Oración?</h3>
-              <p className="text-indigo-100 text-lg opacity-90 max-w-xl">
-                No estás solo. Comparte tu petición y nuestro equipo orará por ti esta semana.
-              </p>
-            </div>
-          </div>
-
-          <button className="relative z-10 px-8 py-4 bg-white text-brand-600 rounded-xl font-bold shadow-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
-            Enviar Petición
-          </button>
-        </div>
-
-        {/* Card 4: Nuestra Iglesia / Info Footer (Full Width Horizontal) */}
-        <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-neu-base dark:bg-neu-base-dark p-6 md:p-8 rounded-[2rem] shadow-neu dark:shadow-neu-dark flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left transition-all hover:shadow-neu-pressed dark:hover:shadow-neu-dark-pressed">
-
-          {/* Identity & Address */}
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex items-center justify-center text-gray-400 shrink-0">
-              <MapPin size={20} />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{settings?.churchName || 'Nuestra Iglesia'}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1 justify-center md:justify-start">
-                <span className="opacity-70">{settings?.address || 'Ubicación no disponible'}</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Schedule */}
-          {(settings?.meetingDays && settings.meetingDays.length > 0) && (
-            <div className="hidden md:block w-px h-12 bg-gray-200 dark:bg-gray-700"></div>
-          )}
-
-          {(settings?.meetingDays && settings.meetingDays.length > 0) && (
-            <div className="flex flex-col items-center md:items-start">
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Clock size={12} /> Horarios
-              </h4>
-              <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-300 font-medium">
-                {settings.meetingDays.slice(0, 2).map(day => ( // Show max 2 days to keep it compact
-                  <span key={day}>{day} {settings.meetingTimes[day]}</span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Socials */}
-          <div className="flex gap-3">
-            {settings?.socials?.facebook && (
-              <a href={settings.socials.facebook} target="_blank" rel="noreferrer" className="p-3 rounded-full bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark text-blue-600 hover:text-blue-700 hover:scale-110 transition-transform">
-                <Facebook size={18} />
-              </a>
-            )}
-            {settings?.socials?.instagram && (
-              <a href={settings.socials.instagram} target="_blank" rel="noreferrer" className="p-3 rounded-full bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark text-pink-600 hover:text-pink-700 hover:scale-110 transition-transform">
-                <Instagram size={18} />
-              </a>
-            )}
-            {settings?.socials?.youtube && (
-              <a href={settings.socials.youtube} target="_blank" rel="noreferrer" className="p-3 rounded-full bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark text-red-600 hover:text-red-700 hover:scale-110 transition-transform">
-                <Youtube size={18} />
-              </a>
-            )}
-          </div>
-
-        </div>
-
       </div>
     </div>
   );
 };
 
-// Extracted Carousel Component for simpler logic
-const CarouselHero: React.FC<{
-  isLive: boolean;
-  heroDate: string;
-  heroTime: string;
-  preacherName: string;
-  onNavigate: (view: ViewState) => void;
-  upcomingEvents: ChurchEvent[];
-}> = ({ isLive, heroDate, heroTime, preacherName, onNavigate, upcomingEvents }) => {
+export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, events = [], nextPlan, settings }) => {
 
-  const [currentSlide, setCurrentSlide] = React.useState(0);
-  // Slide 0 is the "Main" (Live/Next Service). Subsequent slides are events.
-  const totalSlides = 1 + upcomingEvents.length;
+  // Logic to determine display data
+  const upcomingEvents = events
+    .filter(e => {
+      const eventDate = new Date(e.date + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return eventDate >= today && e.activeInBanner && (e.targetAudience === 'PUBLIC' || e.targetAudience === 'MEMBERS_ONLY');
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 10);
 
-  React.useEffect(() => {
-    if (totalSlides <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % totalSlides);
-    }, 6000); // 6 seconds per slide
-    return () => clearInterval(interval);
-  }, [totalSlides]);
+  const address = settings?.address;
+  const globalActiveTeam = settings?.teams?.find(t => t.id === settings.activeTeamId);
 
-  // Helper to get active event for current slide (if > 0)
-  const activeEvent = currentSlide > 0 ? upcomingEvents[currentSlide - 1] : null;
+  // Use settings team or plan team, fallback to defaults
+  const displayTeam = globalActiveTeam ? {
+    teamName: globalActiveTeam.name,
+    preacher: globalActiveTeam.members.preacher,
+    musicDirector: globalActiveTeam.members.musicDirector || (globalActiveTeam.members as any).worshipLeader,
+    audioOperator: globalActiveTeam.members.audioOperator,
+    elder: globalActiveTeam.members.elder
+  } : (nextPlan?.team || null);
 
-  // Determine Gradient
-  // Default (Main Slide): Neutral Blue-ish/Gray or Red if Live
-  // Event Slide: Use event.bannerGradient OR fallback
-  const getBackgroundClass = () => {
-    if (currentSlide === 0) {
-      if (isLive) return 'bg-gradient-to-br from-red-600 via-red-500 to-orange-500';
-      return 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900'; // Default Neutral for Main Status
-    }
-    // Event Slide
-    // Event Slide
-    if (activeEvent?.bannerGradient) {
-      return `bg-gradient-to-br ${activeEvent.bannerGradient}`;
-    }
-
-    // Auto-assign background if missing (User Request: "le asigne automaticamente un fondo de los que ya hay")
-    // Deterministic fallback based on ID length or char code, so it doesn't flicker on re-renders but varies per event
-    const gradients = [
-      'from-purple-500 to-pink-500',
-      'from-blue-500 to-cyan-400',
-      'from-emerald-400 to-green-500',
-      'from-orange-400 to-red-500',
-      'from-indigo-500 to-purple-600',
-      'from-yellow-400 to-orange-500'
-    ];
-    // Fallback ID if event is somehow malformed
-    const seed = activeEvent?.id ? activeEvent.id.charCodeAt(0) + activeEvent.id.length : Math.floor(Math.random() * 10);
-    const grad = gradients[seed % gradients.length];
-
-    return `bg-gradient-to-br ${grad}`;
-  };
-
-  // Text Color Logic: If it's the main slide (neutral), use dark text. If it's a gradient event, use white.
-  const isDarkBackground = currentSlide > 0 || isLive;
-  // Actually, users want the "Main" slide to look like the Admin one? 
-  // Admin usually has "Next Service" in logic. 
-  // Let's stick to: Main Slide = Neutral (Morpho) unless Live. 
-  // Event Slides = Colored Gradients from Admin.
 
   return (
-    <div className="p-1 rounded-[2.5rem] shadow-neu dark:shadow-neu-dark bg-white">
-      {/* 
-          Container for the inner banner. 
-          The 'p-1' on parent + 'bg-white' creates the "fino virilito" (thin border).
-          We apply the gradient to THIS inner div.
-       */}
-      <div className={`relative overflow-hidden rounded-[2.3rem] h-80 transition-all duration-500 ${getBackgroundClass()}`}>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 pt-2">
 
-        {/* Texture Overlay (Optional, keep if refined) */}
-        {!isDarkBackground && (
-          <img
-            src={`https://api.dicebear.com/9.x/patterns/svg?seed=${currentSlide}&backgroundColor=transparent`}
-            alt="Pattern"
-            className="absolute inset-0 w-full h-full object-cover opacity-5 pointer-events-none"
-          />
-        )}
+      {/* Stories Carousel Section */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between px-6 mb-4">
+          <h3 className="font-bold text-slate-900 text-lg tracking-tight">Historias Destacadas</h3>
+          <span onClick={() => onNavigate(ViewState.EVENTS)} className="text-indigo-600 text-xs font-bold cursor-pointer">Ver todo</span>
+        </div>
 
-        {/* Abstract Shapes for Gradient Backgrounds */}
-        {isDarkBackground && (
-          <>
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full blur-2xl -ml-12 -mb-12 pointer-events-none"></div>
-          </>
-        )}
-
-        {/* Content Render */}
-        {currentSlide === 0 ? (
-          // MAIN SLIDE CONTENT
-          <div className="relative z-10 h-full flex flex-col justify-center p-8 md:p-12 animate-in fade-in duration-500">
-            <div className="inline-flex items-center space-x-2 mb-4">
-              <span className={`w-3 h-3 rounded-full animate-pulse ${isLive ? 'bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)]' : 'bg-brand-500'}`}></span>
-              <span className={`${isLive ? 'text-white' : 'text-brand-500'} font-bold tracking-widest text-xs uppercase`}>
-                {isLive ? 'EN VIVO AHORA' : 'Próximo Servicio:'}
-                {!isLive && <span className="text-gray-600 dark:text-gray-400 normal-case ml-1">{heroDate} {heroTime}</span>}
-              </span>
+        <div className="flex gap-4 overflow-x-auto px-6 pb-4 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
+          {upcomingEvents.length > 0 ? upcomingEvents.map((event, i) => (
+            <EventStoryCard key={event.id} event={event} index={i} />
+          )) : (
+            <div className="w-full text-center py-10 text-slate-400 text-sm font-bold bg-slate-50 rounded-3xl mx-6 border-dashed border-2 border-slate-200">
+              No hay historias
             </div>
-            <h2 className={`text-4xl md:text-5xl font-black ${isLive ? 'text-white' : 'text-gray-900 dark:text-gray-100'} mb-2 tracking-tight line-clamp-2`}>
-              {isLive ? 'Únete Ahora' : 'Te Esperamos'}
-            </h2>
-            <p className={`${isLive ? 'text-red-100' : 'text-gray-500 dark:text-gray-400'} mb-8 max-w-lg text-lg flex items-center gap-2`}>
-              <span className={`font-bold ${isLive ? 'text-white' : 'text-brand-500'}`}>Predica:</span> {preacherName}
-            </p>
+          )}
+        </div>
+      </div>
 
-            <button
-              onClick={() => onNavigate(ViewState.LIVE)}
-              className={`w-max flex items-center space-x-3 px-8 py-4 ${isLive ? 'bg-white text-red-600 shadow-lg' : 'bg-neu-base dark:bg-neu-base-dark text-brand-500 shadow-neu dark:shadow-neu-dark'} font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all duration-200 group`}
-            >
-              <PlayCircle size={24} className="group-hover:scale-110 transition-transform" />
-              <span>{isLive ? 'Ver Transmisión' : 'Ver Transmisiones'}</span>
-            </button>
+      {/* Quick Actions Grid */}
+      <QuickActionsGrid onNavigate={onNavigate} />
+
+      {/* Main Vertical Content */}
+      <div className="px-6 space-y-6">
+
+        {/* Live Stream Card */}
+        <div className="w-full bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200 aspect-video relative group">
+          {nextPlan?.isActive ? (
+            <iframe
+              width="100%"
+              height="100%"
+              src="https://www.youtube.com/embed/live_stream?channel=UCjaxadventista7morenacersda63"
+              title="Live Service"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 z-10"
+            ></iframe>
+          ) : (
+            <>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+                <Radio size={32} className="mb-2 opacity-50" />
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-600">OFFLINE</p>
+                {nextPlan && (
+                  <p className="text-[10px] text-slate-600 mt-1">Próximo: {new Date(nextPlan.date).toLocaleDateString()} {nextPlan.startTime}</p>
+                )}
+              </div>
+            </>
+          )}
+          {nextPlan?.isActive && (
+            <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600 px-3 py-1 rounded-full z-20">
+              <span className="text-[10px] font-bold text-white tracking-wider animate-pulse">EN VIVO</span>
+            </div>
+          )}
+        </div>
+
+        {/* Address Card */}
+        {address && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="block bg-white p-4 rounded-3xl border border-slate-100 flex items-center gap-4 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
+          >
+            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 flex-shrink-0">
+              <MapPin size={24} />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ubicación</p>
+              <p className="font-bold text-slate-800 text-sm line-clamp-1">{address}</p>
+            </div>
+            <ChevronRight size={20} className="text-slate-300" />
+          </a>
+        )}
+
+        {/* Team Info Card */}
+        <div className="bg-white rounded-[2.5rem] p-6 shadow-lg shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full translate-x-10 -translate-y-10 opacity-50" />
+
+          <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 relative z-10">
+            <UserCheck size={20} className="text-indigo-600" />
+            <span className="text-lg">{displayTeam?.teamName || 'Equipo de Hoy'}</span>
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4 relative z-10">
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Predicador</p>
+              <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.preacher || (settings?.pastorName || '---')}</p>
+            </div>
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Anciano</p>
+              <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.elder || '---'}</p>
+            </div>
           </div>
-        ) : (
-          // EVENT SLIDE CONTENT (Always White Text on Gradient)
-          <div className="relative z-10 h-full flex flex-col justify-center p-8 md:p-12 animate-in fade-in slide-in-from-right-4 duration-500">
-            {activeEvent && (
-              <>
-                <div className="inline-flex items-center space-x-2 mb-4">
-                  <span className="w-3 h-3 rounded-full bg-white/50 backdrop-blur-md animate-pulse"></span>
-                  <span className="text-white/80 font-bold tracking-widest text-xs uppercase border border-white/20 px-2 py-0.5 rounded-full bg-white/10">
-                    Próximo Evento
-                  </span>
-                </div>
-                <h2 className="text-3xl md:text-5xl font-black text-white mb-2 tracking-tight line-clamp-2 drop-shadow-sm">
-                  {activeEvent.title}
-                </h2>
-                <p className="text-white/90 mb-8 max-w-lg text-lg flex items-center gap-4 font-medium">
-                  <span className="flex items-center gap-1"><Calendar size={18} /> {new Date(activeEvent.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-                  <span className="w-px h-4 bg-white/40"></span>
-                  <span className="flex items-center gap-1"><Clock size={18} /> {new Date('2000-01-01T' + activeEvent.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
-                </p>
+        </div>
 
-                <button
-                  onClick={() => onNavigate(ViewState.EVENTS)}
-                  className="w-max flex items-center space-x-3 px-8 py-4 bg-white/20 backdrop-blur-md border border-white/30 text-white font-bold rounded-2xl hover:bg-white hover:text-brand-600 transition-all duration-200 group shadow-lg"
-                >
-                  <Calendar size={24} className="group-hover:scale-110 transition-transform" />
-                  <span>Ver Detalles</span>
-                </button>
-              </>
+        {/* Socials Footer */}
+        {settings?.socials && (
+          <div className="flex justify-center gap-6 py-4 pb-8 opacity-50 grayscale hover:grayscale-0 transition-all">
+            {settings.socials.facebook && (
+              <a href={settings.socials.facebook} target="_blank" rel="noreferrer"><Facebook size={24} /></a>
+            )}
+            {settings.socials.instagram && (
+              <a href={settings.socials.instagram} target="_blank" rel="noreferrer"><Instagram size={24} /></a>
+            )}
+            {settings.socials.youtube && (
+              <a href={settings.socials.youtube} target="_blank" rel="noreferrer"><Youtube size={24} /></a>
             )}
           </div>
         )}
 
-        {/* Dots Indicator */}
-        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
-          {Array.from({ length: totalSlides }).map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentSlide(idx)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentSlide ? (isDarkBackground ? 'bg-white w-8' : 'bg-brand-500 w-8') : (isDarkBackground ? 'bg-white/40 hover:bg-white/60' : 'bg-gray-300 hover:bg-gray-400')}`}
-            />
-          ))}
-        </div>
       </div>
     </div>
   );

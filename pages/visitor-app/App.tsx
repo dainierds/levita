@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import React, { useState, useEffect, useRef } from 'react';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { ChurchEvent, ServicePlan, ChurchSettings } from '../../types';
 import { ViewState } from './types';
-import { Navbar } from './components/Sidebar'; // Importing the refactored Navbar
 import { HomeView } from './views/HomeView';
 import { LiveView } from './views/LiveView';
 import { EventsView } from './views/EventsView';
@@ -11,18 +10,19 @@ import { OrderView } from './views/OrderView';
 import { TranslationView } from './views/TranslationView';
 import { PrayerView } from './views/PrayerView';
 
-import { Bell, Moon, Sun, Search, User, ArrowLeft, LogOut } from 'lucide-react';
+import {
+  Home, Video, List, Heart, User, Calendar, LogOut,
+  Signal, Wifi, Battery, Share, Bell, Search
+} from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
-import PWAInstallButton from '../../components/PWAInstallButton';
-import UserProfileMenu from '../../components/UserProfileMenu';
 
 const SimpleView: React.FC<{ title: string }> = ({ title }) => (
-  <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400 animate-in fade-in">
-    <div className="w-24 h-24 rounded-full shadow-neu dark:shadow-neu-dark flex items-center justify-center mb-6">
-      <Search size={32} className="opacity-30" />
+  <div className="flex flex-col items-center justify-center h-full text-gray-400 animate-in fade-in">
+    <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center mb-6">
+      <Search size={32} className="opacity-30 text-slate-500" />
     </div>
-    <h2 className="text-3xl font-bold mb-2 text-gray-600 dark:text-gray-300">{title}</h2>
-    <p>Esta sección está en construcción.</p>
+    <h2 className="text-2xl font-bold mb-2 text-slate-600">{title}</h2>
+    <p>Próximamente</p>
   </div>
 );
 
@@ -34,13 +34,26 @@ interface AppProps {
 
 const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) => {
   const [activeView, setActiveView] = useState<ViewState>(ViewState.HOME);
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // Data State
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [nextPlan, setNextPlan] = useState<ServicePlan | null>(null);
   const [settings, setSettings] = useState<ChurchSettings | null>(initialSettings || null);
 
-  // Visitor Identification for Notifications
+  // Native Shell State
+  const [showNativeHeader, setShowNativeHeader] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollTop = e.currentTarget.scrollTop;
+    if (scrollTop > 50) {
+      setShowNativeHeader(false);
+    } else {
+      setShowNativeHeader(true);
+    }
+  };
+
+  // Visitor Notification logic (simplified)
   const [visitorId] = useState(() => {
     const stored = localStorage.getItem('levita_visitor_id');
     if (stored) return stored;
@@ -49,80 +62,43 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
     return newId;
   });
 
-  // Notifications Hook
-  // We need to import useNotifications. Ensure the path is correct relative to this file.
-  // ../../hooks/useNotifications
   const { unreadCount } = useNotifications(initialTenantId, visitorId, 'VISITOR');
 
 
   useEffect(() => {
-    // If we already have settings, don't re-fetch unless tenant changes
-    if (initialSettings) {
-      setSettings(initialSettings);
-    }
-
+    if (initialSettings) setSettings(initialSettings);
     if (!initialTenantId) return;
 
     const fetchData = async () => {
-      if (!initialTenantId) {
-        console.error("VisitorApp: No initialTenantId provided");
-        return;
-      }
-
       try {
-        // Fetch Settings from Tenant Doc
+        // Fetch Settings
         const settingsRef = doc(db, 'tenants', initialTenantId);
         const settingsSnap = await getDoc(settingsRef);
-
         if (settingsSnap.exists()) {
-          const tenantData = settingsSnap.data();
-          const settingsData = tenantData.settings as ChurchSettings;
-          if (settingsData) {
-            setSettings(settingsData);
-          }
+          setSettings((settingsSnap.data().settings as ChurchSettings) || null);
         }
 
         // Fetch Events
         const eventsQ = query(collection(db, 'events'), where('tenantId', '==', initialTenantId));
         const eventsSnap = await getDocs(eventsQ);
-        const loadedEvents = eventsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChurchEvent));
+        setEvents(eventsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChurchEvent)));
 
-        setEvents(loadedEvents);
-
-        // Fetch Plans (Active AND Upcoming)
-        // We fetch all plans for the tenant and filter client-side to be safe with composite indexes
-        // CRITICAL: Must use 'servicePlans' collection to match Admin App (hooks/usePlans.ts)
-        const plansQ = query(
-          collection(db, 'servicePlans'),
-          where('tenantId', '==', initialTenantId)
-        );
+        // Fetch Plans
+        const plansQ = query(collection(db, 'servicePlans'), where('tenantId', '==', initialTenantId));
         const plansSnap = await getDocs(plansQ);
         const loadedPlans = plansSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
 
-        // Logic to determine active vs next plan
-        // 1. Find RELEVANT active plan (ignore stale active plans older than 2 days)
-        const today = new Date();
-        const twoDaysAgo = new Date();
-        twoDaysAgo.setDate(today.getDate() - 2);
-        const staleCutoff = twoDaysAgo.toLocaleDateString('en-CA');
-        const todayStr = today.toLocaleDateString('en-CA');
-
-        const active = loadedPlans.find(p => p.isActive && p.date >= staleCutoff);
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const active = loadedPlans.find(p => p.isActive); // Simplification: just take active
 
         if (active) {
           setNextPlan(active);
         } else {
-          // 2. Find NEXT upcoming plan
-          // Filter for future dates OR today
           const upcoming = loadedPlans
             .filter(p => !p.isActive && p.date >= todayStr)
             .sort((a, b) => a.date.localeCompare(b.date))[0];
-
-          // Fallback: If no upcoming, maybe show the most recent past one?
-          // For now, just show upcoming or null
           setNextPlan(upcoming || null);
         }
-
 
       } catch (error) {
         console.error("Error fetching visitor data:", error);
@@ -131,13 +107,6 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
     fetchData();
   }, [initialTenantId, initialSettings]);
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
 
   const renderContent = () => {
     switch (activeView) {
@@ -161,75 +130,105 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-neu-base dark:bg-neu-base-dark transition-colors duration-300 font-sans selection:bg-brand-500 selection:text-white">
+    <div className="fixed inset-0 bg-gray-100 flex items-center justify-center lg:p-4 font-sans text-slate-900">
+      {/* Phone Frame Simulator */}
+      <div className="w-full h-full lg:w-full lg:max-w-[400px] lg:h-[850px] bg-white lg:rounded-[3rem] overflow-hidden shadow-2xl relative lg:border-[8px] lg:border-slate-900 lg:ring-4 ring-slate-800">
 
-      {/* Header */}
-      <header className="flex-none h-24 flex items-center justify-between px-6 lg:px-10 z-10 relative">
-        <div className="flex items-center">
-          {/* Back / Exit Button */}
-          {onExit && (
-            <button onClick={onExit} className="mr-4 p-2 rounded-full bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark text-gray-500 hover:text-red-500 transition-colors">
-              <LogOut size={20} />
+        {/* --- NATIVE LAYER: STATUS BAR --- */}
+        <div className="h-12 bg-white flex justify-between items-center px-8 absolute top-0 left-0 right-0 z-50 select-none pointer-events-none">
+          <span className="text-sm font-semibold text-slate-900">9:41</span>
+          <div className="flex gap-2 items-center text-slate-900">
+            <div className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-50 pointer-events-auto cursor-pointer" onClick={onExit}>
+              Salir de Demo
+            </div>
+            <Signal size={16} strokeWidth={2.5} />
+            <Wifi size={16} strokeWidth={2.5} />
+            <Battery size={20} strokeWidth={2.5} />
+          </div>
+        </div>
+
+        {/* --- NATIVE LAYER: HEADER --- */}
+        <div className={`absolute top-12 left-0 right-0 bg-white/80 backdrop-blur-xl z-40 transition-all duration-300 transform px-6 py-4 flex justify-between items-center border-b border-slate-100 ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg shadow-sm">
+              V
+            </div>
+            <div>
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bienvenido</h2>
+              <p className="text-lg font-black text-slate-900 leading-none">Visitante</p>
+            </div>
+          </div>
+          <div className="flex gap-4 text-slate-600">
+            <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative" onClick={() => setActiveView(ViewState.TRANSLATION)}>
+              {/* Translation shortcut */}
+              <Share size={20} strokeWidth={2} />
             </button>
-          )}
-
-          {/* User Avatar - Moved here from sidebar */}
-          <div className="mr-4 lg:hidden">
-            <div className="w-10 h-10 rounded-full bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark flex items-center justify-center border-2 border-neu-base dark:border-neu-base-dark active:shadow-neu-pressed">
-              <User size={20} className="text-gray-400" />
-            </div>
-          </div>
-
-          <div className="">
-            <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 dark:text-gray-200 tracking-tight">
-              {activeView === ViewState.HOME && 'Dashboard'}
-              {activeView === ViewState.LIVE && 'En Vivo'}
-              {activeView === ViewState.EVENTS && 'Eventos'}
-              {activeView === ViewState.ORDER && 'Orden del Culto'}
-              {activeView === ViewState.PRAYER && 'Oración'}
-              {activeView === ViewState.PROFILE && 'Perfil'}
-              {activeView === ViewState.TRANSLATION && 'Traducción'}
-            </h1>
-            <p className="text-xs md:text-sm text-gray-400 font-medium hidden sm:block">Modo Visitante</p>
+            <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative" onClick={onExit}>
+              <LogOut size={20} strokeWidth={2} />
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center space-x-4 md:space-x-6">
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`w-12 h-7 md:w-14 md:h-8 rounded-full shadow-neu-pressed dark:shadow-neu-dark-pressed flex items-center px-1 transition-all duration-300 ${isDarkMode ? 'justify-end' : 'justify-start'}`}
-          >
-            <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-brand-500 shadow-md flex items-center justify-center text-white">
-              {isDarkMode ? <Moon size={10} /> : <Sun size={10} />}
-            </div>
-          </button>
-
-          <UserProfileMenu
-            user={{ name: 'Visitante', email: 'Modo Invitado', role: 'Visitante' }}
-            roleLabel="Visitante"
-            variant="full"
-            onLogout={onExit}
-            className="shadow-neu dark:shadow-neu-dark rounded-full bg-neu-base dark:bg-neu-base-dark"
-          />
-        </div>
-      </header>
-
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-10 pb-28 scroll-smooth no-scrollbar">
-        <div className="w-full h-full">
+        {/* --- CONTENT AREA --- */}
+        <div
+          className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-32 pb-24 scroll-smooth"
+          onScroll={handleScroll}
+          ref={scrollRef}
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           {renderContent()}
         </div>
-      </main>
 
-      {/* Bottom Navigation */}
-      <Navbar
-        activeView={activeView}
-        onNavigate={setActiveView}
-      />
+        {/* --- NATIVE TAB BAR --- */}
+        <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-6 py-4 pb-8 flex justify-between items-center z-50 text-slate-400">
+          <TabIcon
+            icon={Home}
+            label="Inicio"
+            active={activeView === ViewState.HOME}
+            onClick={() => setActiveView(ViewState.HOME)}
+          />
+          <TabIcon
+            icon={Calendar}
+            label="Eventos"
+            active={activeView === ViewState.EVENTS}
+            onClick={() => setActiveView(ViewState.EVENTS)}
+          />
 
+          {/* FAB */}
+          <button
+            onClick={() => setActiveView(ViewState.LIVE)}
+            className="w-14 h-14 bg-indigo-600 rounded-full shadow-lg shadow-indigo-500/40 flex items-center justify-center text-white mb-8 transform hover:scale-105 transition-transform active:scale-95"
+          >
+            <Video size={24} strokeWidth={2.5} />
+          </button>
+
+          <TabIcon
+            icon={List}
+            label="Orden"
+            active={activeView === ViewState.ORDER}
+            onClick={() => setActiveView(ViewState.ORDER)}
+          />
+          <TabIcon
+            icon={User}
+            label="Perfil"
+            active={activeView === ViewState.PROFILE}
+            onClick={() => setActiveView(ViewState.PROFILE)}
+          />
+        </div>
+
+      </div>
     </div>
   );
 };
+
+const TabIcon = ({ icon: Icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className={`flex flex-col items-center gap-1.5 w-16 transition-colors ${active ? 'text-indigo-600' : 'hover:text-slate-600'}`}
+  >
+    <Icon size={24} fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 2.5} />
+    <span className={`text-[10px] font-bold ${active ? 'text-indigo-600' : 'text-slate-400'}`}>{label}</span>
+  </button>
+);
 
 export default App;
