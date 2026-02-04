@@ -1,12 +1,73 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChurchEvent, ServicePlan, ChurchSettings } from '../types';
-import { MapPin, Calendar, Clock, Radio, ChevronRight, Share2, Globe, Bell, User, Mic2, Heart, UserCheck, List } from 'lucide-react';
-import LiveTranslation from './LiveTranslation';
-import LiveTranslation from './LiveTranslation';
-import { requestNotificationPermission, subscribeToPush, sendLocalNotification } from '../services/notificationService';
-import PWAInstallButton from './PWAInstallButton';
-
+import { MapPin, Calendar, Clock, Radio, ChevronRight, Share2, Globe, Bell, User, Mic2, Heart, UserCheck, List, Gift, Play, Plus } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+
+// --- SUB-COMPONENTS ---
+
+const QuickActionsGrid = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-2 md:grid-cols-4 gap-4 px-6 mb-8">
+      <button className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+        <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center">
+          <Globe size={24} />
+        </div>
+        <span className="text-xs font-bold text-slate-700">Traducción</span>
+      </button>
+      <button className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+        <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
+          <Gift size={24} />
+        </div>
+        <span className="text-xs font-bold text-slate-700">Donaciones</span>
+      </button>
+      <button onClick={() => navigate('/miembro/liturgia')} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+        <div className="w-12 h-12 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
+          <List size={24} />
+        </div>
+        <span className="text-xs font-bold text-slate-700">Programa</span>
+      </button>
+      <button onClick={() => navigate('/miembro/oracion')} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+        <div className="w-12 h-12 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center">
+          <Heart size={24} />
+        </div>
+        <span className="text-xs font-bold text-slate-700">Oración</span>
+      </button>
+    </div>
+  );
+};
+
+const EventStoryCard = ({ event, index }: { event: ChurchEvent, index: number }) => {
+  const colors = ["bg-indigo-600", "bg-pink-600", "bg-orange-500", "bg-emerald-500", "bg-purple-600", "bg-blue-600"];
+  const color = colors[index % colors.length];
+  const dateLabel = new Date(event.date).toLocaleDateString('es-ES', { weekday: 'short', hour: '2-digit', minute: '2-digit' }).toUpperCase();
+
+  return (
+    <div className={`relative w-36 h-60 rounded-[1.5rem] overflow-hidden flex-shrink-0 bg-slate-900 snap-start border border-slate-800 shadow-xl shadow-slate-200/50 group`}>
+      <div className="absolute inset-0 bg-slate-900 animate-pulse"></div>
+      {/* Use placeholder image since ChurchEvent has no imageUrl */}
+      <img src={`https://images.unsplash.com/photo-${index % 2 === 0 ? '1470225620780-dba8ba36b745' : '1438232992991-995b7058bbb3'}?auto=format&fit=crop&q=80&w=400`} alt="" className="w-full h-full object-cover opacity-80 mix-blend-overlay transition-transform duration-700 group-hover:scale-110" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+      {/* Label Badge */}
+      <div className={`absolute top-0 right-0 ${color} text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-2xl shadow-lg z-10`}>
+        {dateLabel}
+      </div>
+
+      {/* Content */}
+      <div className="absolute inset-0 flex flex-col justify-end p-4 z-10">
+        <div className={`w-8 h-1 ${color.replace('bg-', 'bg-')} mb-3 rounded-full shadow-[0_0_10px_currentColor] opacity-80`}></div>
+        <p className="text-white text-xl font-black leading-[0.9] uppercase tracking-tighter drop-shadow-lg mb-1 line-clamp-3">
+          {event.title}
+        </p>
+        <p className="text-slate-300 text-[10px] font-bold tracking-widest uppercase opacity-80">
+          {event.location || 'Santuario'}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 interface MemberAppProps {
   activePlan?: ServicePlan;
@@ -18,18 +79,14 @@ interface MemberAppProps {
 
 const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginRequest, nextPreacher = 'Por definir', settings }) => {
   const { t } = useLanguage();
-  // Filter events for members (Public + Members Only)
+  const navigate = useNavigate();
+
+  // Filter events (Public + Members Only)
   const activeEvents = events.filter(e => e.activeInBanner && (e.targetAudience === 'PUBLIC' || e.targetAudience === 'MEMBERS_ONLY'));
-
-  const [notifPermission, setNotifPermission] = React.useState<NotificationPermission>('default');
-  const [showPrayerForm, setShowPrayerForm] = React.useState(false);
-
   const address = settings?.address;
 
-  // Determine Active Team: Priority to Global Active Team (from settings), fallback to Active Plan Team
+  // Determine Active Team
   const globalActiveTeam = settings?.teams?.find(t => t.id === settings.activeTeamId);
-
-  // Construct a displayable team object
   const displayTeam = globalActiveTeam ? {
     teamName: globalActiveTeam.name,
     preacher: globalActiveTeam.members.preacher,
@@ -38,41 +95,32 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
     elder: globalActiveTeam.members.elder
   } : (activePlan?.team || null);
 
-  const handleEnableNotifications = async () => {
-    const perm = await requestNotificationPermission();
-    setNotifPermission(perm);
-    if (perm === 'granted') {
-      await subscribeToPush();
-      sendLocalNotification('¡Notificaciones Activadas!', 'Ahora recibirás alertas de nuevos eventos y servicios.');
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-white md:max-w-md md:mx-auto md:shadow-2xl md:my-8 md:rounded-[3rem] overflow-hidden relative pb-20">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
 
-      {/* Header */}
-      <div className="px-6 pt-12 pb-6 flex justify-between items-center bg-white sticky top-0 z-10">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tighter">{t('app.name')}</h1>
-          <p className="text-xs text-slate-400 font-medium">{t('app.tagline')}</p>
+      {/* Stories Carousel */}
+      <div className="mb-8 pt-6">
+        <div className="flex items-center justify-between px-6 mb-4">
+          <h3 className="font-bold text-slate-800 text-xl tracking-tight">Próximos Eventos</h3>
+          <span onClick={() => navigate('/miembro/eventos')} className="text-indigo-600 text-xs font-black tracking-widest uppercase bg-indigo-50 px-3 py-1 rounded-full cursor-pointer">Ver Todo</span>
         </div>
-        <div className="flex items-center gap-3">
-          <PWAInstallButton variant="icon" className="bg-indigo-50 text-indigo-600" />
-          {notifPermission !== 'granted' && (
-            <button onClick={handleEnableNotifications} className="p-2 bg-indigo-50 text-indigo-600 rounded-full animate-pulse">
-              <Bell size={18} />
-            </button>
+
+        <div className="flex gap-4 overflow-x-auto px-6 pb-8 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
+          {activeEvents.length > 0 ? activeEvents.map((event, i) => (
+            <EventStoryCard key={event.id} event={event} index={i} />
+          )) : (
+            <div className="w-full text-center py-10 text-slate-400 text-sm font-bold bg-slate-50 rounded-3xl mx-6 border-dashed border-2 border-slate-200">
+              No hay eventos próximos
+            </div>
           )}
-          <button onClick={onLoginRequest} className="text-sm font-bold text-slate-300 hover:text-indigo-600">
-            {t('member.exit')}
-          </button>
         </div>
       </div>
 
-      <div className="px-6 space-y-8 overflow-y-auto pb-24 h-[calc(100vh-100px)] no-scrollbar">
+      <QuickActionsGrid navigate={navigate} />
 
-        {/* Live Stream / YouTube Embed */}
-        <div className="w-full bg-black rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-300 aspect-video relative">
+      <div className="px-6 space-y-6">
+        {/* Live Stream Card */}
+        <div className="w-full bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200 aspect-video relative group">
           {activePlan?.isActive ? (
             <iframe
               width="100%"
@@ -82,21 +130,22 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              className="absolute inset-0 z-10"
             ></iframe>
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 bg-slate-900">
-              <Radio size={32} className="mb-2 opacity-50" />
-              <p className="text-xs font-bold uppercase tracking-widest">{t('member.offline')}</p>
-            </div>
+            <>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+                <Radio size={32} className="mb-2 opacity-50" />
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t('member.offline')}</p>
+              </div>
+              <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-white text-[10px] font-bold">
+                OFFLINE
+              </div>
+            </>
           )}
-
           {activePlan?.isActive && (
-            <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-              </span>
-              <span className="text-[10px] font-bold text-white tracking-wider">{t('member.live')}</span>
+            <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600 px-3 py-1 rounded-full z-20">
+              <span className="text-[10px] font-bold text-white tracking-wider animate-pulse">EN VIVO</span>
             </div>
           )}
         </div>
@@ -106,145 +155,138 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
           <a
             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
             target="_blank"
-            rel="noopener noreferrer"
-            className="block bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-3 hover:bg-slate-100 transition-colors"
+            rel="noreferrer"
+            className="block bg-white p-4 rounded-3xl border border-slate-100 flex items-center gap-4 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
           >
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 shadow-sm">
-              <MapPin size={20} />
+            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 flex-shrink-0">
+              <MapPin size={24} />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-bold text-slate-400 uppercase">{t('member.location')}</p>
-              <p className="font-bold text-slate-700 line-clamp-1">{address}</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ubicación</p>
+              <p className="font-bold text-slate-800 text-sm line-clamp-1">{address}</p>
             </div>
-            <ChevronRight size={16} className="text-slate-300" />
+            <ChevronRight size={20} className="text-slate-300" />
           </a>
         )}
 
-        {/* Read-Only Service Plan */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100">
-          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <UserCheck size={18} className="text-indigo-500" />
-            {displayTeam?.teamName || t('member.today_team')}
-          </h3>
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="p-3 bg-slate-50 rounded-2xl">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-1">{t('role.preacher')}</p>
-              <p className="font-bold text-slate-700">{displayTeam?.preacher || '---'}</p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-2xl">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-1">{t('role.elder')}</p>
-              <p className="font-bold text-slate-700">{displayTeam?.elder || '---'}</p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-2xl">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-1">{t('role.audio')}</p>
-              <p className="font-bold text-slate-700">{displayTeam?.audioOperator || '---'}</p>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-2xl">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-1">{t('role.music')}</p>
-              <p className="font-bold text-slate-700">{displayTeam?.musicDirector || '---'}</p>
-            </div>
-          </div>
+        {/* Team Info Card */}
+        <div className="bg-white rounded-[2.5rem] p-6 shadow-lg shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full translate-x-10 -translate-y-10 opacity-50" />
 
-          {/* Next Preacher for Members */}
-          <div className="mb-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-200 rounded-full flex items-center justify-center text-indigo-600">
-              <User size={20} />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-indigo-400 uppercase">{t('member.next_preacher')}</p>
-              <p className="font-bold text-indigo-900">{nextPreacher}</p>
-            </div>
-          </div>
-
-          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <List size={18} className="text-pink-500" /> {t('member.order_of_service')}
+          <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 relative z-10">
+            <UserCheck size={20} className="text-indigo-600" />
+            <span className="text-lg">{displayTeam?.teamName || 'Equipo de Hoy'}</span>
           </h3>
-          <div className="space-y-3">
-            {activePlan?.items.map((item, idx) => (
-              <div key={item.id} className="flex gap-3 items-start">
-                <span className="text-xs font-bold text-slate-300 mt-1">{String(idx + 1).padStart(2, '0')}</span>
-                <div>
-                  <p className="text-sm font-bold text-slate-700">{item.title}</p>
-                  <p className="text-xs text-slate-400">{item.durationMinutes} min • {item.type}</p>
-                </div>
-              </div>
-            ))}
-            {!activePlan && (
-              <div className="text-center text-slate-400 italic py-4">No hay orden del culto activo.</div>
-            )}
+
+          <div className="grid grid-cols-2 gap-4 relative z-10">
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Predicador</p>
+              <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.preacher || '---'}</p>
+            </div>
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Anciano</p>
+              <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.elder || '---'}</p>
+            </div>
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Música</p>
+              <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.musicDirector || '---'}</p>
+            </div>
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Audio</p>
+              <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.audioOperator || '---'}</p>
+            </div>
           </div>
         </div>
 
-        {/* Upcoming Events */}
-        <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <Calendar size={18} className="text-teal-500" /> {t('member.upcoming_events')}
-        </h3>
-        <div className="space-y-4">
-          {activeEvents.map(event => (
-            <div key={event.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col gap-3">
-              <div>
-                <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-bold uppercase tracking-wide">
-                  {event.type}
-                </span>
-                <h4 className="text-xl font-bold text-slate-800 mt-3 leading-snug">{event.title}</h4>
+        {/* Prayer Request Card */}
+        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[2.5rem] p-6 text-white shadow-xl shadow-indigo-500/30 relative overflow-hidden">
+          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                <Heart className="text-white fill-white" size={20} />
               </div>
-              <div className="flex items-center gap-4 text-slate-500 text-sm">
-                <div className="flex items-center gap-1">
-                  <Calendar size={14} />
-                  <span>{event.date}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock size={14} />
-                  <span>{event.time}</span>
-                </div>
-              </div>
+              <h3 className="font-bold text-lg">Petición de Oración</h3>
             </div>
-          ))}
-          {activeEvents.length === 0 && (
-            <div className="w-full text-center text-slate-400 italic py-4">No hay eventos anunciados.</div>
-          )}
-        </div>
-
-        {/* Prayer Request */}
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] p-6 text-white shadow-lg shadow-indigo-200">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-white/20 rounded-full"><Heart className="text-white fill-white" size={20} /></div>
-            <h3 className="font-bold text-lg">{t('member.prayer_request')}</h3>
+            <p className="text-indigo-100 text-sm mb-6 leading-relaxed opacity-90">
+              ¿Necesitas apoyo espiritual? Envíanos tu petición y nuestro equipo orará por ti.
+            </p>
+            <button
+              onClick={() => navigate('/miembro/oracion')}
+              className="w-full py-4 bg-white text-indigo-600 rounded-2xl font-bold text-sm shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+            >
+              <span>Enviar Petición</span>
+              <List size={16} className="rotate-0" />
+            </button>
           </div>
-
-          {!showPrayerForm ? (
-            <>
-              <p className="text-indigo-100 text-sm mb-4">¿Necesitas apoyo? Envíanos tu petición y nuestro equipo orará por ti.</p>
-              <button onClick={() => setShowPrayerForm(true)} className="w-full py-3 bg-white text-indigo-600 rounded-xl font-bold text-sm shadow-sm hover:bg-indigo-50 transition-colors">
-                {t('member.send_request')}
-              </button>
-            </>
-          ) : (
-            <form onSubmit={(e) => { e.preventDefault(); setShowPrayerForm(false); sendLocalNotification('Petición Enviada', 'Estaremos orando por ti.'); }} className="space-y-3">
-              <textarea
-                className="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-sm text-white placeholder-indigo-200 outline-none focus:bg-white/20"
-                placeholder="Escribe tu petición aquí..."
-                rows={3}
-              />
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setShowPrayerForm(false)} className="flex-1 py-2 bg-transparent border border-white/30 text-white rounded-lg font-bold text-xs">{t('common.cancel')}</button>
-                <button type="submit" className="flex-1 py-2 bg-white text-indigo-600 rounded-lg font-bold text-xs">{t('member.send_request')}</button>
-              </div>
-            </form>
-          )}
         </div>
 
       </div>
-
-      {/* Bottom Nav (Visual Only for PWA feel) */}
-      <div className="absolute bottom-6 left-6 right-6 h-16 bg-white/90 backdrop-blur-lg rounded-full shadow-2xl shadow-slate-300 border border-slate-100 flex items-center justify-around px-4 md:hidden">
-        <button className="p-2 text-indigo-600"><Calendar size={24} /></button>
-        <button className="p-2 text-slate-300"><MapPin size={24} /></button>
-        <button className="p-2 text-slate-300"><Share2 size={24} /></button>
-      </div>
-
     </div>
   );
 };
 
 export default MemberApp;
+
+const QuickActionsGrid = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-2 md:grid-cols-4 gap-4 px-6 mb-8">
+      <button className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+        <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center">
+          <Globe size={24} />
+        </div>
+        <span className="text-xs font-bold text-slate-700">Traducción</span>
+      </button>
+      <button className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+        <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
+          <Gift size={24} />
+        </div>
+        <span className="text-xs font-bold text-slate-700">Donaciones</span>
+      </button>
+      <button onClick={() => navigate('/miembro/liturgia')} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+        <div className="w-12 h-12 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
+          <List size={24} />
+        </div>
+        <span className="text-xs font-bold text-slate-700">Programa</span>
+      </button>
+      <button onClick={() => navigate('/miembro/oracion')} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-3 text-center active:scale-95 transition-transform">
+        <div className="w-12 h-12 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center">
+          <Heart size={24} />
+        </div>
+        <span className="text-xs font-bold text-slate-700">Oración</span>
+      </button>
+    </div>
+  );
+};
+
+const EventStoryCard = ({ event, index }: { event: ChurchEvent, index: number }) => {
+  const colors = ["bg-indigo-600", "bg-pink-600", "bg-orange-500", "bg-emerald-500", "bg-purple-600", "bg-blue-600"];
+  const color = colors[index % colors.length];
+  const dateLabel = new Date(event.date).toLocaleDateString('es-ES', { weekday: 'short', hour: '2-digit', minute: '2-digit' }).toUpperCase();
+
+  return (
+    <div className={`relative w-36 h-60 rounded-[1.5rem] overflow-hidden flex-shrink-0 bg-slate-900 snap-start border border-slate-800 shadow-xl shadow-slate-200/50 group`}>
+      <div className="absolute inset-0 bg-slate-900 animate-pulse"></div>
+      {/* Use placeholder image since ChurchEvent has no imageUrl */}
+      <img src={`https://images.unsplash.com/photo-${index % 2 === 0 ? '1470225620780-dba8ba36b745' : '1438232992991-995b7058bbb3'}?auto=format&fit=crop&q=80&w=400`} alt="" className="w-full h-full object-cover opacity-80 mix-blend-overlay transition-transform duration-700 group-hover:scale-110" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+      {/* Label Badge */}
+      <div className={`absolute top-0 right-0 ${color} text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-2xl shadow-lg z-10`}>
+        {dateLabel}
+      </div>
+
+      {/* Content */}
+      <div className="absolute inset-0 flex flex-col justify-end p-4 z-10">
+        <div className={`w-8 h-1 ${color.replace('bg-', 'bg-')} mb-3 rounded-full shadow-[0_0_10px_currentColor] opacity-80`}></div>
+        <p className="text-white text-xl font-black leading-[0.9] uppercase tracking-tighter drop-shadow-lg mb-1 line-clamp-3">
+          {event.title}
+        </p>
+        <p className="text-slate-300 text-[10px] font-bold tracking-widest uppercase opacity-80">
+          {event.location || 'Santuario'}
+        </p>
+      </div>
+    </div>
+  );
+};

@@ -1,150 +1,144 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-    Home, Video, List, Heart, User, Menu, X, Bell, Calendar, LogOut
+    Home, Video, List, Heart, User, Menu, Bell, Calendar, LogOut,
+    Signal, Wifi, Battery, Share, Book
 } from 'lucide-react';
-import UserProfileMenu from '../UserProfileMenu';
 
 const MiembroLayout: React.FC = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [menuOpen, setMenuOpen] = useState(false);
-    const [notificaciones] = useState(0);
+
+    // Native Shell Logic
+    const [showNativeHeader, setShowNativeHeader] = useState(true);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const scrollTop = e.currentTarget.scrollTop;
+        if (scrollTop > 50) {
+            setShowNativeHeader(false);
+        } else {
+            setShowNativeHeader(true);
+        }
+    };
 
     const navItems = [
         { path: '/miembro/inicio', icon: Home, label: 'Inicio' },
-        { path: '/miembro/en-vivo', icon: Video, label: 'En Vivo' },
         { path: '/miembro/eventos', icon: Calendar, label: 'Eventos' },
-        { path: '/miembro/liturgia', icon: List, label: 'Orden del Culto' },
-        { path: '/miembro/oracion', icon: Heart, label: 'Oración' },
+        // Middle button handled separately
+        { path: '/miembro/biblia', icon: Book, label: 'Biblia' }, // Future placeholder or link to external? Or keep 'Orden'?
+        { path: '/miembro/perfil', icon: User, label: 'Perfil' },
     ];
-
-    const menuItems = [
-        { path: '/miembro/inicio', icon: Home, label: 'Inicio' },
-        { path: '/miembro/en-vivo', icon: Video, label: 'Transmisión en Vivo' },
-        { path: '/miembro/liturgia', icon: List, label: 'Orden del Culto' },
-        { path: '/miembro/eventos', icon: Calendar, label: 'Próximos Eventos' },
-        { path: '/miembro/oracion', icon: Heart, label: 'Peticiones de Oración' },
-        { path: '/miembro/perfil', icon: User, label: 'Mi Perfil' },
-    ];
-
-    const getTitulo = () => {
-        const ruta = location.pathname;
-        if (ruta.includes('inicio')) return 'Inicio';
-        if (ruta.includes('en-vivo')) return 'En Vivo';
-        if (ruta.includes('liturgia')) return 'Orden del Culto';
-        if (ruta.includes('eventos')) return 'Eventos';
-        if (ruta.includes('oracion')) return 'Oración';
-        if (ruta.includes('perfil')) return 'Perfil';
-        return 'LEVITA';
-    };
+    // Note: The original 'En Vivo' and 'Orden' might need to be fit into the 5-tab native bar or the + button.
+    // Sandbox uses: Home, Events, [PLUS], Bible, Profile.
+    // Original MiembroLayout uses: Home, Live, Events, Order, Prayer.
+    // Strategy: Map closest matches.
+    // Home -> Inicio
+    // Events -> Eventos
+    // [PLUS] -> Actions Menu? Or 'En Vivo'?
+    // Bible -> (Not in original, maybe 'Orden'?)
+    // Profile -> Perfil (was in menu, now in tab)
 
     return (
-        <div className="h-screen flex flex-col bg-gray-50">
-            {/* HEADER */}
-            <header className="fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-indigo-600 to-purple-700 text-white shadow-lg z-40 flex items-center justify-between px-4">
-                <button
-                    onClick={() => setMenuOpen(true)}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                    <Menu className="w-6 h-6" />
-                </button>
+        <div className="fixed inset-0 bg-gray-100 flex items-center justify-center lg:p-4">
+            {/* Phone Frame Simulator - Responsive: Full Screen on Mobile/Tablet, Framed on Desktop */}
+            <div className="w-full h-full lg:w-full lg:max-w-[400px] lg:h-[850px] bg-white lg:rounded-[3rem] overflow-hidden shadow-2xl relative lg:border-[8px] lg:border-slate-900 lg:ring-4 ring-slate-800">
 
-                <h1 className="text-lg font-bold">{getTitulo()}</h1>
-
-                <div className="flex items-center gap-3">
-                    <UserProfileMenu
-                        user={user}
-                        roleLabel="Miembro"
-                        variant="full"
-                        className="text-slate-800"
-                    />
+                {/* --- NATIVE LAYER: STATUS BAR --- */}
+                <div className="h-12 bg-white flex justify-between items-center px-8 absolute top-0 left-0 right-0 z-50 select-none pointer-events-none">
+                    <span className="text-sm font-semibold text-slate-900">9:41</span>
+                    <div className="flex gap-2 items-center text-slate-900">
+                        <Signal size={16} strokeWidth={2.5} />
+                        <Wifi size={16} strokeWidth={2.5} />
+                        <Battery size={20} strokeWidth={2.5} />
+                    </div>
                 </div>
-            </header>
 
-            {/* CONTENIDO PRINCIPAL */}
-            <main className="flex-1 overflow-y-auto pt-16 pb-16">
-                <Outlet />
-            </main>
-
-            {/* BOTTOM NAVIGATION */}
-            <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-40">
-                <div className="flex h-full">
-                    {navItems.map(({ path, icon: Icon, label }) => {
-                        const isActive = location.pathname.includes(path);
-                        return (
-                            <button
-                                key={path}
-                                onClick={() => navigate(path)}
-                                className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all ${isActive
-                                    ? 'text-indigo-600 bg-indigo-50'
-                                    : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-50'
-                                    }`}
-                            >
-                                <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
-                                <span className={`text-[10px] ${isActive ? 'font-bold' : 'font-medium'}`}>
-                                    {label}
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </nav>
-
-            {/* MENÚ LATERAL */}
-            {menuOpen && (
-                <>
-                    <div
-                        className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm"
-                        onClick={() => setMenuOpen(false)}
-                    />
-
-                    <div className="fixed top-0 left-0 bottom-0 w-[80%] max-w-xs bg-white shadow-2xl z-50 flex flex-col animate-in slide-in-from-left duration-300">
-                        <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white p-6 relative">
-                            <button
-                                onClick={() => setMenuOpen(false)}
-                                className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-
-                            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center font-bold text-2xl mb-3 border-2 border-white/30 backdrop-blur-md">
-                                {user?.name?.charAt(0).toUpperCase()}
-                            </div>
-                            <h2 className="font-bold text-lg leading-tight">{user?.name}</h2>
-                            <p className="text-sm text-indigo-100 opacity-80">{user?.email}</p>
+                {/* --- NATIVE LAYER: HEADER --- */}
+                <div className={`absolute top-12 left-0 right-0 bg-white/80 backdrop-blur-xl z-40 transition-all duration-300 transform px-6 py-4 flex justify-between items-center border-b border-slate-100 ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg shadow-sm">
+                            {user?.name?.charAt(0).toUpperCase() || 'A'}
                         </div>
-
-                        <div className="flex-1 overflow-y-auto py-2">
-                            {menuItems.map(({ path, icon: Icon, label }) => (
-                                <button
-                                    key={path}
-                                    onClick={() => {
-                                        navigate(path);
-                                        setMenuOpen(false);
-                                    }}
-                                    className="w-full flex items-center gap-4 px-6 py-4 hover:bg-slate-50 active:bg-slate-100 transition-colors text-left border-b border-slate-50/50"
-                                >
-                                    <Icon className="w-5 h-5 text-slate-500" />
-                                    <span className="text-slate-700 font-medium text-sm">{label}</span>
-                                </button>
-                            ))}
+                        <div>
+                            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Buenos días</h2>
+                            <p className="text-lg font-black text-slate-900 leading-none truncate max-w-[150px]">{user?.name?.split(' ')[0] || 'Miembro'}</p>
                         </div>
-
-                        <button
-                            onClick={logout}
-                            className="flex items-center gap-3 px-6 py-5 border-t border-gray-100 hover:bg-red-50 text-red-500 transition-colors"
-                        >
-                            <LogOut className="w-5 h-5" />
-                            <span className="font-bold text-sm">Cerrar Sesión</span>
+                    </div>
+                    <div className="flex gap-4 text-slate-600">
+                        <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative">
+                            <Share size={20} strokeWidth={2} />
+                        </button>
+                        <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative">
+                            <Bell size={20} strokeWidth={2} />
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
                         </button>
                     </div>
-                </>
-            )}
+                </div>
+
+                {/* --- CONTENT AREA --- */}
+                <div
+                    className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-32 pb-24 scroll-smooth"
+                    onScroll={handleScroll}
+                    ref={scrollRef}
+                    style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                    <Outlet />
+                </div>
+
+                {/* --- NATIVE TAB BAR --- */}
+                <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-6 py-4 pb-8 flex justify-between items-center z-50 text-slate-400">
+                    <TabIcon
+                        icon={Home}
+                        label="Inicio"
+                        active={location.pathname.includes('/miembro/inicio')}
+                        onClick={() => navigate('/miembro/inicio')}
+                    />
+                    <TabIcon
+                        icon={Calendar}
+                        label="Eventos"
+                        active={location.pathname.includes('/miembro/eventos')}
+                        onClick={() => navigate('/miembro/eventos')}
+                    />
+
+                    {/* FAB */}
+                    <button
+                        onClick={() => navigate('/miembro/en-vivo')}
+                        className="w-14 h-14 bg-indigo-600 rounded-full shadow-lg shadow-indigo-500/40 flex items-center justify-center text-white mb-8 transform hover:scale-105 transition-transform active:scale-95"
+                    >
+                        <Video size={24} strokeWidth={2.5} />
+                    </button>
+
+                    <TabIcon
+                        icon={List}
+                        label="Orden"
+                        active={location.pathname.includes('/miembro/liturgia')}
+                        onClick={() => navigate('/miembro/liturgia')}
+                    />
+                    <TabIcon
+                        icon={User}
+                        label="Perfil"
+                        active={location.pathname.includes('/miembro/perfil')}
+                        onClick={() => navigate('/miembro/perfil')}
+                    />
+                </div>
+
+            </div>
         </div>
     );
 };
+
+const TabIcon = ({ icon: Icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) => (
+    <button
+        onClick={onClick}
+        className={`flex flex-col items-center gap-1.5 w-16 transition-colors ${active ? 'text-indigo-600' : 'hover:text-slate-600'}`}
+    >
+        <Icon size={24} fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 2.5} />
+        <span className={`text-[10px] font-bold ${active ? 'text-indigo-600' : 'text-slate-400'}`}>{label}</span>
+    </button>
+);
 
 export default MiembroLayout;
