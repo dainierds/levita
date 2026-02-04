@@ -623,6 +623,35 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                             </div>
                                             <span className="text-[9px] font-bold text-slate-500 mt-1 block">Cinta</span>
                                         </button>
+
+                                        {/* Banner Style */}
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, storyStyle: 'banner' })}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'banner' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            <div className="w-12 h-16 bg-slate-100 rounded-lg relative overflow-hidden shadow-sm">
+                                                <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=100&q=80" className="w-full h-full object-cover opacity-80" />
+                                                <div className="absolute top-1 left-0 right-0 bg-white py-1 flex justify-center items-center">
+                                                    <div className="w-1 h-1 bg-indigo-500 rounded-full mr-0.5" />
+                                                    <span className="text-[3px] font-bold text-indigo-900">SÁB, 5 NOV</span>
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] font-bold text-slate-500 mt-1 block">Banner</span>
+                                        </button>
+
+                                        {/* Bottom Style */}
+                                        <button
+                                            onClick={() => setNewEvent({ ...newEvent, storyStyle: 'bottom' })}
+                                            className={`p-2 rounded-xl border-2 transition-all ${newEvent.storyStyle === 'bottom' ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200' : 'border-slate-100 hover:border-slate-200'}`}
+                                        >
+                                            <div className="w-12 h-16 bg-slate-900 rounded-lg relative overflow-hidden shadow-sm flex flex-col justify-end">
+                                                <img src="https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=100&q=80" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                                                <div className="relative p-1 bg-gradient-to-t from-black/80 to-transparent">
+                                                    <div className="text-white text-[4px] font-bold uppercase">DOM 18 ENE</div>
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] font-bold text-slate-500 mt-1 block">Inferior</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>

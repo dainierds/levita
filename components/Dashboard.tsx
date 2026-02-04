@@ -5,10 +5,10 @@ import { usePlans } from '../hooks/usePlans';
 import { useAuth } from '../context/AuthContext'; // Added
 import { Role, User as UserType } from '../types';
 
-import StatisticsPanel from './StatisticsPanel';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, ChevronRight } from 'lucide-react';
 
 import { ChurchSettings } from '../types';
+import EventStoryCard from './EventStoryCard';
 import { db } from '../services/firebase'; // Added
 import { collection, query, where, getDocs } from 'firebase/firestore'; // Added
 
@@ -25,7 +25,16 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
   const { user } = useAuth();
 
   // Elders see ALL banners. Admins see ALL. Others might be restricted but Dashboard is mostly Admin/Elder.
-  const activeEvents = events.filter(e => e.activeInBanner);
+  // Filter and sort events for stories
+  const activeEvents = events
+    .filter(e => {
+      const eventDate = new Date(e.date + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return eventDate >= today && e.activeInBanner;
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 10);
   const activePlan = plans.find(p => p.isActive);
 
   // --- LOGIC: Resolved Next Service (Plan vs Team vs Recurrence) ---
@@ -115,7 +124,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
   } : (activePlan?.team || null);
 
 
-  const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [musicTeamMembers, setMusicTeamMembers] = useState<UserType[]>([]);
 
   // Fetch Music Team Logic
@@ -151,15 +159,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
     }
   }, [activePlan, resolvedNextItem, user?.tenantId, users]);
 
-
-  useEffect(() => {
-    if (activeEvents.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentEventIndex((prev) => (prev + 1) % activeEvents.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [activeEvents.length]);
-
   if (eventsLoading || plansLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -175,48 +174,33 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
         <p className="text-slate-500">Aquí está lo que sucede hoy en la iglesia.</p>
       </header>
 
-      {/* Dynamic Carousel */}
-      <section className="relative w-full h-64 rounded-soft overflow-hidden shadow-xl shadow-indigo-100 group transition-all duration-500">
-        {activeEvents.length > 0 ? (
-          <div className={`absolute inset-0 bg-gradient-to-r ${activeEvents[currentEventIndex].bannerGradient || 'from-indigo-500 to-purple-500'} flex items-center p-8 md:p-12 text-white transition-colors duration-500`}>
-            <div className="space-y-4 z-10 max-w-2xl animate-in slide-in-from-bottom-4 duration-500" key={currentEventIndex}>
-              <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold tracking-wide uppercase">
-                {activeEvents[currentEventIndex].type}
-              </span>
-              <h3 className="text-3xl md:text-4xl font-bold leading-tight">
-                {activeEvents[currentEventIndex].title}
-              </h3>
-              <div className="flex items-center gap-6 text-indigo-100">
-                <div className="flex items-center gap-2">
-                  <Calendar size={18} />
-                  <span>{activeEvents[currentEventIndex].date}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={18} />
-                  <span>{activeEvents[currentEventIndex].time}</span>
-                </div>
-              </div>
-            </div>
-            {/* Abstract Shapes */}
-            <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-            <div className="absolute left-0 bottom-0 w-48 h-48 bg-black/10 rounded-full -ml-10 -mb-10 blur-xl"></div>
+      {/* Stories Carousel Section */}
+      <div className="mb-2">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-slate-800 text-lg tracking-tight">Próximos Eventos</h3>
+          <button
+            onClick={() => setCurrentView('events')}
+            className="text-indigo-600 text-xs font-bold hover:underline flex items-center gap-1"
+          >
+            Gestionar Eventos <ChevronRight size={14} />
+          </button>
+        </div>
 
-            {/* Carousel Indicators */}
-            <div className="absolute bottom-6 right-8 flex gap-2">
-              {activeEvents.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`w-2 h-2 rounded-full transition-all ${idx === currentEventIndex ? 'bg-white w-6' : 'bg-white/40'}`}
-                />
-              ))}
+        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
+          {activeEvents.length > 0 ? activeEvents.map((event, i) => (
+            <EventStoryCard
+              key={event.id}
+              event={event}
+              index={i}
+              onClick={() => setCurrentView('events')}
+            />
+          )) : (
+            <div className="w-full text-center py-10 text-slate-400 text-sm font-bold bg-white rounded-3xl border-dashed border-2 border-slate-100">
+              No hay historias destacadas
             </div>
-          </div>
-        ) : (
-          <div className="absolute inset-0 bg-slate-200 flex items-center justify-center text-slate-400">
-            No hay eventos destacados
-          </div>
-        )}
-      </section>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Live Status Section - Split into 2 Cards */}

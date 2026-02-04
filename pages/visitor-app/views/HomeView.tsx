@@ -2,6 +2,7 @@ import React from 'react';
 import { ViewState } from '../types';
 import { ChurchEvent, ServicePlan, ChurchSettings } from '../../../types';
 import { Globe, Gift, List, Heart, MapPin, ChevronRight, UserCheck, Radio, Calendar, Clock, Facebook, Instagram, Youtube } from 'lucide-react';
+import EventStoryCard from '../../../components/EventStoryCard';
 
 interface HomeViewProps {
   onNavigate: (view: ViewState) => void;
@@ -59,61 +60,6 @@ const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({
   );
 };
 
-const EventStoryCard: React.FC<{ event: ChurchEvent, index: number }> = ({ event, index }) => {
-  const imgUrl = event.imageUrl || `https://images.unsplash.com/photo-${index % 2 === 0 ? '1470225620780-dba8ba36b745' : '1438232992991-995b7058bbb3'}?auto=format&fit=crop&q=80&w=400`;
-  const dateObj = new Date(event.date + 'T00:00:00');
-  const day = dateObj.getDate();
-  const month = dateObj.toLocaleDateString('es-ES', { month: 'short' }).toUpperCase().replace('.', '');
-
-  const renderBadge = () => {
-    switch (event.storyStyle) {
-      case 'poster':
-        return (
-          <div className="absolute top-4 left-4 text-white leading-none drop-shadow-md z-10">
-            <span className="text-4xl font-bold block tracking-tighter shadow-black/20">{day}</span>
-            <span className="text-[10px] font-bold opacity-90 uppercase tracking-widest">{month} • {event.time}</span>
-          </div>
-        );
-      case 'ribbon':
-        return (
-          <div className="absolute top-6 left-0 bg-[#D32F2F] text-white px-3 py-1 font-bold text-[10px] shadow-lg uppercase tracking-wider z-10 rounded-r-md">
-            {dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).toUpperCase()} | {event.time}
-          </div>
-        );
-      case 'pill':
-      default:
-        return (
-          <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-full text-[10px] font-bold shadow-sm uppercase tracking-wide z-10">
-            {dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '')} • {event.time}
-          </div>
-        );
-    }
-  };
-
-  return (
-    <div className={`relative w-36 h-56 rounded-[1.5rem] overflow-hidden flex-shrink-0 bg-slate-900 snap-start shadow-md group border border-slate-100/10`}>
-      <div className="absolute inset-0 bg-slate-900 animate-pulse"></div>
-      <img src={imgUrl} alt="" className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-110" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
-
-      {renderBadge()}
-
-      {/* Content */}
-      <div className="absolute inset-0 flex flex-col justify-end p-4 z-10">
-        <p className="text-white text-base font-bold leading-tight drop-shadow-md mb-1 line-clamp-3">
-          {event.title}
-        </p>
-        {/* If 'pill' style (default), we might show a small location or calendar icon if needed, but keeping it clean for now */}
-        {event.storyStyle === 'pill' && (
-          <div className="flex items-center gap-1 text-white/70 text-[9px] uppercase font-bold tracking-wider mt-1">
-            <Calendar size={10} />
-            <span>Evento</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, events = [], nextPlan, settings }) => {
 
@@ -151,9 +97,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
 
         <div className="flex gap-4 overflow-x-auto px-6 pb-4 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
           {upcomingEvents.length > 0 ? upcomingEvents.map((event, i) => (
-            <div key={event.id} onClick={() => onEventSelect && onEventSelect(event.id)} className="cursor-pointer">
-              <EventStoryCard event={event} index={i} />
-            </div>
+            <EventStoryCard
+              key={event.id}
+              event={event}
+              index={i}
+              onClick={(id) => onEventSelect && onEventSelect(id)}
+            />
           )) : (
             <div className="w-full text-center py-10 text-slate-400 text-sm font-bold bg-slate-50 rounded-3xl mx-6 border-dashed border-2 border-slate-200">
               No hay historias
