@@ -8,7 +8,7 @@ import { storage } from '../services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { parseCSV, parseICS } from '../utils/eventImport';
 import imageCompression from 'browser-image-compression';
-import { parseEventsFromImage } from '../services/geminiService';
+import { parseEventsFromDocument } from '../services/geminiService';
 
 interface EventsAdminProps {
     events: ChurchEvent[];
@@ -185,11 +185,11 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
 
         setIsSubmitting(true);
         try {
-            // 1. Call AI Service
-            const parsedEvents = await parseEventsFromImage(file);
+            // 1. Call AI Service (Now supports Images, PDF, DOCX)
+            const parsedEvents = await parseEventsFromDocument(file);
 
             if (!parsedEvents || parsedEvents.length === 0) {
-                alert("No se pudieron extraer eventos de la imagen. Intenta con una imagen más clara.");
+                alert("No se pudieron extraer eventos del documento. Intenta con un archivo más claro.");
                 setIsSubmitting(false);
                 return;
             }
@@ -519,7 +519,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                             <label className="bg-emerald-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg cursor-pointer flex items-center gap-2">
                                 <Sparkles size={20} />
                                 <span className="hidden md:inline">Escaneo IA</span>
-                                <input type="file" accept="image/*" className="hidden" onChange={handleAIImport} disabled={isSubmitting} />
+                                <input type="file" accept="image/*,.pdf,.docx" className="hidden" onChange={handleAIImport} disabled={isSubmitting} />
                             </label>
                             <label className="bg-slate-800 text-white px-4 py-3 rounded-xl font-bold hover:bg-slate-700 transition-colors shadow-lg cursor-pointer flex items-center gap-2">
                                 <Upload size={20} />

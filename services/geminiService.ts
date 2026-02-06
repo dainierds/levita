@@ -1,4 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import * as pdfjsLib from 'pdfjs-dist';
+// @ts-ignore
+import mammoth from 'mammoth';
+
+// Configure PDF Worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 // Initialize the Gemini client
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
@@ -132,5 +138,70 @@ export const parseEventsFromImage = async (imageFile: File): Promise<any[]> => {
   } catch (error) {
     console.error("Error parsing events from image:", error);
     throw new Error("Could not parse events from image.");
+  }
+};
+
+const extractTextFromPDF = async (file: File): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items.map((item: any) => item.str).join(' ');
+    fullText += `\n--- Page ${i} ---\n${pageText}`;
+  }
+  return fullText;
+};
+
+const extractTextFromDocx = async (file: File): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  return result.value;
+};
+
+export const parseEventsFromDocument = async (file: File): Promise<any[]> => {
+  try {
+    let promptContent: any[] = [];
+    const basePrompt = `
+    Analyze this schedule/calendar. 
+    Extract ALL events found and return them as a strict JSON array.
+    
+    Current Year Context: ${new Date().getFullYear()} (Use this if year is missing).
+    
+    Each event object must have:
+    - title: string 
+    - date: string (YYYY-MM-DD)
+    - time: string (HH:mm 24h)
+    - description: string
+    - type: string ("SERVICE", "SOCIAL", "PRAYER", "MINISTRY")
+    
+    Return ONLY JSON array.
+    `;
+
+    if (file.type === 'application/pdf') {
+      const text = await extractTextFromPDF(file);
+      promptContent = [`${basePrompt}\n\nDOCUMENT TEXT CONTENT:\n${text}`];
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') { // .docx
+      const text = await extractTextFromDocx(file);
+      promptContent = [`${basePrompt}\n\nDOCUMENT TEXT CONTENT:\n${text}`];
+    } else if (file.type.startsWith('image/')) {
+      const imagePart = await fileToGenerativePart(file);
+      promptContent = [basePrompt, imagePart];
+    } else {
+      throw new Error("Unsupported file type: " + file.type);
+    }
+
+    const result = await model.generateContent(promptContent);
+    const response = await result.response;
+    const text = response.text();
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    return JSON.parse(cleanText);
+
+  } catch (error) {
+    console.error("Error parsing document:", error);
+    throw error;
   }
 };
