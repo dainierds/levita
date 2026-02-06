@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChurchEvent, EventType, Role } from '../types';
-import { Calendar, Clock, MapPin, Plus, Trash2, X, Check, Image as ImageIcon, LayoutTemplate, Pencil, ChevronLeft, ChevronRight, List, Upload, Loader2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Trash2, X, Check, Image as ImageIcon, LayoutTemplate, Pencil, ChevronLeft, ChevronRight, List, Upload, Loader2, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc, writeBatch } from 'firebase/firestore';
@@ -8,6 +8,7 @@ import { storage } from '../services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { parseCSV, parseICS } from '../utils/eventImport';
 import imageCompression from 'browser-image-compression';
+import { parseEventsFromImage } from '../services/geminiService';
 
 interface EventsAdminProps {
     events: ChurchEvent[];
@@ -174,6 +175,59 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
         } finally {
             setIsSubmitting(false);
             // Reset input
+            e.target.value = '';
+        }
+    };
+
+    const handleAIImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user?.tenantId) return;
+
+        setIsSubmitting(true);
+        try {
+            // 1. Call AI Service
+            const parsedEvents = await parseEventsFromImage(file);
+
+            if (!parsedEvents || parsedEvents.length === 0) {
+                alert("No se pudieron extraer eventos de la imagen. Intenta con una imagen más clara.");
+                setIsSubmitting(false);
+                return;
+            }
+
+            // 2. Confirm?
+            if (!confirm(`La IA detectó ${parsedEvents.length} eventos en la imagen.\n\nEjemplo: ${parsedEvents[0].title} (${parsedEvents[0].date})\n\n¿Deseas importarlos?`)) {
+                setIsSubmitting(false);
+                return;
+            }
+
+            // 3. Save to DB
+            const batch = writeBatch(db);
+            let count = 0;
+            parsedEvents.forEach((ev: any) => {
+                const docRef = doc(collection(db, 'events'));
+                batch.set(docRef, {
+                    title: ev.title || 'Evento Importado',
+                    description: ev.description || '',
+                    date: ev.date,
+                    time: ev.time || '00:00',
+                    type: ev.type || 'SERVICE',
+                    tenantId: user.tenantId,
+                    activeInBanner: true,
+                    targetAudience: 'PUBLIC',
+                    bannerGradient: 'from-indigo-500 to-purple-500',
+                    storyStyle: 'poster'
+                });
+                count++;
+            });
+
+            await batch.commit();
+            alert(`¡Éxito! Se han creado ${count} eventos automáticamente.`);
+
+        } catch (error) {
+            console.error(error);
+            alert("Error al analizar la imagen: " + (error as any).message);
+        } finally {
+            setIsSubmitting(false);
             e.target.value = '';
         }
     };
@@ -462,9 +516,14 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                 <div className="flex gap-2">
                     {!readOnly && (
                         <>
+                            <label className="bg-emerald-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg cursor-pointer flex items-center gap-2">
+                                <Sparkles size={20} />
+                                <span className="hidden md:inline">Escaneo IA</span>
+                                <input type="file" accept="image/*" className="hidden" onChange={handleAIImport} disabled={isSubmitting} />
+                            </label>
                             <label className="bg-slate-800 text-white px-4 py-3 rounded-xl font-bold hover:bg-slate-700 transition-colors shadow-lg cursor-pointer flex items-center gap-2">
                                 <Upload size={20} />
-                                <span className="hidden md:inline">Importar</span>
+                                <span className="hidden md:inline">Importar CSV</span>
                                 <input type="file" accept=".csv,.ics" className="hidden" onChange={handleFileUpload} disabled={isSubmitting} />
                             </label>
                             <button

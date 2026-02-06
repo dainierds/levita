@@ -79,3 +79,58 @@ export const translateText = async (text: string, targetLanguage: string): Promi
     }
   }
 };
+// Helper to convert File to base64
+const fileToGenerativePart = async (file: File) => {
+  return new Promise<{ inlineData: { data: string; mimeType: string } }>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Data = reader.result as string;
+      // Remove data url prefix (e.g. "data:image/jpeg;base64,")
+      const base64Content = base64Data.split(',')[1];
+      resolve({
+        inlineData: {
+          data: base64Content,
+          mimeType: file.type,
+        },
+      });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+export const parseEventsFromImage = async (imageFile: File): Promise<any[]> => {
+  const prompt = `
+    Analyze this image of a schedule/calendar. 
+    Extract ALL events found in the image and return them as a strict JSON array.
+    
+    Current Year Context: ${new Date().getFullYear()} (Use this if year is missing, unless image specifies another year).
+    
+    Each event object must have:
+    - title: string (The name of the event or activity)
+    - date: string (Format YYYY-MM-DD. Infer month/year from headers if needed. If day is "Saturday 4" and header says "April", calculate it.)
+    - time: string (Format HH:mm in 24h format. e.g. "17:00". If range "3:00 - 5:00", take start time.)
+    - description: string (Any extra details, preacher name, or sub-activities)
+    - type: string (Enum: "SERVICE", "SOCIAL", "PRAYER", "MINISTRY". Default to "SERVICE" if unsure or generic.)
+    
+    Rules:
+    - If multiple events are listed applied to a single date (e.g. "Sábado 4: Event A", then below "3:00 Event B"), create separate event objects for each.
+    - Ignore pure headers like "April 2026" that don't have specific activity attached, use them only for context.
+    - Return ONLY the JSON array. No markdown formatting, no code blocks like \`\`\`json. Just the raw array string.
+  `;
+
+  try {
+    const imagePart = await fileToGenerativePart(imageFile);
+    const result = await model.generateContent([prompt, imagePart]);
+    const response = await result.response;
+    const text = response.text();
+
+    // Cleanup basic markdown if present
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    return JSON.parse(cleanText);
+  } catch (error) {
+    console.error("Error parsing events from image:", error);
+    throw new Error("Could not parse events from image.");
+  }
+};
