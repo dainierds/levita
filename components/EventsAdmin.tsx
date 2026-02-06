@@ -7,6 +7,7 @@ import { collection, addDoc, deleteDoc, doc, updateDoc, writeBatch } from 'fireb
 import { storage } from '../services/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { parseCSV, parseICS } from '../utils/eventImport';
+import imageCompression from 'browser-image-compression';
 
 interface EventsAdminProps {
     events: ChurchEvent[];
@@ -183,8 +184,28 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
 
         setIsSubmitting(true);
         try {
-            const storageRef = ref(storage, `events/images/${Date.now()}_${file.name}`);
-            await uploadBytes(storageRef, file);
+            // Compress Image Logic
+            console.log(`Original size: ${file.size / 1024 / 1024} MB`);
+
+            const options = {
+                maxSizeMB: 0.2, // Compress to ~200KB
+                maxWidthOrHeight: 1280,
+                useWebWorker: true
+            };
+
+            let uploadFile = file;
+            try {
+                if (file.type.startsWith('image/')) {
+                    const compressedFile = await imageCompression(file, options);
+                    console.log(`Compressed size: ${compressedFile.size / 1024 / 1024} MB`);
+                    uploadFile = compressedFile;
+                }
+            } catch (err) {
+                console.warn("Compression failed, using original.", err);
+            }
+
+            const storageRef = ref(storage, `events/images/${Date.now()}_${uploadFile.name}`);
+            await uploadBytes(storageRef, uploadFile);
             const url = await getDownloadURL(storageRef);
             setNewEvent(prev => ({ ...prev, imageUrl: url }));
         } catch (error) {
