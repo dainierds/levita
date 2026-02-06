@@ -8,8 +8,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLi
 
 // Initialize the Gemini client
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
-const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
 
 const getLanguageName = (code: string): string => {
   const map: Record<string, string> = {
@@ -200,8 +200,11 @@ export const parseEventsFromDocument = async (file: File): Promise<any[]> => {
 
     return JSON.parse(cleanText);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error parsing document:", error);
+    if (error.message?.includes('404') || error.status === 404) {
+      throw new Error("Error 404: El modelo de IA no está disponible o la API no está activada en tu proyecto de Google Cloud. Asegúrate de habilitar 'Google Generative AI API'.");
+    }
     throw error;
   }
 };
