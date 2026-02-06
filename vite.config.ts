@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        workbox: {
+          maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB
+        },
         manifest: {
           name: 'Levita Church OS',
           short_name: 'Levita',
@@ -47,6 +50,18 @@ export default defineConfig(({ mode }) => {
         }
       })
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'pdf-lib': ['pdfjs-dist'],
+            'doc-lib': ['mammoth'],
+            'firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth', 'firebase/storage'],
+            'ai-sdk': ['@google/generative-ai'],
+          }
+        }
+      }
+    },
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
