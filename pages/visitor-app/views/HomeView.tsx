@@ -88,6 +88,63 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 pt-2">
 
+      {/* HERO SECTION: Next Service & Preacher */}
+      <div className="mx-6 mb-8 mt-2 relative rounded-[2.5rem] overflow-hidden shadow-2xl shadow-indigo-500/30 group">
+        {/* Animated Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-700 to-indigo-800 bg-[length:200%_200%] animate-[gradient_6s_ease-in-out_infinite]"></div>
+
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
+
+        <div className="relative p-8 text-center text-white">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest mb-6 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
+            Próximo Servicio
+          </div>
+
+          {/* Preacher Name */}
+          <div className="mb-8 relative">
+            <h2 className="text-4xl font-black mb-2 leading-none tracking-tight drop-shadow-md">
+              {displayTeam?.preacher?.split(' ')[0] || (settings?.pastorName?.split(' ')[0] || 'Invitado')}
+            </h2>
+            {displayTeam?.preacher?.split(' ').length > 1 && (
+              <p className="text-lg font-bold opacity-90 leading-none mb-1">{displayTeam.preacher.split(' ').slice(1).join(' ')}</p>
+            )}
+            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mt-3">
+              Predicador
+            </p>
+          </div>
+
+          {/* Date & Time Grid */}
+          <div className="grid grid-cols-2 gap-px bg-white/20 rounded-2xl overflow-hidden border border-white/10 backdrop-blur-sm">
+            <div className="bg-black/20 p-3 flex flex-col justify-center">
+              <span className="text-xl font-bold leading-none mb-1">
+                {nextPlan ? new Date(nextPlan.date + 'T00:00:00').getDate() : new Date().getDate()}
+              </span>
+              <span className="text-[9px] font-bold uppercase opacity-70">
+                {nextPlan ? new Date(nextPlan.date + 'T00:00:00').toLocaleDateString('es-ES', { month: 'short' }).toUpperCase() : 'HOY'}
+              </span>
+            </div>
+            <div className="bg-black/20 p-3 flex flex-col justify-center">
+              <span className="text-xl font-bold leading-none mb-1">
+                {nextPlan?.startTime || settings?.meetingTimes?.['Sábado'] || '09:00'}
+              </span>
+              <span className="text-[9px] font-bold uppercase opacity-70">Hora</span>
+            </div>
+          </div>
+
+          {displayTeam?.elder && (
+            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-center gap-2 opacity-80">
+              <UserCheck size={12} />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Anciano: {displayTeam.elder.split(' ')[0]}</span>
+            </div>
+          )}
+
+        </div>
+      </div>
+
       {/* Stories Carousel Section */}
       <div className="mb-6">
         <div className="flex items-center justify-between px-6 mb-4">
@@ -136,7 +193,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
                 <Radio size={32} className="mb-2 opacity-50" />
                 <p className="text-xs font-bold uppercase tracking-widest text-slate-600">OFFLINE</p>
                 {nextPlan && (
-                  <p className="text-[10px] text-slate-600 mt-1">Próximo: {new Date(nextPlan.date).toLocaleDateString()} {nextPlan.startTime}</p>
+                  <p className="text-[10px] text-slate-600 mt-1">Próximo: {new Date(nextPlan.date + 'T00:00:00').toLocaleDateString()} {nextPlan.startTime}</p>
                 )}
               </div>
             </>
@@ -167,26 +224,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
           </a>
         )}
 
-        {/* Team Info Card */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-lg shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full translate-x-10 -translate-y-10 opacity-50" />
-
-          <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 relative z-10">
-            <UserCheck size={20} className="text-indigo-600" />
-            <span className="text-lg">{displayTeam?.teamName || 'Equipo de Hoy'}</span>
-          </h3>
-
-          <div className="grid grid-cols-2 gap-4 relative z-10">
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Predicador</p>
-              <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.preacher || (settings?.pastorName || '---')}</p>
-            </div>
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Anciano</p>
-              <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.elder || '---'}</p>
-            </div>
-          </div>
-        </div>
 
         {/* Socials Footer */}
         {settings?.socials && (
