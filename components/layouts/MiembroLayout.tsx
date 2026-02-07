@@ -47,18 +47,8 @@ const MiembroLayout: React.FC = () => {
             {/* Phone Frame Simulator - Responsive: Full Screen on Mobile/Tablet, Framed on Desktop */}
             <div className="w-full h-full lg:w-full lg:max-w-[400px] lg:h-[850px] bg-white lg:rounded-[3rem] overflow-hidden shadow-2xl relative lg:border-[8px] lg:border-slate-900 lg:ring-4 ring-slate-800">
 
-                {/* --- NATIVE LAYER: STATUS BAR --- */}
-                <div className="h-12 bg-white flex justify-between items-center px-8 absolute top-0 left-0 right-0 z-50 select-none pointer-events-none">
-                    <span className="text-sm font-semibold text-slate-900">9:41</span>
-                    <div className="flex gap-2 items-center text-slate-900">
-                        <Signal size={16} strokeWidth={2.5} />
-                        <Wifi size={16} strokeWidth={2.5} />
-                        <Battery size={20} strokeWidth={2.5} />
-                    </div>
-                </div>
-
                 {/* --- NATIVE LAYER: HEADER --- */}
-                <div className={`absolute top-12 left-0 right-0 bg-white/80 backdrop-blur-xl z-40 transition-all duration-300 transform px-6 py-4 flex justify-between items-center border-b border-slate-100 ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+                <div className={`absolute top-0 left-0 right-0 bg-white/80 backdrop-blur-xl z-40 transition-all duration-300 transform px-6 py-6 pt-12 flex justify-between items-center border-b border-slate-100 ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg shadow-sm">
                             {user?.name?.charAt(0).toUpperCase() || 'A'}
@@ -69,8 +59,12 @@ const MiembroLayout: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex gap-4 text-slate-600">
-                        <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative">
-                            <Share size={20} strokeWidth={2} />
+                        <button
+                            onClick={logout}
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors relative text-red-500 hover:text-red-600"
+                            title="Cerrar Sesión"
+                        >
+                            <LogOut size={20} strokeWidth={2} />
                         </button>
                         <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative">
                             <Bell size={20} strokeWidth={2} />
