@@ -37,8 +37,17 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
 
   // Data State
   const [events, setEvents] = useState<ChurchEvent[]>([]);
-  const [nextPlan, setNextPlan] = useState<ServicePlan | null>(null);
+  // Use a generic object for next service info to decouple from ServicePlan strict type if needed
+  const [nextService, setNextService] = useState<{
+    dateStr: string;
+    time: string;
+    preacher: string;
+    dateObj: Date;
+    type: 'PLAN' | 'TEAM';
+  } | null>(null);
+
   const [settings, setSettings] = useState<ChurchSettings | null>(initialSettings || null);
+  const [nextPlan, setNextPlan] = useState<ServicePlan | null>(null); // Keep for compatibility if needed
 
   // Native Shell State
   const [showNativeHeader, setShowNativeHeader] = useState(true);
@@ -74,8 +83,10 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
         // Fetch Settings
         const settingsRef = doc(db, 'tenants', initialTenantId);
         const settingsSnap = await getDoc(settingsRef);
+        let currentSettings = initialSettings;
         if (settingsSnap.exists()) {
-          setSettings((settingsSnap.data().settings as ChurchSettings) || null);
+          currentSettings = (settingsSnap.data().settings as ChurchSettings) || null;
+          setSettings(currentSettings);
         }
 
         // Fetch Events
@@ -88,17 +99,73 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
         const plansSnap = await getDocs(plansQ);
         const loadedPlans = plansSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
 
-        const todayStr = new Date().toLocaleDateString('en-CA');
-        const active = loadedPlans.find(p => p.isActive); // Simplification: just take active
+        const active = loadedPlans.find(p => p.isActive);
+        setNextPlan(active || null); // Keep for live stream logic
 
-        if (active) {
-          setNextPlan(active);
-        } else {
-          const upcoming = loadedPlans
-            .filter(p => !p.isActive && p.date >= todayStr)
-            .sort((a, b) => a.date.localeCompare(b.date))[0];
-          setNextPlan(upcoming || null);
+        // --- RESOLVE NEXT SERVICE LOGIC (Copied from Dashboard) ---
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // 1. Future Service Plans
+        const futurePlans = loadedPlans
+          .filter(p => !p.isActive && new Date(p.date + 'T00:00:00') >= today)
+          .map(p => {
+            const [y, m, d] = p.date.split('-').map(Number);
+            return {
+              dateStr: p.date,
+              dateObj: new Date(y, m - 1, d),
+              time: p.startTime,
+              preacher: p.team.preacher,
+              type: 'PLAN' as const
+            };
+          });
+
+        // 2. Future Teams (Roster) from Settings
+        const futureTeams = (currentSettings?.teams || [])
+          .filter(t => t.date && new Date(t.date + 'T00:00:00') >= today)
+          .filter(t => {
+            if (!t.date || !currentSettings?.meetingTimes) return false;
+            const [y, m, d] = t.date.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+            const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+            return Object.keys(currentSettings.meetingTimes).includes(capitalizedDay);
+          })
+          .map(t => {
+            const [y, m, d] = t.date!.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+            const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+            const recTime = currentSettings?.meetingTimes?.[capitalizedDay as any] || '10:00';
+
+            return {
+              dateStr: t.date!,
+              dateObj: dateObj,
+              time: recTime,
+              preacher: t.members.preacher,
+              type: 'TEAM' as const
+            };
+          });
+
+        const planDates = new Set(futurePlans.map(p => p.dateStr));
+        const uniqueTeams = futureTeams.filter(t => !planDates.has(t.dateStr));
+        const resolvedNext = [...futurePlans, ...uniqueTeams].sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime())[0];
+
+        if (resolvedNext) {
+          setNextService(resolvedNext);
+        } else if (active) {
+          // If active, show that? Or next? User wants "Next".
+          // If active is present, maybe we show "Active Now"?
+          // Ticker usually likes "Next".
+          setNextService({
+            dateStr: active.date,
+            time: active.startTime,
+            preacher: active.team.preacher,
+            dateObj: new Date(active.date + 'T00:00:00'),
+            type: 'PLAN'
+          });
         }
+        // -----------------------------------------------------------
 
       } catch (error) {
         console.error("Error fetching visitor data:", error);
@@ -123,6 +190,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
             }}
             events={events}
             nextPlan={nextPlan}
+            nextService={nextService} // Pass our resolved service
             settings={settings}
           />
         );

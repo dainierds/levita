@@ -61,7 +61,7 @@ const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({
 };
 
 
-export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, events = [], nextPlan, settings }) => {
+export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, events = [], nextPlan, settings, nextService }) => {
 
   // ... (Data logic remains unchanged) ...
   const upcomingEvents = events
@@ -75,75 +75,37 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
     .slice(0, 10);
 
   const address = settings?.address;
-  const globalActiveTeam = settings?.teams?.find(t => t.id === settings.activeTeamId);
-  const displayTeam = globalActiveTeam ? {
-    teamName: globalActiveTeam.name,
-    preacher: globalActiveTeam.members.preacher,
-    musicDirector: globalActiveTeam.members.musicDirector || (globalActiveTeam.members as any).worshipLeader,
-    audioOperator: globalActiveTeam.members.audioOperator,
-    elder: globalActiveTeam.members.elder
-  } : (nextPlan?.team || null);
+
+  // Ticker Content
+  const tickerText = nextService
+    ? `PRÓXIMO CULTO: ${nextService.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${nextService.time}  ✦  PREDICADOR: ${nextService.preacher?.toUpperCase() || 'POR DEFINIR'}  ✦  `
+    : 'BIENVENIDOS A LA IGLESIA  ✦  ';
+
+  // Repeat text to ensure smooth loop
+  const displayTicker = tickerText.repeat(4);
 
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 pt-2">
 
-      {/* HERO SECTION: Next Service & Preacher */}
-      <div className="mx-6 mb-8 mt-2 relative rounded-[2.5rem] overflow-hidden shadow-2xl shadow-indigo-500/30 group">
-        {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-700 to-indigo-800 bg-[length:200%_200%] animate-[gradient_6s_ease-in-out_infinite]"></div>
-
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-400/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
-
-        <div className="relative p-8 text-center text-white">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest mb-6 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-            Próximo Servicio
+      {/* TICKER TAPE START */}
+      <div className="mx-6 mb-8 mt-4 relative rounded-full overflow-hidden shadow-lg shadow-indigo-200 group h-10 border border-indigo-100 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+        <div className="absolute inset-0 flex items-center">
+          <div className="whitespace-nowrap animate-[marquee_20s_linear_infinite] flex items-center">
+            <span className="text-xs font-black text-white tracking-widest px-4">{displayTicker}</span>
           </div>
-
-          {/* Preacher Name */}
-          <div className="mb-8 relative">
-            <h2 className="text-4xl font-black mb-2 leading-none tracking-tight drop-shadow-md">
-              {displayTeam?.preacher?.split(' ')[0] || (settings?.pastorName?.split(' ')[0] || 'Invitado')}
-            </h2>
-            {displayTeam?.preacher?.split(' ').length > 1 && (
-              <p className="text-lg font-bold opacity-90 leading-none mb-1">{displayTeam.preacher.split(' ').slice(1).join(' ')}</p>
-            )}
-            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mt-3">
-              Predicador
-            </p>
-          </div>
-
-          {/* Date & Time Grid */}
-          <div className="grid grid-cols-2 gap-px bg-white/20 rounded-2xl overflow-hidden border border-white/10 backdrop-blur-sm">
-            <div className="bg-black/20 p-3 flex flex-col justify-center">
-              <span className="text-xl font-bold leading-none mb-1">
-                {nextPlan ? new Date(nextPlan.date + 'T00:00:00').getDate() : new Date().getDate()}
-              </span>
-              <span className="text-[9px] font-bold uppercase opacity-70">
-                {nextPlan ? new Date(nextPlan.date + 'T00:00:00').toLocaleDateString('es-ES', { month: 'short' }).toUpperCase() : 'HOY'}
-              </span>
-            </div>
-            <div className="bg-black/20 p-3 flex flex-col justify-center">
-              <span className="text-xl font-bold leading-none mb-1">
-                {nextPlan?.startTime || settings?.meetingTimes?.['Sábado'] || '09:00'}
-              </span>
-              <span className="text-[9px] font-bold uppercase opacity-70">Hora</span>
-            </div>
-          </div>
-
-          {displayTeam?.elder && (
-            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-center gap-2 opacity-80">
-              <UserCheck size={12} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Anciano: {displayTeam.elder.split(' ')[0]}</span>
-            </div>
-          )}
-
         </div>
+        {/* Gradient masks for fade effect */}
+        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-blue-600 to-transparent z-10"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-purple-600 to-transparent z-10"></div>
       </div>
+      <style>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
+      {/* TICKER TAPE END */}
 
       {/* Stories Carousel Section */}
       <div className="mb-6">
