@@ -225,10 +225,10 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
         {/* --- NATIVE LAYER: STATUS BAR --- */}
         {/* --- NATIVE LAYER: HEADER --- */}
         <div
-          className={`absolute top-0 left-0 right-0 bg-white z-40 transition-all duration-300 transform shadow-sm rounded-b-[2.5rem] overflow-hidden ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}
+          className={`absolute top-0 left-0 right-0 z-40 transition-all duration-300 transform ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}
         >
-          {/* Top Row: Greeting & Actions */}
-          <div className="px-6 py-4 pt-5 flex justify-between items-center bg-white relative z-20">
+          {/* WHITE FRONT CARD */}
+          <div className="relative z-20 bg-white rounded-b-[2.5rem] shadow-sm px-6 py-4 pt-8 pb-6 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg shadow-sm">
                 V
@@ -245,17 +245,20 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
             </div>
           </div>
 
-          {/* Attached Ticker Tape (Only provided if activeView is HOME) */}
+          {/* COLORED BOTTOM CARD (Ticker) - Layered Behind */}
           {activeView === ViewState.HOME && (
-            <div className="relative h-12 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 z-10 flex items-center">
-              <div className="absolute inset-0 flex items-center overflow-hidden">
-                <div className="whitespace-nowrap animate-[marquee_20s_linear_infinite] flex items-center">
+            <div className="absolute inset-x-0 top-10 -bottom-10 z-10 rounded-b-[2.5rem] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-[0_20px_40px_-12px_rgba(79,70,229,0.5)] flex items-end justify-center pb-2 overflow-hidden">
+
+              {/* Marquee Content */}
+              <div className="w-full flex items-center overflow-hidden mb-1">
+                <div className="whitespace-nowrap animate-[marquee_20s_linear_infinite] flex items-center w-full">
                   <span className="text-[10px] font-black text-white tracking-widest px-4">{displayTicker}</span>
                 </div>
               </div>
-              {/* Masks */}
-              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-blue-600 to-transparent z-10"></div>
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-purple-600 to-transparent z-10"></div>
+
+              {/* Masks for gradient fade at edges */}
+              <div className="absolute left-0 bottom-0 top-20 w-8 bg-gradient-to-r from-blue-600 to-transparent z-20 pointer-events-none"></div>
+              <div className="absolute right-0 bottom-0 top-20 w-8 bg-gradient-to-l from-purple-600 to-transparent z-20 pointer-events-none"></div>
             </div>
           )}
         </div>
