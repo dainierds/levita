@@ -247,7 +247,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
 
           {/* Attached Ticker Tape (Only provided if activeView is HOME) */}
           {activeView === ViewState.HOME && (
-            <div className="relative h-8 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 z-10">
+            <div className="relative h-12 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 z-10 flex items-center">
               <div className="absolute inset-0 flex items-center overflow-hidden">
                 <div className="whitespace-nowrap animate-[marquee_20s_linear_infinite] flex items-center">
                   <span className="text-[10px] font-black text-white tracking-widest px-4">{displayTicker}</span>
