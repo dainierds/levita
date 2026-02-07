@@ -103,8 +103,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
     <div className="hidden md:flex flex-col w-64 h-screen bg-white fixed left-0 top-0 z-50">
       {/* Logo */}
       <div className="p-8 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 shadow-lg shadow-indigo-500/20 flex items-center justify-center text-white">
-          <Church size={24} strokeWidth={2.5} />
+        <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm">
+          <img src="/levita-logo-new.jpg" alt="Levita Logo" className="w-full h-full object-cover" />
         </div>
         <div>
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 tracking-tight">LEVITA</h1>
