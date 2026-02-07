@@ -8,8 +8,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLi
 
 // Initialize the Gemini client
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+const fallbackModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
 const getLanguageName = (code: string): string => {
   const map: Record<string, string> = {
