@@ -161,10 +161,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
             </div>
           </div>
           <div className="flex gap-4 text-slate-600 items-center">
-            <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative" onClick={() => setActiveView(ViewState.TRANSLATION)}>
-              {/* Translation shortcut */}
-              <Share size={20} strokeWidth={2} />
-            </button>
+
             <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative" onClick={onExit}>
               <LogOut size={20} strokeWidth={2} />
             </button>
