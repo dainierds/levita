@@ -182,8 +182,8 @@ const VisitorLanding: React.FC = () => {
             <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
                 <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
                     <div className="text-center mb-10">
-                        <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Globe size={32} />
+                        <div className="w-20 h-20 rounded-full overflow-hidden shadow-sm mx-auto mb-6">
+                            <img src="/levita-logo-new.jpg" alt="Levita Logo" className="w-full h-full object-cover" />
                         </div>
                         <h1 className="text-2xl font-black text-slate-900 mb-2">LEVITA</h1>
                         <p className="text-slate-500">Church Operating System</p>
