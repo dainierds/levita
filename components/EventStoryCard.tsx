@@ -8,8 +8,16 @@ interface EventStoryCardProps {
     onClick?: (eventId: string) => void;
 }
 
+const PLACEHOLDERS = [
+    'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=400', // Worship/Music
+    'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&q=80&w=400', // Hands/Worship
+    'https://images.unsplash.com/photo-1544427920-c49ccfb85579?auto=format&fit=crop&q=80&w=400', // Community/People
+    'https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&q=80&w=400', // Bible/Study
+    'https://images.unsplash.com/photo-1510590337019-5ef2d39dd3c8?auto=format&fit=crop&q=80&w=400'  // Abstract/Stage light
+];
+
 const EventStoryCard: React.FC<EventStoryCardProps> = ({ event, index, onClick }) => {
-    const imgUrl = event.imageUrl || `https://images.unsplash.com/photo-${index % 2 === 0 ? '1470225620780-dba8ba36b745' : '1438232992991-995b7058bbb3'}?auto=format&fit=crop&q=80&w=400`;
+    const imgUrl = event.imageUrl || PLACEHOLDERS[index % PLACEHOLDERS.length];
     const dateObj = new Date(event.date + 'T00:00:00');
     const day = dateObj.getDate();
     const month = dateObj.toLocaleDateString('es-ES', { month: 'short' }).toUpperCase().replace('.', '');
