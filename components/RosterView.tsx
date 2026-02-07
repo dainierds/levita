@@ -7,6 +7,7 @@ import { useNotification } from './NotificationSystem';
 import TeamManager from './TeamManager';
 import { db } from '../services/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
+import { parsePreacherScheduleFromDocument, PreacherAssignment } from '../services/geminiService'; // Import AI Service
 
 interface RosterViewProps {
     plans: ServicePlan[];
@@ -29,6 +30,66 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     const { role, user } = useAuth();
     const [selectedRoleTab, setSelectedRoleTab] = useState('elder');
     const [showTeamManager, setShowTeamManager] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+
+    // AI Import Handler
+    const handleImportPreachers = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsImporting(true);
+        addNotification('info', 'Procesando...', 'La IA está leyendo el documento. Por favor espera.');
+
+        try {
+            // Context: Send current view's Year and Month
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth(); // 0-indexed
+
+            const assignments = await parsePreacherScheduleFromDocument(file, year, month);
+
+            console.log("AI Parsed Assignments:", assignments);
+
+            if (assignments.length === 0) {
+                addNotification('warning', 'Sin resultados', 'No se encontraron asignaciones válidas en el documento.');
+                setIsImporting(false);
+                return;
+            }
+
+            let successCount = 0;
+
+            // Process sequentially to avoid race conditions with Plan creation?
+            // Since props.plans might not update instantly, we rely on the fact that dates are likely distinct 
+            // or that we are just updating a field. 
+            // However, creating new plans for same day multiple times could be an issue if AI returns duplicates.
+
+            for (const item of assignments) {
+                // Parse date "YYYY-MM-DD" to local Date object set to noon to avoid timezone shifts
+                // Ensure we use the correct components
+                const [y, m, d] = item.date.split('-').map(Number);
+                const itemDate = new Date(y, m - 1, d);
+
+                // Validation: Only import for the CURRENTLY VIEWED month/year to prevent accidental overwrites of other months
+                if (itemDate.getMonth() !== month || itemDate.getFullYear() !== year) {
+                    console.warn(`Skipping date ${item.date} outside of current view context.`);
+                    continue;
+                }
+
+                // Call updateAssignment
+                await updateAssignment(itemDate, 'preacher', item.preacher);
+                successCount++;
+            }
+
+            addNotification('success', 'Importación Exitosa', `Se asignaron ${successCount} predicadores.`);
+
+        } catch (error: any) {
+            console.error("Import Error:", error);
+            addNotification('error', 'Error de Importación', error.message || 'No se pudo procesar el documento.');
+        } finally {
+            setIsImporting(false);
+            // Reset input
+            e.target.value = '';
+        }
+    };
 
     // Music Groups State
     const [musicGroups, setMusicGroups] = useState<MusicTeam[]>([]);
@@ -672,7 +733,21 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                             <button className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 rounded-xl border border-slate-200">
                                 Historial
                             </button>
-                            {canEdit && selectedRoleTab !== 'teams' && selectedRoleTab !== 'musicDirector' && (
+                            {/* AI Preacher Import Button - Only for Preachers */}
+                            {canEdit && selectedRoleTab === 'preacher' && (
+                                <label className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl flex items-center gap-2 cursor-pointer shadow-md transition-colors">
+                                    <Sparkles size={14} /> Importar Lista IA
+                                    <input
+                                        type="file"
+                                        accept="image/*,.pdf,.docx"
+                                        className="hidden"
+                                        onChange={handleImportPreachers}
+                                        disabled={isImporting}
+                                    />
+                                </label>
+                            )}
+
+                            {canEdit && selectedRoleTab !== 'teams' && selectedRoleTab !== 'musicDirector' && selectedRoleTab !== 'preacher' && (
                                 <button
                                     onClick={handleAutoAssignClick}
                                     className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center gap-2"
@@ -682,6 +757,15 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                             )}
                         </div>
                     </div>
+
+                    {/* Global AI Loader */}
+                    {isImporting && (
+                        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+                            <Sparkles size={48} className="text-emerald-500 animate-pulse mb-4" />
+                            <h3 className="text-xl font-bold text-emerald-800">Analizando Documento...</h3>
+                            <p className="text-sm text-slate-500">Extrayendo itinerario de predicación</p>
+                        </div>
+                    )}
 
                     {/* Auto Assign Modal selection */}
                     {showAutoAssignModal && (

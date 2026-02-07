@@ -208,3 +208,66 @@ export const parseEventsFromDocument = async (file: File): Promise<any[]> => {
     throw error;
   }
 };
+
+export interface PreacherAssignment {
+  date: string; // YYYY-MM-DD
+  preacher: string;
+  notes?: string;
+}
+
+export const parsePreacherScheduleFromDocument = async (file: File, contextYear: number, contextMonth: number): Promise<PreacherAssignment[]> => {
+  try {
+    const monthName = new Date(contextYear, contextMonth).toLocaleString('es-ES', { month: 'long' });
+
+    let promptContent: any[] = [];
+    const basePrompt = `
+        Analyze this document or image containing a Preacher Schedule (Rol de Predicación).
+        Target Context: Month: ${monthName}, Year: ${contextYear}.
+        
+        Task: Extract ALL dates and assigned preachers for this specific month.
+        
+        Return a Strict JSON Array of objects:
+        [
+          {
+            "date": "YYYY-MM-DD", // Full date. Infer year/month from context.
+            "preacher": "Name String",
+            "notes": "Any extra info (e.g. topic, special sabbath)"
+          }
+        ]
+        
+        Rules:
+        - If input has multiple months, ONLY extract for ${monthName}.
+        - If date is "Sábado 3", use ${contextYear}-${String(contextMonth + 1).padStart(2, '0')}-03.
+        - Ignore empty slots.
+        - Return ONLY JSON.
+        `;
+
+    if (file.type === 'application/pdf') {
+      const text = await extractTextFromPDF(file);
+      promptContent = [basePrompt + `\n\nDOCUMENT TEXT:\n${text}`];
+    } else if (file.type.startsWith('image/')) {
+      const imagePart = await fileToGenerativePart(file);
+      promptContent = [basePrompt, imagePart];
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') { // .docx
+      const text = await extractTextFromDocx(file);
+      promptContent = [basePrompt + `\n\nDOCUMENT TEXT:\n${text}`];
+    } else {
+      throw new Error("Unsupported file type");
+    }
+
+    const result = await model.generateContent(promptContent);
+    const response = await result.response;
+    const text = response.text();
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    console.log("Gemini Preacher Parse:", cleanText);
+    return JSON.parse(cleanText);
+
+  } catch (error: any) {
+    console.error("Error parsing preacher schedule:", error);
+    if (error.message?.includes('404') || error.status === 404) {
+      throw new Error("Error 404: API no disponible. Verifica tu configuración de Google Cloud.");
+    }
+    throw error;
+  }
+};
