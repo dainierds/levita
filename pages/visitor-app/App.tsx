@@ -272,7 +272,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
 
         {/* --- CONTENT AREA --- */}
         <div
-          className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-28 pb-24 scroll-smooth"
+          className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-40 pb-24 scroll-smooth"
           onScroll={handleScroll}
           ref={scrollRef}
           style={{ WebkitOverflowScrolling: 'touch' }}
