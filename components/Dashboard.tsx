@@ -43,14 +43,19 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
 
   // 1. Future Service Plans
   const futurePlans = plans
-    .filter(p => !p.isActive && new Date(p.date) >= today)
-    .map(p => ({
-      dateStr: p.date,
-      dateObj: new Date(p.date),
-      time: p.startTime, // Plan has explicit time
-      preacher: p.team.preacher,
-      type: 'PLAN'
-    }));
+    .filter(p => !p.isActive && new Date(p.date + 'T00:00:00') >= today)
+    .map(p => {
+      // Parse as LOCAL date to avoid UTC shift
+      const [y, m, d] = p.date.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      return {
+        dateStr: p.date,
+        dateObj: dateObj,
+        time: p.startTime, // Plan has explicit time
+        preacher: p.team.preacher,
+        type: 'PLAN'
+      };
+    });
 
   // 2. Future Teams (Roster)
   // Check if a team exists for a date that DOESN'T have a plan yet? 
