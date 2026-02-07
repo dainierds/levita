@@ -57,29 +57,23 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
             let successCount = 0;
 
-            // Process sequentially to avoid race conditions with Plan creation?
-            // Since props.plans might not update instantly, we rely on the fact that dates are likely distinct 
-            // or that we are just updating a field. 
-            // However, creating new plans for same day multiple times could be an issue if AI returns duplicates.
+            const affectedDates: string[] = [];
 
             for (const item of assignments) {
                 // Parse date "YYYY-MM-DD" to local Date object set to noon to avoid timezone shifts
-                // Ensure we use the correct components
                 const [y, m, d] = item.date.split('-').map(Number);
                 const itemDate = new Date(y, m - 1, d);
 
-                // Validation: Only import for the CURRENTLY VIEWED month/year to prevent accidental overwrites of other months
-                if (itemDate.getMonth() !== month || itemDate.getFullYear() !== year) {
-                    console.warn(`Skipping date ${item.date} outside of current view context.`);
-                    continue;
-                }
-
+                // Removed restriction: Allow importing for ANY date found in the doc.
                 // Call updateAssignment
                 await updateAssignment(itemDate, 'preacher', item.preacher);
                 successCount++;
+                affectedDates.push(item.date);
             }
 
-            addNotification('success', 'Importación Exitosa', `Se asignaron ${successCount} predicadores.`);
+            // Distinct months count for feedback
+            const distinctMonths = new Set(affectedDates.map(d => d.slice(0, 7))).size; // YYYY-MM
+            addNotification('success', 'Importación Exitosa', `Se asignaron ${successCount} turnos en ${distinctMonths} mes(es).`);
 
         } catch (error: any) {
             console.error("Import Error:", error);

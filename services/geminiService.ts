@@ -222,22 +222,24 @@ export const parsePreacherScheduleFromDocument = async (file: File, contextYear:
     let promptContent: any[] = [];
     const basePrompt = `
         Analyze this document or image containing a Preacher Schedule (Rol de Predicación).
-        Target Context: Month: ${monthName}, Year: ${contextYear}.
+        Target Context: Year: ${contextYear}. default Month Start: ${monthName} (Use only if no month headers found).
         
-        Task: Extract ALL dates and assigned preachers for this specific month.
+        Task: Extract ALL dates and assigned preachers found in the document, across ALL months present.
         
         Return a Strict JSON Array of objects:
         [
           {
-            "date": "YYYY-MM-DD", // Full date. Infer year/month from context.
+            "date": "YYYY-MM-DD", // Full date. Infer year/month from document headers if available.
             "preacher": "Name String",
             "notes": "Any extra info (e.g. topic, special sabbath)"
           }
         ]
         
         Rules:
-        - If input has multiple months, ONLY extract for ${monthName}.
-        - If date is "Sábado 3", use ${contextYear}-${String(contextMonth + 1).padStart(2, '0')}-03.
+        - Extract assignments for ALL months found in the file. Do NOT limit to ${monthName}.
+        - If the document has headers like "FEBRERO", "MARZO", use them to determine the month for the dates below them.
+        - If no month is specified for a section, assume it starts from ${monthName}.
+        - Improve date inference: If year is missing, use ${contextYear} unless document says otherwise.
         - Ignore empty slots.
         - Return ONLY JSON.
         `;
