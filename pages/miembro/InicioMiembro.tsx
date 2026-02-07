@@ -27,7 +27,7 @@ const QuickActionsGrid = () => {
                 <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
                     <Gift size={26} strokeWidth={2} />
                 </div>
-                <span className="text-sm font-bold text-slate-600">Donaciones</span>
+                <span className="text-sm font-bold text-slate-600">Ofrendas</span>
             </button>
             <button
                 onClick={() => navigate('/miembro/liturgia')}
