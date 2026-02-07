@@ -131,14 +131,7 @@ END:VCALENDAR`;
     // MODAL SPECIFIC STYLES
     if (isModal) {
       return (
-        <div key={event.id} className="relative w-full overflow-hidden rounded-[2.5rem] shadow-2xl bg-slate-900 group">
-
-          {/* BACKGROUND IMAGE BLURRED */}
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-50 blur-xl scale-110 transition-transform duration-700 pointer-events-none"
-            style={{ backgroundImage: `url(${event.imageUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${event.id}`})` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-slate-900/40 pointer-events-none" />
+        <div key={event.id} className="relative w-full overflow-hidden rounded-[2.5rem] shadow-2xl bg-white group">
 
           {/* CONTENT */}
           <div className="relative z-10 p-0">
@@ -146,55 +139,58 @@ END:VCALENDAR`;
             <div className="relative h-64 w-full">
               <img
                 src={event.imageUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${event.id}`}
-                className="w-full h-full object-cover mask-gradient-b"
+                className="w-full h-full object-cover"
                 alt={event.title}
               />
-              <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex flex-col items-center min-w-[60px]">
-                <span className="text-xs font-bold text-white/80 uppercase">{month}</span>
-                <span className="text-2xl font-black text-white">{day}</span>
+              <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg flex flex-col items-center min-w-[60px]">
+                <span className="text-xs font-bold text-slate-500 uppercase">{month}</span>
+                <span className="text-2xl font-black text-slate-900">{day}</span>
               </div>
             </div>
 
-            <div className="px-6 pb-8 -mt-12 relative">
-              <h3 className="text-3xl font-black text-white mb-6 drop-shadow-lg leading-tight">{event.title}</h3>
+            <div className="px-6 pb-8 -mt-6 relative z-20 bg-white rounded-t-[2rem]">
+              {/* Center Pull Indicator (Visual only) */}
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 mt-3" />
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 text-white/90">
-                  <div className="p-3 rounded-full bg-white/10 backdrop-blur text-white">
+              <h3 className="text-2xl font-black text-slate-800 mb-6 leading-tight text-center">{event.title}</h3>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <div className="p-2.5 rounded-full bg-indigo-100 text-indigo-600">
                     <Clock size={20} />
                   </div>
-                  <span className="text-lg font-medium">{timeStr}</span>
+                  <span className="text-base font-bold text-slate-700">{timeStr}</span>
                 </div>
 
-                <div className="flex items-center gap-4 text-white/90">
-                  <div className="p-3 rounded-full bg-white/10 backdrop-blur text-white">
+                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <div className="p-2.5 rounded-full bg-orange-100 text-orange-600">
                     <MapPin size={20} />
                   </div>
-                  <span className="text-lg font-medium">{event.placeName || 'Ubicación por definir'}</span>
+                  <span className="text-base font-bold text-slate-700">{event.placeName || 'Ubicación por definir'}</span>
                 </div>
 
                 {/* DESCRIPTION FIELD */}
                 {event.description && (
-                  <div className="mt-6 p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                    <h4 className="text-xs font-bold text-white/50 uppercase mb-2 tracking-widest">Descripción</h4>
-                    <p className="text-base text-white/90 leading-relaxed whitespace-pre-wrap">
+                  <div className="mt-4">
+                    {/* <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 ml-1 tracking-widest">Descripción</h4> */}
+                    <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">
                       {event.description}
-                    </p>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-8 flex gap-3">
+              <div className="mt-6 flex gap-3">
                 <button
                   onClick={(e) => { e.stopPropagation(); addToGoogleCalendar(event); }}
-                  className="flex-1 py-4 rounded-2xl font-bold text-sm bg-white text-slate-900 shadow-xl hover:bg-slate-100 flex items-center justify-center gap-2 transition-transform active:scale-95"
+                  className="flex-1 py-4 rounded-2xl font-bold text-sm bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50 flex items-center justify-center gap-2"
                 >
                   <CalendarIcon size={18} /> Google
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); downloadICal(event); }}
-                  className="flex-1 py-4 rounded-2xl font-bold text-sm bg-slate-800 text-white border border-slate-700 shadow-xl hover:bg-slate-700 flex items-center justify-center gap-2 transition-transform active:scale-95"
+                  className="flex-1 py-4 rounded-2xl font-bold text-sm bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50 flex items-center justify-center gap-2"
                 >
                   <Download size={18} /> Apple
                 </button>
@@ -209,7 +205,7 @@ END:VCALENDAR`;
                     alert('Dirección no disponible para este evento.');
                   }
                 }}
-                className="mt-4 w-full py-4 rounded-2xl font-bold text-white bg-brand-500 shadow-lg shadow-brand-500/30 hover:bg-brand-600 transition-all flex items-center justify-center gap-2"
+                className="mt-4 w-full py-4 rounded-2xl font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
               >
                 <MapPin size={18} /> Cómo llegar
               </button>
