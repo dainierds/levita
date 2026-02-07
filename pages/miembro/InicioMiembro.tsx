@@ -82,13 +82,25 @@ const InicioMiembro: React.FC = () => {
                 const loadedPlans = plansSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServicePlan));
 
                 const todayStr = new Date().toLocaleDateString('en-CA');
+                const now = new Date();
+
+                // SATURDAY NOON RULE
+                let skipToday = false;
+                if (now.getDay() === 6 && now.getHours() >= 12) {
+                    skipToday = true;
+                }
+
                 const active = loadedPlans.find(p => p.isActive);
 
-                if (active) {
+                if (active && !skipToday) {
                     setActivePlan(active);
                 } else {
                     const upcoming = loadedPlans
                         .filter(p => !p.isActive && p.date >= todayStr)
+                        .filter(p => {
+                            if (skipToday && p.date === todayStr) return false;
+                            return true;
+                        })
                         .sort((a, b) => a.date.localeCompare(b.date))[0];
                     setActivePlan(upcoming || null);
                 }

@@ -103,12 +103,24 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
         setNextPlan(active || null); // Keep for live stream logic
 
         // --- RESOLVE NEXT SERVICE LOGIC (Copied from Dashboard) ---
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const todayZero = new Date(now);
+        todayZero.setHours(0, 0, 0, 0);
+
+        // SATURDAY NOON RULE: If it's Saturday (6) and time is >= 12:00, 
+        // we skip today and look for next service (e.g. Tuesday).
+        let searchStart = todayZero;
+
+        if (now.getDay() === 6 && now.getHours() >= 12) {
+          const tomorrow = new Date(now);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(0, 0, 0, 0);
+          searchStart = tomorrow;
+        }
 
         // 1. Future Service Plans
         const futurePlans = loadedPlans
-          .filter(p => !p.isActive && new Date(p.date + 'T00:00:00') >= today)
+          .filter(p => !p.isActive && new Date(p.date + 'T00:00:00') >= searchStart)
           .map(p => {
             const [y, m, d] = p.date.split('-').map(Number);
             return {
@@ -122,7 +134,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
 
         // 2. Future Teams (Roster) from Settings
         const futureTeams = (currentSettings?.teams || [])
-          .filter(t => t.date && new Date(t.date + 'T00:00:00') >= today)
+          .filter(t => t.date && new Date(t.date + 'T00:00:00') >= searchStart)
           .filter(t => {
             if (!t.date || !currentSettings?.meetingTimes) return false;
             const [y, m, d] = t.date.split('-').map(Number);
@@ -153,10 +165,8 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
 
         if (resolvedNext) {
           setNextService(resolvedNext);
-        } else if (active) {
-          // If active, show that? Or next? User wants "Next".
-          // If active is present, maybe we show "Active Now"?
-          // Ticker usually likes "Next".
+        } else if (active && searchStart.getTime() === todayZero.getTime()) {
+          // Only fallback to active if we are NOT skipping today
           setNextService({
             dateStr: active.date,
             time: active.startTime,
@@ -164,6 +174,10 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
             dateObj: new Date(active.date + 'T00:00:00'),
             type: 'PLAN'
           });
+        } else {
+          // Fallback: Find next generic recurrence if nothing scheduled?
+          // For now, let's leave as null or define a generic "Proximo Culto"
+          // But the user requested generic fallback: "En espera..."
         }
         // -----------------------------------------------------------
 
