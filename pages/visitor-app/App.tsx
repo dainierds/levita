@@ -211,6 +211,12 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
     }
   };
 
+  // Ticker Content for Header
+  const tickerText = nextService
+    ? `PRÓXIMO CULTO: ${nextService.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${nextService.time}  ✦  PREDICADOR: ${nextService.preacher?.toUpperCase() || 'POR DEFINIR'}  ✦  `
+    : 'BIENVENIDOS A LA IGLESIA  ✦  ';
+  const displayTicker = tickerText.repeat(4);
+
   return (
     <div className="fixed inset-0 bg-gray-100 flex items-center justify-center lg:p-4 font-sans text-slate-900">
       {/* Phone Frame Simulator */}
@@ -218,27 +224,52 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
 
         {/* --- NATIVE LAYER: STATUS BAR --- */}
         {/* --- NATIVE LAYER: HEADER --- */}
-        <div className={`absolute top-0 left-0 right-0 bg-white/80 backdrop-blur-xl z-40 transition-all duration-300 transform px-6 py-4 flex justify-between items-center border-b border-slate-100 ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg shadow-sm">
-              V
+        <div
+          className={`absolute top-0 left-0 right-0 bg-white z-40 transition-all duration-300 transform shadow-sm rounded-b-[2.5rem] overflow-hidden ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}
+        >
+          {/* Top Row: Greeting & Actions */}
+          <div className="px-6 py-4 pt-5 flex justify-between items-center bg-white relative z-20">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg shadow-sm">
+                V
+              </div>
+              <div>
+                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bienvenido</h2>
+                <p className="text-lg font-black text-slate-900 leading-none">Visitante</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bienvenido</h2>
-              <p className="text-lg font-black text-slate-900 leading-none">Visitante</p>
+            <div className="flex gap-4 text-slate-600 items-center">
+              <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative" onClick={onExit}>
+                <LogOut size={20} strokeWidth={2} />
+              </button>
             </div>
           </div>
-          <div className="flex gap-4 text-slate-600 items-center">
 
-            <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative" onClick={onExit}>
-              <LogOut size={20} strokeWidth={2} />
-            </button>
-          </div>
+          {/* Attached Ticker Tape (Only provided if activeView is HOME) */}
+          {activeView === ViewState.HOME && (
+            <div className="relative h-8 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 z-10">
+              <div className="absolute inset-0 flex items-center overflow-hidden">
+                <div className="whitespace-nowrap animate-[marquee_20s_linear_infinite] flex items-center">
+                  <span className="text-[10px] font-black text-white tracking-widest px-4">{displayTicker}</span>
+                </div>
+              </div>
+              {/* Masks */}
+              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-blue-600 to-transparent z-10"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-purple-600 to-transparent z-10"></div>
+            </div>
+          )}
         </div>
+
+        <style>{`
+            @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+            }
+        `}</style>
 
         {/* --- CONTENT AREA --- */}
         <div
-          className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-24 pb-24 scroll-smooth"
+          className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-28 pb-24 scroll-smooth"
           onScroll={handleScroll}
           ref={scrollRef}
           style={{ WebkitOverflowScrolling: 'touch' }}

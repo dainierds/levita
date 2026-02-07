@@ -88,25 +88,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 pt-2">
 
-      {/* TICKER TAPE START */}
-      <div className="mx-6 mb-8 mt-4 relative rounded-full overflow-hidden shadow-lg shadow-indigo-200 group h-10 border border-indigo-100 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-        <div className="absolute inset-0 flex items-center">
-          <div className="whitespace-nowrap animate-[marquee_20s_linear_infinite] flex items-center">
-            <span className="text-xs font-black text-white tracking-widest px-4">{displayTicker}</span>
-          </div>
-        </div>
-        {/* Gradient masks for fade effect */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-blue-600 to-transparent z-10"></div>
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-purple-600 to-transparent z-10"></div>
-      </div>
-      <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-      `}</style>
-      {/* TICKER TAPE END */}
-
       {/* Stories Carousel Section */}
       <div className="mb-6">
         <div className="flex items-center justify-between px-6 mb-4">
