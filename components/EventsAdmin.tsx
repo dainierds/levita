@@ -521,11 +521,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                 <span className="hidden md:inline">Escaneo IA</span>
                                 <input type="file" accept="image/*,.pdf,.docx" className="hidden" onChange={handleAIImport} disabled={isSubmitting} />
                             </label>
-                            <label className="bg-slate-800 text-white px-4 py-3 rounded-xl font-bold hover:bg-slate-700 transition-colors shadow-lg cursor-pointer flex items-center gap-2">
-                                <Upload size={20} />
-                                <span className="hidden md:inline">Importar CSV</span>
-                                <input type="file" accept=".csv,.ics" className="hidden" onChange={handleFileUpload} disabled={isSubmitting} />
-                            </label>
+
                             <button
                                 onClick={() => setShowModal(true)}
                                 className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center gap-2"
@@ -536,6 +532,15 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                     )}
                 </div>
             </div>
+
+            {/* Global Loading Overlay */}
+            {isSubmitting && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white">
+                    <Loader2 size={48} className="animate-spin mb-4" />
+                    <h3 className="text-xl font-bold">Procesando...</h3>
+                    <p className="text-sm text-slate-200">La IA está leyendo tu documento, esto puede tardar unos segundos.</p>
+                </div>
+            )}
 
             {viewMode === 'LIST' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
