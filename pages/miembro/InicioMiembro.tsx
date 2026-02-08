@@ -137,7 +137,11 @@ const InicioMiembro: React.FC = () => {
     } : (activePlan?.team || null);
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 pt-2">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 pt-2 relative">
+
+            {/* Ambient Under-glow */}
+            <div className="fixed bottom-0 left-0 right-0 h-[30vh] bg-gradient-to-t from-indigo-500/10 via-purple-500/5 to-transparent pointer-events-none z-0" />
+            <div className="fixed bottom-[-100px] left-[10%] right-[10%] h-[200px] bg-indigo-500/20 blur-[100px] rounded-full pointer-events-none z-0" />
 
             {/* Stories Carousel */}
             <div className="mb-6">
