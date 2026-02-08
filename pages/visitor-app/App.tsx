@@ -390,7 +390,7 @@ const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: an
       )}
 
       {/* Icon - Absolute Positioning for Perfect Alignment */}
-      <div className={`absolute left-1/2 -translate-x-1/2 transition-all duration-300 z-10 ${isActive ? '-top-[13px] text-white' : 'top-[17px] text-slate-400'}`}>
+      <div className={`absolute left-1/2 -translate-x-1/2 transition-all duration-300 z-10 ${isActive ? '-top-[10px] text-white' : 'top-[17px] text-slate-400'}`}>
         <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
       </div>
 
