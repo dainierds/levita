@@ -121,15 +121,10 @@ const MiembroLayout: React.FC = () => {
                     <Outlet />
                 </div>
 
-                {/* --- NATIVE TAB BAR (CURVED STYLE) --- */}
-                <div className="absolute bottom-6 left-4 right-4 h-20 bg-white/95 backdrop-blur-xl border border-white/20 rounded-[2.5rem] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] flex items-center justify-around z-50 px-2 relative">
+                {/* --- NATIVE TAB BAR (CURVED FULL WIDTH) --- */}
+                <div className="absolute bottom-0 left-0 right-0 h-24 bg-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] flex items-end justify-around pb-6 px-2 z-50">
 
-                    {/* Animated Active Indicator (The "Curve" Bubble) */}
-                    {/* We calculate position based on active index. Since we can't easily rely on just CSS, we use a shared layoutId or absolute positioning. 
-                        To simplify, we render the 'active' bubble BEHIND the active icon but constrained to its cell. 
-                        Actually, 'CurvedNavigationBar' moves the bubble. We will use Framer Motion's layoutId for smooth transition. 
-                    */}
-
+                    {/* Items */}
                     <TabItem
                         icon={Home}
                         label="Inicio"
@@ -177,25 +172,25 @@ const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: an
     return (
         <button
             onClick={onClick}
-            className="relative flex flex-col items-center justify-center w-14 h-full"
+            className="relative flex flex-col items-center justify-end w-16 h-14 mb-1"
         >
             {/* Active Bubble Background (The "Curve") */}
             {isActive && (
                 <motion.div
                     layoutId="activeTabBubble"
-                    className="absolute -top-6 w-14 h-14 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.5)] border-4 border-[#F2F4F7]"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="absolute -top-6 w-14 h-14 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.4)] border-[3px] border-white"
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 />
             )}
 
             {/* Icon */}
-            <div className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-white -translate-y-6' : 'text-slate-400'}`}>
-                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+            <div className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-white -translate-y-5' : 'text-slate-400'}`}>
+                <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
             </div>
 
-            {/* Label (Hidden when active to mimic curve effect clean look, or keep small) */}
+            {/* Label (Hidden when active to mimic curve effect clean look) */}
             {!isActive && (
-                <span className="text-[9px] font-bold text-slate-400 mt-1">{label}</span>
+                <span className="text-[10px] font-bold text-slate-400 mt-1">{label}</span>
             )}
         </button>
     );
