@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSermons, Sermon } from '../hooks/useSermons';
 import { generateSermonOutline } from '../services/geminiService';
 import { Wand2, BookOpen, Save, Trash2, Plus, Loader2, Copy, Check } from 'lucide-react';
+import AnimatedGenerateButton from './ui/animated-generate-button-shadcn-tailwind';
 
 const SermonManager: React.FC = () => {
     const { sermons, loading, saveSermon, deleteSermon } = useSermons();
@@ -177,14 +178,17 @@ const SermonManager: React.FC = () => {
                                                 <option value="Portuguese">Português</option>
                                             </select>
                                         </div>
-                                        <button
-                                            onClick={handleGenerateAI}
-                                            disabled={isGenerating || !aiParams.passage}
-                                            className="w-full md:w-auto px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-md hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                                        >
-                                            {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
-                                            Generar
-                                        </button>
+                                        <div className="w-full md:w-auto">
+                                            <AnimatedGenerateButton
+                                                className="w-full md:w-auto"
+                                                onClick={handleGenerateAI}
+                                                disabled={isGenerating || !aiParams.passage}
+                                                labelIdle="Generar"
+                                                labelActive="Generando..."
+                                                generating={isGenerating}
+                                                highlightHueDeg={250}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
