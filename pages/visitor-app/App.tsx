@@ -359,7 +359,7 @@ const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: an
   return (
     <button
       onClick={onClick}
-      className="relative flex flex-col items-center justify-center w-16 h-full"
+      className="relative w-16 h-full"
     >
       {/* Active Bubble Background (The "Curve") */}
       {isActive && (
@@ -370,13 +370,13 @@ const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: an
         />
       )}
 
-      {/* Icon */}
-      <div className={`relative z-10 transition-transform duration-300 ${isActive ? '-translate-y-10 text-white' : 'text-slate-400'}`}>
+      {/* Icon - Absolute Positioning for Perfect Alignment */}
+      <div className={`absolute left-1/2 -translate-x-1/2 transition-all duration-300 z-10 ${isActive ? '-top-[13px] text-white' : 'top-[17px] text-slate-400'}`}>
         <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
       </div>
 
       {/* Label */}
-      <span className={`text-[10px] font-bold mt-1 transition-opacity duration-300 ${isActive ? 'opacity-0' : 'text-slate-400'}`}>
+      <span className={`absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-bold transition-opacity duration-300 ${isActive ? 'opacity-0' : 'text-slate-400'}`}>
         {label}
       </span>
     </button>
