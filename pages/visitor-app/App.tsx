@@ -15,6 +15,7 @@ import {
   Signal, Wifi, Battery, Share, Bell, Search
 } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
+import { motion } from 'framer-motion';
 
 const SimpleView: React.FC<{ title: string }> = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-full text-gray-400 animate-in fade-in">
@@ -310,41 +311,41 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
           {renderContent()}
         </div>
 
-        {/* --- NATIVE TAB BAR (Flutter Style) --- */}
-        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around items-center h-16 z-50 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)]">
-          <TabIcon
+        {/* --- NATIVE TAB BAR (CURVED STYLE) --- */}
+        <div className="absolute bottom-6 left-4 right-4 h-20 bg-white/95 backdrop-blur-xl border border-white/20 rounded-[2.5rem] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] flex items-center justify-around z-50 px-2 relative">
+
+          <TabItem
             icon={Home}
             label="Inicio"
-            active={activeView === ViewState.HOME} // Implicit index 0
+            isActive={activeView === ViewState.HOME}
             onClick={() => setActiveView(ViewState.HOME)}
           />
-          <TabIcon
+          <TabItem
             icon={Calendar}
             label="Eventos"
-            active={activeView === ViewState.EVENTS} // Implicit index 1
+            isActive={activeView === ViewState.EVENTS}
             onClick={() => setActiveView(ViewState.EVENTS)}
           />
 
-          {/* Central Item (Logo/Icon Style) */}
-          <button
+          {/* Live Button (Center) */}
+          <TabItem
+            icon={Video}
+            label="En Vivo"
+            isActive={activeView === ViewState.LIVE}
             onClick={() => setActiveView(ViewState.LIVE)}
-            className="flex flex-col items-center justify-center w-16 h-16 -mt-8 relative group"
-          >
-            <div className="w-14 h-14 bg-[#2398C3] rounded-full shadow-lg shadow-[#2398C3]/30 flex items-center justify-center text-white transform transition-transform active:scale-95 border-4 border-white">
-              <Video size={26} strokeWidth={2.5} />
-            </div>
-          </button>
+            isSpecial
+          />
 
-          <TabIcon
+          <TabItem
             icon={Globe}
-            label="Traducción" // Keep label but hide visually
-            active={activeView === ViewState.TRANSLATION} // Implicit index 3
+            label="Traducción"
+            isActive={activeView === ViewState.TRANSLATION}
             onClick={() => setActiveView(ViewState.TRANSLATION)}
           />
-          <TabIcon
+          <TabItem
             icon={User}
-            label="Perfil" // Keep label but hide visually
-            active={activeView === ViewState.PROFILE} // Implicit index 4
+            label="Perfil"
+            isActive={activeView === ViewState.PROFILE}
             onClick={() => setActiveView(ViewState.PROFILE)}
           />
         </div>
@@ -354,16 +355,32 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
   );
 };
 
-// Updated TabIcon to hide labels (showSelectedLabels: false)
-const TabIcon = ({ icon: Icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className={`flex flex-col items-center justify-center w-16 h-full transition-colors ${active ? 'text-[#2398C3]' : 'text-slate-400 hover:text-slate-600'}`}
-    title={label}
-  >
-    <Icon size={26} fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 2} />
-    {/* Label hidden as per request */}
-  </button>
-);
+const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: any, label: string, isActive: boolean, onClick: () => void, isSpecial?: boolean }) => {
+  return (
+    <button
+      onClick={onClick}
+      className="relative flex flex-col items-center justify-center w-14 h-full"
+    >
+      {/* Active Bubble Background (The "Curve") */}
+      {isActive && (
+        <motion.div
+          layoutId="activeVisitorTabBubble"
+          className="absolute -top-6 w-14 h-14 bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.5)] border-4 border-[#F2F4F7]"
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
+      )}
+
+      {/* Icon */}
+      <div className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-white -translate-y-6' : 'text-slate-400'}`}>
+        <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+      </div>
+
+      {/* Label */}
+      {!isActive && (
+        <span className="text-[9px] font-bold text-slate-400 mt-1">{label}</span>
+      )}
+    </button>
+  );
+};
 
 export default App;
