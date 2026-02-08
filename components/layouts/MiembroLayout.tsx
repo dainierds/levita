@@ -79,12 +79,18 @@ const MiembroLayout: React.FC = () => {
                     </div>
 
                     {/* COLORED BOTTOM CARD (Ticker) - Layered Behind */}
-                    <div className="absolute inset-x-0 top-10 -bottom-10 z-10 rounded-b-[2.5rem] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-[0_20px_40px_-12px_rgba(79,70,229,0.5)] flex items-end justify-center pb-2 overflow-hidden">
+                    <div className="absolute inset-x-0 top-10 -bottom-10 z-10 rounded-b-[2.5rem] bg-[#0b0b0c] flex items-end justify-center pb-2 overflow-hidden shadow-2xl">
+
+                        {/* Lime Glow Effect */}
+                        <div className="pointer-events-none absolute inset-x-0 -bottom-10 top-[72%] rounded-[28px] bg-lime-400/90 blur-xl shadow-[0_40px_80px_-16px_rgba(163,230,53,0.8)] z-0 mix-blend-screen opacity-50" />
+
+                        {/* Radial Gradient Background */}
+                        <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_30%_10%,#1a1a1a_0%,#0f0f10_60%,#0b0b0c_100%)] z-0" />
 
                         {/* Marquee Content */}
-                        <div className="w-full flex items-center overflow-hidden mb-1">
+                        <div className="w-full flex items-center overflow-hidden mb-1 relative z-10">
                             <div className="whitespace-nowrap animate-[marquee_20s_linear_infinite] flex items-center w-full">
-                                <span className="text-[10px] font-black text-white tracking-widest px-4">
+                                <span className="text-[10px] font-black text-white tracking-widest px-4 drop-shadow-[0_0_10px_rgba(163,230,53,0.5)]">
                                     {/* Content injected via logic below */}
                                     {(() => {
                                         // Helper for 12h format
@@ -105,9 +111,9 @@ const MiembroLayout: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Masks for gradient fade at edges */}
-                        <div className="absolute left-0 bottom-0 top-20 w-8 bg-gradient-to-r from-blue-600 to-transparent z-20 pointer-events-none"></div>
-                        <div className="absolute right-0 bottom-0 top-20 w-8 bg-gradient-to-l from-purple-600 to-transparent z-20 pointer-events-none"></div>
+                        {/* Masks for gradient fade at edges (Darker to match theme) */}
+                        <div className="absolute left-0 bottom-0 top-20 w-8 bg-gradient-to-r from-[#0b0b0c] to-transparent z-20 pointer-events-none"></div>
+                        <div className="absolute right-0 bottom-0 top-20 w-8 bg-gradient-to-l from-[#0b0b0c] to-transparent z-20 pointer-events-none"></div>
                     </div>
                 </div>
 
