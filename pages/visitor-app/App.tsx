@@ -310,39 +310,41 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
           {renderContent()}
         </div>
 
-        {/* --- NATIVE TAB BAR --- */}
-        <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-6 py-4 pb-8 flex justify-between items-center z-50 text-slate-400">
+        {/* --- NATIVE TAB BAR (Flutter Style) --- */}
+        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around items-center h-16 z-50 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)]">
           <TabIcon
             icon={Home}
             label="Inicio"
-            active={activeView === ViewState.HOME}
+            active={activeView === ViewState.HOME} // Implicit index 0
             onClick={() => setActiveView(ViewState.HOME)}
           />
           <TabIcon
             icon={Calendar}
             label="Eventos"
-            active={activeView === ViewState.EVENTS}
+            active={activeView === ViewState.EVENTS} // Implicit index 1
             onClick={() => setActiveView(ViewState.EVENTS)}
           />
 
-          {/* FAB */}
+          {/* Central Item (Logo/Icon Style) */}
           <button
             onClick={() => setActiveView(ViewState.LIVE)}
-            className="w-14 h-14 bg-indigo-600 rounded-full shadow-lg shadow-indigo-500/40 flex items-center justify-center text-white mb-8 transform hover:scale-105 transition-transform active:scale-95"
+            className="flex flex-col items-center justify-center w-16 h-16 -mt-8 relative group"
           >
-            <Video size={24} strokeWidth={2.5} />
+            <div className="w-14 h-14 bg-[#2398C3] rounded-full shadow-lg shadow-[#2398C3]/30 flex items-center justify-center text-white transform transition-transform active:scale-95 border-4 border-white">
+              <Video size={26} strokeWidth={2.5} />
+            </div>
           </button>
 
           <TabIcon
             icon={Globe}
-            label="Traducción"
-            active={activeView === ViewState.TRANSLATION}
+            label="Traducción" // Keep label but hide visually
+            active={activeView === ViewState.TRANSLATION} // Implicit index 3
             onClick={() => setActiveView(ViewState.TRANSLATION)}
           />
           <TabIcon
             icon={User}
-            label="Perfil"
-            active={activeView === ViewState.PROFILE}
+            label="Perfil" // Keep label but hide visually
+            active={activeView === ViewState.PROFILE} // Implicit index 4
             onClick={() => setActiveView(ViewState.PROFILE)}
           />
         </div>
@@ -352,13 +354,15 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
   );
 };
 
+// Updated TabIcon to hide labels (showSelectedLabels: false)
 const TabIcon = ({ icon: Icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) => (
   <button
     onClick={onClick}
-    className={`flex flex-col items-center gap-1.5 w-16 transition-colors ${active ? 'text-indigo-600' : 'hover:text-slate-600'}`}
+    className={`flex flex-col items-center justify-center w-16 h-full transition-colors ${active ? 'text-[#2398C3]' : 'text-slate-400 hover:text-slate-600'}`}
+    title={label}
   >
-    <Icon size={24} fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 2.5} />
-    <span className={`text-[10px] font-bold ${active ? 'text-indigo-600' : 'text-slate-400'}`}>{label}</span>
+    <Icon size={26} fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 2} />
+    {/* Label hidden as per request */}
   </button>
 );
 
