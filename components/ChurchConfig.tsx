@@ -168,33 +168,84 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
         />
       </section>
 
-      {/* 2. Meeting Times */}
+      {/* 2. Meeting Times (12h Format) */}
       {config.meetingDays.length > 0 && (
         <section className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in slide-in-from-top-4 duration-300">
           <div className="flex items-center gap-2 mb-6 text-slate-800">
             <Clock className="text-indigo-500" size={24} />
             <h3 className="text-xl font-bold">Horarios de Reunión</h3>
           </div>
-          <p className="text-sm text-slate-500 mb-6">Define el horario de inicio para cada día de reunión</p>
+          <p className="text-sm text-slate-500 mb-6 font-medium">Define el horario de inicio (Formato 12h)</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {DAYS.map(day => {
               const isActive = config.meetingDays.includes(day);
+
+              // Parse 24h to 12h for Display
+              const rawTime = config.meetingTimes[day] || '10:00';
+              let [hours, minutes] = rawTime.split(':').map(Number);
+              const period = hours >= 12 ? 'PM' : 'AM';
+              const displayHours = hours % 12 || 12;
+
+              const updateTime = (newH: number, newM: number, newP: string) => {
+                let h24 = newH;
+                if (newP === 'PM' && h24 !== 12) h24 += 12;
+                if (newP === 'AM' && h24 === 12) h24 = 0;
+                const timeStr = `${h24.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`;
+                handleTimeChange(day, timeStr);
+              };
+
               return (
-                <div key={day} className={`transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-30 grayscale pointer-events-none'}`}>
-                  <label className="block text-xs font-bold text-slate-400 mb-2 uppercase">{day}</label>
+                <div key={day} className={`transition-all duration-300 ${isActive ? 'opacity-100 transform scale-100' : 'opacity-40 grayscale pointer-events-none scale-95'}`}>
+                  <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider">{day}</label>
+
                   <div className={`
-                    flex items-center px-4 py-3 border rounded-xl bg-slate-50
-                    ${isActive ? 'border-indigo-200 bg-white ring-2 ring-indigo-50' : 'border-slate-100'}
+                    flex items-center justify-between p-2 border rounded-xl bg-slate-50/50
+                    ${isActive ? 'border-indigo-200 bg-white ring-4 ring-indigo-50/50 shadow-sm' : 'border-slate-100'}
                   `}>
-                    <input
-                      type="time"
-                      value={config.meetingTimes[day] || ''}
-                      onChange={(e) => handleTimeChange(day, e.target.value)}
+
+                    {/* Hour Select */}
+                    <div className="relative">
+                      <select
+                        value={displayHours}
+                        onChange={(e) => updateTime(parseInt(e.target.value), minutes, period)}
+                        className="bg-transparent font-bold text-lg text-slate-700 outline-none cursor-pointer appearance-none text-center w-12 z-10 relative"
+                        disabled={!isActive}
+                      >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
+                          <option key={h} value={h}>{h}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <span className="text-indigo-300 font-bold mb-1">:</span>
+
+                    {/* Minute Select (00, 15, 30, 45) */}
+                    <div className="relative">
+                      <select
+                        value={minutes}
+                        onChange={(e) => updateTime(displayHours, parseInt(e.target.value), period)}
+                        className="bg-transparent font-bold text-lg text-slate-700 outline-none cursor-pointer appearance-none text-center w-12 z-10 relative"
+                        disabled={!isActive}
+                      >
+                        {[0, 15, 30, 45].map(m => (
+                          <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* AM/PM Toggle */}
+                    <button
+                      onClick={() => updateTime(displayHours, minutes, period === 'AM' ? 'PM' : 'AM')}
                       disabled={!isActive}
-                      className="bg-transparent w-full outline-none text-slate-700 font-medium disabled:text-slate-300"
-                    />
-                    {isActive && <Clock size={16} className="text-indigo-400" />}
+                      className={`
+                            ml-2 px-3 py-1.5 rounded-lg text-xs font-black transition-colors min-w-[3rem]
+                            ${period === 'AM' ? 'bg-orange-100 text-orange-600' : 'bg-indigo-100 text-indigo-600'}
+                        `}
+                    >
+                      {period}
+                    </button>
+
                   </div>
                 </div>
               );

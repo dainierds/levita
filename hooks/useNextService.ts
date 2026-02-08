@@ -52,6 +52,15 @@ export const useNextService = (tenantId?: string | null) => {
                     searchStart = tomorrow;
                 }
 
+                // Helper to format 24h to 12h
+                const formatTime12h = (time24: string) => {
+                    if (!time24) return '';
+                    const [hours, minutes] = time24.split(':').map(Number);
+                    const period = hours >= 12 ? 'PM' : 'AM';
+                    const hours12 = hours % 12 || 12;
+                    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+                };
+
                 // 1. Future Service Plans
                 const futurePlans = loadedPlans
                     .filter(p => !p.isActive && new Date(p.date + 'T00:00:00') >= searchStart)
@@ -60,7 +69,7 @@ export const useNextService = (tenantId?: string | null) => {
                         return {
                             dateStr: p.date,
                             dateObj: new Date(y, m - 1, d),
-                            time: p.startTime,
+                            time: formatTime12h(p.startTime),
                             preacher: p.team.preacher,
                             type: 'PLAN' as const
                         };
@@ -69,37 +78,36 @@ export const useNextService = (tenantId?: string | null) => {
                 // 2. Future Teams (Roster) from Settings
                 const futureTeams = (currentSettings?.teams || [])
                     .filter(t => t.date && new Date(t.date + 'T00:00:00') >= searchStart)
-                    .filter(t => {
-                        if (!t.date || !currentSettings?.meetingTimes) return false;
-                        const [y, m, d] = t.date.split('-').map(Number);
-                        const dateObj = new Date(y, m - 1, d);
-
-                        // Explicit lookup to match ChurchSettings keys
-                        const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                        const capitalizedDay = DAYS_MAP[dateObj.getDay()];
-
-                        // Trim key to handle potential whitespace issues in DB
-                        const key = Object.keys(currentSettings.meetingTimes || {}).find(k => k.trim() === capitalizedDay) || capitalizedDay;
-                        return Object.keys(currentSettings.meetingTimes).includes(key);
-                    })
                     .map(t => {
                         const [y, m, d] = t.date!.split('-').map(Number);
                         const dateObj = new Date(y, m - 1, d);
-
                         const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                        const capitalizedDay = DAYS_MAP[dateObj.getDay()];
-                        const key = Object.keys(currentSettings?.meetingTimes || {}).find(k => k.trim() === capitalizedDay) || capitalizedDay;
+                        const dayName = DAYS_MAP[dateObj.getDay()]; // e.g., "Martes"
 
-                        const recTime = currentSettings?.meetingTimes?.[key as any] || '10:00';
+                        // Robust Lookup: Case-insensitive & Trimmed
+                        // We iterate all keys in meetingTimes to find a match for the day name
+                        const meetingTimes = currentSettings?.meetingTimes || {};
+                        const matchedKey = Object.keys(meetingTimes).find(
+                            k => k.trim().toLowerCase() === dayName.toLowerCase()
+                        );
+
+                        // If match found, use it; otherwise default to '10:00' (or keep raw if not found, but '10:00' is the fallback in original)
+                        // User screenshot shows "Martes" -> "19:00". If we find "martes", we get "19:00".
+                        const rawTime = matchedKey ? meetingTimes[matchedKey] : '10:00';
 
                         return {
                             dateStr: t.date!,
                             dateObj: dateObj,
-                            time: recTime,
+                            time: formatTime12h(rawTime),
                             preacher: t.members.preacher,
                             type: 'TEAM' as const
                         };
-                    });
+                    })
+                    // Filter out teams where we theoretically shouldn't have a service if strictly based on meetingDays setting?
+                    // The previous code filtered based on `meetingTimes.includes(key)`. We implicitly do tha via `matchedKey`.
+                    // But let's keep all teams if they exist in the roster, just ensuring time is correct.
+                    // If a team is scheduled on a non-meeting day, that's a user data anomaly, but we should still show it if it's in the roster.
+                    .filter(t => t.time !== '');
 
                 const planDates = new Set(futurePlans.map(p => p.dateStr));
                 const uniqueTeams = futureTeams.filter(t => !planDates.has(t.dateStr));

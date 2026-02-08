@@ -136,27 +136,23 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
         // 2. Future Teams (Roster) from Settings
         const futureTeams = (currentSettings?.teams || [])
           .filter(t => t.date && new Date(t.date + 'T00:00:00') >= searchStart)
-          .filter(t => {
-            if (!t.date || !currentSettings?.meetingTimes) return false;
-            const [y, m, d] = t.date.split('-').map(Number);
-            const dateObj = new Date(y, m - 1, d);
-
-            const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-            const capitalizedDay = DAYS_MAP[dateObj.getDay()];
-
-            return Object.keys(currentSettings.meetingTimes).includes(capitalizedDay);
-          })
           .map(t => {
             const [y, m, d] = t.date!.split('-').map(Number);
             const dateObj = new Date(y, m - 1, d);
 
-            // Explicit lookup to match ChurchSettings keys
             const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-            const capitalizedDay = DAYS_MAP[dateObj.getDay()];
+            const dayName = DAYS_MAP[dateObj.getDay()];
 
-            // Trim key to handle potential whitespace issues in DB
-            const key = Object.keys(currentSettings?.meetingTimes || {}).find(k => k.trim() === capitalizedDay) || capitalizedDay;
-            const recTime = currentSettings?.meetingTimes?.[key as any] || '10:00';
+            // Robust Lookup: Case-insensitive & Trimmed
+            const meetingTimes = currentSettings?.meetingTimes || {};
+            const normalizedDay = dayName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            const matchedKey = Object.keys(meetingTimes).find(
+              k => k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalizedDay
+            );
+
+            // If match found, use it; otherwise default to '10:00'
+            const recTime = matchedKey ? meetingTimes[matchedKey] : '10:00';
 
             return {
               dateStr: t.date!,
@@ -165,7 +161,8 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
               preacher: t.members.preacher,
               type: 'TEAM' as const
             };
-          });
+          })
+          .filter(t => t.time !== '');
 
         const planDates = new Set(futurePlans.map(p => p.dateStr));
         const uniqueTeams = futureTeams.filter(t => !planDates.has(t.dateStr));
