@@ -1,25 +1,24 @@
-import React, { useState, useEffect } from 'react'; // Added React imports
-import { Radio, Clock, CheckCircle2, Music, Mic2, Calendar, Loader2, User, FileText, UserCheck, Mic, BookOpen } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Radio, Clock, CheckCircle2, Music, Mic2, Calendar, Loader2, User, FileText, UserCheck, Mic, BookOpen, ChevronRight, BarChart3 } from 'lucide-react';
 import { useEvents } from '../hooks/useEvents';
 import { usePlans } from '../hooks/usePlans';
-import { useAuth } from '../context/AuthContext'; // Added
+import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Role, User as UserType } from '../types';
-
-import { BarChart3, ChevronRight } from 'lucide-react';
-
 import { ChurchSettings } from '../types';
 import EventStoryCard from './EventStoryCard';
-import { db } from '../services/firebase'; // Added
-import { collection, query, where, getDocs } from 'firebase/firestore'; // Added
+import { db } from '../services/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 interface DashboardProps {
   setCurrentView: (view: string) => void;
   role?: Role;
   settings?: ChurchSettings;
-  users?: UserType[]; // Added optional prop
+  users?: UserType[];
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', settings, users = [] }) => {
+  const { t, language } = useLanguage();
   const { events, loading: eventsLoading } = useEvents();
   const { plans, loading: plansLoading } = usePlans();
   const { user } = useAuth();
@@ -70,6 +69,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
       const [y, m, d] = t.date.split('-').map(Number);
       const dateObj = new Date(y, m - 1, d);
 
+      // We still use es-ES here for matching the KEYS in settings (which are likely stored in Spanish)
+      // If settings keys change to English, this logic needs update. For now assuming keys are Spanish.
       const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
       const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
       // Only include if this day is a configured meeting day
@@ -97,19 +98,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
   const allUpcoming = [...futurePlans, ...futureTeams].sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
 
   // Deduplicate by date (Plan wins)
-  const uniqueUpcoming: typeof allUpcoming = [];
-  const seenDates = new Set<string>();
-  allUpcoming.forEach(item => {
-    if (!seenDates.has(item.dateStr)) {
-      seenDates.add(item.dateStr);
-      uniqueUpcoming.push(item);
-    } else {
-      // If we already have this date, it was likely a Plan (since we put Plans first? No, we sorted by date).
-      // If mixed, we want Plan to win.
-      // Let's refine: Filter futureTeams to exclude dates present in futurePlans.
-    }
-  });
-
   // Refined Merge:
   const planDates = new Set(futurePlans.map(p => p.dateStr));
   const uniqueTeams = futureTeams.filter(t => !planDates.has(t.dateStr));
@@ -175,19 +163,19 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
   return (
     <div className="p-4 md:p-8 space-y-8 max-w-full mx-auto">
       <header className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-800">Hola, Pastor.</h2>
-        <p className="text-slate-500">Aquí está lo que sucede hoy en la iglesia.</p>
+        <h2 className="text-3xl font-bold text-slate-800">{t('dashboard.welcome', { name: user?.name?.split(' ')[0] || 'Pastor' })}</h2>
+        <p className="text-slate-500">{t('dashboard.subtitle') || "Aquí está lo que sucede hoy en la iglesia."}</p>
       </header>
 
       {/* Stories Carousel Section */}
       <div className="mb-2">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-slate-800 text-lg tracking-tight">Próximos Eventos</h3>
+          <h3 className="font-bold text-slate-800 text-lg tracking-tight">{t('dashboard.upcoming_events') || "Próximos Eventos"}</h3>
           <button
             onClick={() => setCurrentView('events')}
             className="text-indigo-600 text-xs font-bold hover:underline flex items-center gap-1"
           >
-            Gestionar Eventos <ChevronRight size={14} />
+            {t('events.title') || "Gestionar Eventos"} <ChevronRight size={14} />
           </button>
         </div>
 
@@ -201,7 +189,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
             />
           )) : (
             <div className="w-full text-center py-10 text-slate-400 text-sm font-bold bg-white rounded-3xl border-dashed border-2 border-slate-100">
-              No hay historias destacadas
+              {t('dashboard.no_stories') || "No hay historias destacadas"}
             </div>
           )}
         </div>
@@ -219,7 +207,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-50 text-red-500 rounded-full text-[10px] font-bold animate-pulse uppercase tracking-wider">
-                        <Radio size={10} /> En Vivo
+                        <Radio size={10} /> {t('member.live') || "En Vivo"}
                       </span>
                       <span className="text-xs font-bold text-slate-400 uppercase">{activePlan.date}</span>
                     </div>
@@ -228,7 +216,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                   <button
                     onClick={() => setCurrentView('planner')}
                     className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                    title="Ver Completo"
+                    title={t('common.view') || "Ver Completo"}
                   >
                     <FileText size={18} />
                   </button>
@@ -261,7 +249,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                   })()}
                   {activePlan.items.length > 5 && (
                     <div className="pl-14 pt-2 text-xs text-slate-400 italic">
-                      + {activePlan.items.length - 5} elementos más...
+                      + {activePlan.items.length - 5} {t('dashboard.more_items') || "elementos más..."}
                     </div>
                   )}
                 </div>
@@ -272,8 +260,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                   <Clock size={32} />
                 </div>
                 <div className="text-center">
-                  <h3 className="font-bold text-slate-600 text-lg">Sin Servicio Activo</h3>
-                  <p className="text-sm">Activa un plan en Orden de Cultos.</p>
+                  <h3 className="font-bold text-slate-600 text-lg">{t('dashboard.no_service') || "Sin Servicio Activo"}</h3>
+                  <p className="text-sm">{t('dashboard.activate_plan') || "Activa un plan en Orden de Cultos."}</p>
                 </div>
               </div>
             )}
@@ -283,7 +271,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
           <div className="card-soft p-6 h-full">
             <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
               <UserCheck size={18} className="text-indigo-500" />
-              {displayTeam?.teamName || 'Equipo Oficial'}
+              {displayTeam?.teamName || (t('dashboard.official_team') || 'Equipo Oficial')}
             </h3>
 
             {displayTeam ? (
@@ -294,8 +282,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     <Mic2 size={18} />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Predicador</span>
-                    <p className="font-bold text-slate-800">{displayTeam.preacher || 'No asignado'}</p>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('role.preacher') || "Predicador"}</span>
+                    <p className="font-bold text-slate-800">{displayTeam.preacher || (t('common.tbd') || 'No asignado')}</p>
                   </div>
                 </div>
 
@@ -305,8 +293,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     <Music size={18} />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Director Música</span>
-                    <p className="font-bold text-slate-800">{displayTeam.musicDirector || 'No asignado'}</p>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('role.music_director') || "Director Música"}</span>
+                    <p className="font-bold text-slate-800">{displayTeam.musicDirector || (t('common.tbd') || 'No asignado')}</p>
                   </div>
                 </div>
 
@@ -316,8 +304,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     <Mic size={18} />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Audio</span>
-                    <p className="font-bold text-slate-800">{displayTeam.audioOperator || 'No asignado'}</p>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('role.audio') || "Audio"}</span>
+                    <p className="font-bold text-slate-800">{displayTeam.audioOperator || (t('common.tbd') || 'No asignado')}</p>
                   </div>
                 </div>
 
@@ -327,14 +315,14 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     <UserCheck size={18} />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Anciano de Turno</span>
-                    <p className="font-bold text-slate-800">{displayTeam.elder || 'No asignado'}</p>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('role.elder') || "Anciano de Turno"}</span>
+                    <p className="font-bold text-slate-800">{displayTeam.elder || (t('common.tbd') || 'No asignado')}</p>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                <p className="text-sm">No hay equipo asignado.</p>
+                <p className="text-sm">{t('dashboard.no_team') || "No hay equipo asignado."}</p>
               </div>
             )}
 
@@ -342,7 +330,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
             {musicTeamMembers.length > 0 && (
               <div className="mt-6 pt-6 border-t border-slate-100">
                 <h4 className="text-sm font-bold text-slate-500 uppercase mb-3 flex items-center gap-2">
-                  <Music size={14} /> Equipo de Alabanza
+                  <Music size={14} /> {t('role.music') || "Equipo de Alabanza"}
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
                   {musicTeamMembers.map(m => (
@@ -363,13 +351,13 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
         {/* Quick Actions / Metrics */}
         <div className="space-y-6">
           <div className="card-soft p-6">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Accesos Rápidos</h3>
+            <h3 className="text-lg font-bold text-slate-800 mb-4">{t('dashboard.quick_access') || "Accesos Rápidos"}</h3>
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => setCurrentView('planner')} className="p-4 bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-3xl text-left">
                 <div className="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center text-indigo-600 mb-2">
                   <CheckCircle2 size={16} />
                 </div>
-                <span className="text-sm font-bold text-indigo-900">Ver Turnos</span>
+                <span className="text-sm font-bold text-indigo-900">{t('dashboard.view_roster') || "Ver Turnos"}</span>
               </button>
 
               {role === 'ELDER' ? (
@@ -377,21 +365,21 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                   <div className="w-8 h-8 bg-purple-200 rounded-full flex items-center justify-center text-purple-600 mb-2">
                     <BookOpen size={16} />
                   </div>
-                  <span className="text-sm font-bold text-purple-900">Crear Sermón</span>
+                  <span className="text-sm font-bold text-purple-900">{t('sermons.create') || "Crear Sermón"}</span>
                 </button>
               ) : role === 'LEADER' ? (
                 <button onClick={() => setCurrentView('events')} className="p-4 bg-pink-50 hover:bg-pink-100 transition-colors rounded-3xl text-left">
                   <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-pink-600 mb-2">
                     <Calendar size={16} />
                   </div>
-                  <span className="text-sm font-bold text-pink-900">Ver Calendario</span>
+                  <span className="text-sm font-bold text-pink-900">{t('events.view_calendar') || "Ver Calendario"}</span>
                 </button>
               ) : (
                 <button onClick={() => setCurrentView('events')} className="p-4 bg-pink-50 hover:bg-pink-100 transition-colors rounded-3xl text-left">
                   <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-pink-600 mb-2">
                     <Calendar size={16} />
                   </div>
-                  <span className="text-sm font-bold text-pink-900">Crear Evento</span>
+                  <span className="text-sm font-bold text-pink-900">{t('events.create') || "Crear Evento"}</span>
                 </button>
               )}
             </div>
@@ -401,63 +389,38 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
             {(() => {
               // Resolved Next Item Logic (Render)
               if (resolvedNextItem) {
-                const dayName = resolvedNextItem.dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+                // Formatting date using language for display
+                const dayName = resolvedNextItem.dateObj.toLocaleDateString(language || 'es', { weekday: 'long' });
                 const displayDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
 
                 return (
                   <>
-                    <h3 className="text-lg font-bold opacity-90 mb-1">Próximo {displayDay}</h3>
+                    <h3 className="text-lg font-bold opacity-90 mb-1">{t('dashboard.next_service') || "Próximo Servicio"}</h3>
+                    <p className="text-xs mb-2 opacity-80">{displayDay}</p>
                     <p className="text-3xl font-bold">{resolvedNextItem.time}</p>
                   </>
                 );
               }
 
-              // Fallback to Recurrence if no resolved item
-              let displayDay = 'Domingo';
-              let displayTime = '10:30 AM';
-
-              if (settings?.meetingTimes) {
-                const days = Object.keys(settings.meetingTimes);
-                if (days.length > 0) {
-                  const dayOrder = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                  const today = new Date();
-                  const currentDayIndex = today.getDay();
-
-                  let foundDay = null;
-
-                  // Check today and future days
-                  for (let i = 0; i < dayOrder.length; i++) {
-                    const checkIndex = (currentDayIndex + i) % 7;
-                    const dayName = dayOrder[checkIndex];
-                    if (days.includes(dayName)) {
-                      foundDay = dayName;
-                      break;
-                    }
-                  }
-
-                  if (foundDay) {
-                    displayDay = foundDay;
-                    displayTime = settings.meetingTimes[foundDay];
-                  }
-                }
-              }
+              // Fallback
+              const displayTime = '10:30 AM'; // Simplified fallback logic display
 
               return (
                 <>
-                  <h3 className="text-lg font-bold opacity-90 mb-1">Próximo {displayDay}</h3>
+                  <h3 className="text-lg font-bold opacity-90 mb-1">{t('dashboard.next_service') || "Próximo Servicio"}</h3>
                   <p className="text-3xl font-bold">{displayTime}</p>
                 </>
               );
             })()}
 
             <div className="mt-4 pt-4 border-t border-white/20">
-              <p className="text-xs font-bold uppercase opacity-80 mb-1 flex items-center gap-1"><User size={12} /> Próximo Predicador</p>
+              <p className="text-xs font-bold uppercase opacity-80 mb-1 flex items-center gap-1"><User size={12} /> {t('member.next_preacher') || "Próximo Predicador"}</p>
               <p className="text-xl font-bold">
-                {resolvedNextItem ? (resolvedNextItem.preacher || 'Por definir') : 'Por definir'}
+                {resolvedNextItem ? (resolvedNextItem.preacher || (t('common.tbd') || 'Por definir')) : (t('common.tbd') || 'Por definir')}
               </p>
             </div>
 
-            <p className="opacity-80 mt-4 text-sm">Prepárate para el servicio de adoración.</p>
+            <p className="opacity-80 mt-4 text-sm">{t('dashboard.prepare_service') || "Prepárate para el servicio de adoración."}</p>
           </div>
         </div>
       </div>

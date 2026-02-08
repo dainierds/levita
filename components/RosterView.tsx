@@ -1,13 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { ServicePlan, ChurchSettings, DayOfWeek, User, Role, ShiftTeam, MusicTeam } from '../types';
 import { User as UserIcon, Mic2, Music, Mic, Sparkles, ChevronLeft, ChevronRight, GripVertical, Users, Settings, Plus, BookOpen } from 'lucide-react';
 import { useNotification } from './NotificationSystem';
 import TeamManager from './TeamManager';
 import { db } from '../services/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
-import { parsePreacherScheduleFromDocument, PreacherAssignment } from '../services/geminiService'; // Import AI Service
+import { parsePreacherScheduleFromDocument, PreacherAssignment } from '../services/geminiService';
 
 interface RosterViewProps {
     plans: ServicePlan[];
@@ -18,14 +18,15 @@ interface RosterViewProps {
 }
 
 const ROLES_CONFIG = [
-    { key: 'elder', roleType: 'ELDER' as Role, label: 'Ancianos', icon: UserIcon, color: 'bg-blue-50 text-blue-600', border: 'border-blue-100' },
-    { key: 'sabbathSchoolTeacher', roleType: 'TEACHER' as Role, label: 'Maestros ES', icon: BookOpen, color: 'bg-emerald-50 text-emerald-600', border: 'border-emerald-100' },
-    { key: 'preacher', roleType: 'PREACHER' as Role, label: 'Predicadores', icon: Mic2, color: 'bg-violet-50 text-violet-600', border: 'border-violet-100' },
-    { key: 'audioOperator', roleType: 'AUDIO' as Role, label: 'Audio', icon: Mic, color: 'bg-orange-50 text-orange-600', border: 'border-orange-100' },
+    { key: 'elder', roleType: 'ELDER' as Role, translationKey: 'role.elder', defaultLabel: 'Ancianos', icon: UserIcon, color: 'bg-blue-50 text-blue-600', border: 'border-blue-100' },
+    { key: 'sabbathSchoolTeacher', roleType: 'TEACHER' as Role, translationKey: 'role.teacher', defaultLabel: 'Maestros ES', icon: BookOpen, color: 'bg-emerald-50 text-emerald-600', border: 'border-emerald-100' },
+    { key: 'preacher', roleType: 'PREACHER' as Role, translationKey: 'role.preacher', defaultLabel: 'Predicadores', icon: Mic2, color: 'bg-violet-50 text-violet-600', border: 'border-violet-100' },
+    { key: 'audioOperator', roleType: 'AUDIO' as Role, translationKey: 'role.audio', defaultLabel: 'Audio', icon: Mic, color: 'bg-orange-50 text-orange-600', border: 'border-orange-100' },
 ];
 
 const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, users, onSaveSettings }) => {
     const { addNotification } = useNotification();
+    const { t, language } = useLanguage();
     const [currentDate, setCurrentDate] = useState(new Date());
     const { role, user } = useAuth();
     const [selectedRoleTab, setSelectedRoleTab] = useState('elder');
@@ -38,61 +39,48 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         if (!file) return;
 
         setIsImporting(true);
-        addNotification('info', 'Procesando...', 'La IA está leyendo el documento. Por favor espera.');
+        addNotification('info', t('roster.processing') || 'Procesando...', t('roster.ai_reading') || 'La IA está leyendo el documento. Por favor espera.');
 
         try {
-            // Context: Send current view's Year and Month
             const year = currentDate.getFullYear();
-            const month = currentDate.getMonth(); // 0-indexed
+            const month = currentDate.getMonth();
 
             const assignments = await parsePreacherScheduleFromDocument(file, year, month);
 
             console.log("AI Parsed Assignments:", assignments);
 
             if (assignments.length === 0) {
-                addNotification('warning', 'Sin resultados', 'No se encontraron asignaciones válidas en el documento.');
+                addNotification('warning', t('roster.no_results_title') || 'Sin resultados', t('roster.no_results_desc') || 'No se encontraron asignaciones válidas en el documento.');
                 setIsImporting(false);
                 return;
             }
 
             let successCount = 0;
-
             const affectedDates: string[] = [];
 
             for (const item of assignments) {
-                // Parse date "YYYY-MM-DD" to local Date object set to noon to avoid timezone shifts
                 const [y, m, d] = item.date.split('-').map(Number);
                 const itemDate = new Date(y, m - 1, d);
-
-                // Removed restriction: Allow importing for ANY date found in the doc.
-                // Call updateAssignment
                 await updateAssignment(itemDate, 'preacher', item.preacher);
                 successCount++;
                 affectedDates.push(item.date);
             }
 
-            // Distinct months count for feedback
-            const distinctMonths = new Set(affectedDates.map(d => d.slice(0, 7))).size; // YYYY-MM
-            addNotification('success', 'Importación Exitosa', `Se asignaron ${successCount} turnos en ${distinctMonths} mes(es).`);
+            const distinctMonths = new Set(affectedDates.map(d => d.slice(0, 7))).size;
+            addNotification('success', t('roster.import_success') || 'Importación Exitosa', t('roster.import_stats', { count: successCount.toString(), months: distinctMonths.toString() }) || `Se asignaron ${successCount} turnos.`);
 
         } catch (error: any) {
             console.error("Import Error:", error);
-            addNotification('error', 'Error de Importación', error.message || 'No se pudo procesar el documento.');
+            addNotification('error', t('roster.import_error') || 'Error de Importación', error.message || 'No se pudo procesar el documento.');
         } finally {
             setIsImporting(false);
-            // Reset input
             e.target.value = '';
         }
     };
 
-    // Music Groups State
     const [musicGroups, setMusicGroups] = useState<MusicTeam[]>([]);
-
-    // Permission Logic
     const canEdit = role === 'ADMIN' || role === 'SUPER_ADMIN' || (role === 'ELDER' && selectedRoleTab === 'elder');
 
-
-    // --- Fetch Music Groups ---
     useEffect(() => {
         const fetchMusicGroups = async () => {
             if (!user?.tenantId) return;
@@ -101,7 +89,6 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                 const snapshot = await getDocs(q);
                 const teams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MusicTeam));
 
-                // Deduplicate by members to create "Unique Groups"
                 const unique: MusicTeam[] = [];
                 const seen = new Set<string>();
 
@@ -109,7 +96,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                     const key = [...t.memberIds].sort().join(',');
                     if (!seen.has(key) && t.memberIds.length > 0) {
                         seen.add(key);
-                        unique.push(t); // Keep one representative
+                        unique.push(t);
                     }
                 });
                 setMusicGroups(unique);
@@ -120,8 +107,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         fetchMusicGroups();
     }, [user?.tenantId]);
 
-    // --- Date Logic ---
-    const getMonthName = (date: Date) => date.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+    const getMonthName = (date: Date) => date.toLocaleString(language || 'es', { month: 'long', year: 'numeric' });
 
     const getServiceDaysInMonth = () => {
         const days: Date[] = [];
@@ -130,7 +116,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         const date = new Date(year, month, 1);
 
         while (date.getMonth() === month) {
-            // Check if this day of week is a Roster Day (e.g., 'Domingo')
+            // Using 'es-ES' for logic consistency with settings if keys are Spanish
             const dayName = date.toLocaleString('es-ES', { weekday: 'long' });
             const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
 
@@ -144,7 +130,6 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
     const serviceDates = getServiceDaysInMonth();
 
-    // --- Helper to get assigned person for a specific date and role ---
     const getPlanForDate = (date: Date) => {
         const localDateStr = date.toLocaleDateString('en-CA');
         const dayPlans = plans.filter(p => p.date === localDateStr);
@@ -158,16 +143,14 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         return (plan.team as any)[roleKey];
     };
 
-    // --- Drag & Drop Handlers ---
     const handleDragStart = (e: React.DragEvent, item: User | ShiftTeam | MusicTeam, type: 'USER' | 'TEAM' | 'MUSIC_GROUP') => {
-        if (!canEdit) return; // Prevent drag if not allowed
+        if (!canEdit) return;
         e.dataTransfer.setData('type', type);
 
         if (type === 'USER') {
             const user = item as User;
             e.dataTransfer.setData('userId', user.id);
             e.dataTransfer.setData('userName', user.name);
-            // Determine the mapped key for the user's role
             const config = ROLES_CONFIG.find(r => r.roleType === user.role);
             if (config) {
                 e.dataTransfer.setData('roleKey', config.key);
@@ -176,7 +159,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             const group = item as MusicTeam;
             e.dataTransfer.setData('groupId', group.id);
             e.dataTransfer.setData('groupData', JSON.stringify(group));
-            e.dataTransfer.setData('roleKey', 'musicDirector'); // Target role
+            e.dataTransfer.setData('roleKey', 'musicDirector');
         } else {
             const team = item as ShiftTeam;
             e.dataTransfer.setData('teamId', team.id);
@@ -198,9 +181,6 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         const type = e.dataTransfer.getData('type');
 
         if (type === 'TEAM') {
-            if (targetRoleKey !== 'teams') {
-                // Allow dropping team anywhere? Or only when tab is Teams?
-            }
             const teamData = JSON.parse(e.dataTransfer.getData('teamData')) as ShiftTeam;
             applyTeam(date, teamData);
             return;
@@ -208,7 +188,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
         if (type === 'MUSIC_GROUP') {
             if (targetRoleKey !== 'musicDirector') {
-                addNotification('warning', 'Rol Incorrecto', 'Solo puedes asignar Grupos de Música en la pestaña de Música.');
+                addNotification('warning', t('roster.wrong_role') || 'Rol Incorrecto', t('roster.music_group_warning') || 'Solo puedes asignar Grupos de Música en la pestaña de Música.');
                 return;
             }
             const groupData = JSON.parse(e.dataTransfer.getData('groupData')) as MusicTeam;
@@ -216,12 +196,11 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             return;
         }
 
-        // User Drop Logic
         const volName = e.dataTransfer.getData('userName');
         const droppedRoleKey = e.dataTransfer.getData('roleKey');
 
         if (droppedRoleKey !== targetRoleKey) {
-            addNotification('warning', 'Rol Incorrecto', `No puedes asignar esta persona a la posición de ${targetRoleKey}`);
+            addNotification('warning', t('roster.wrong_role') || 'Rol Incorrecto', t('roster.role_mismatch_warning', { role: targetRoleKey }) || `No puedes asignar esta persona a la posición de ${targetRoleKey}`);
             return;
         }
 
@@ -229,29 +208,23 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     };
 
     const applyMusicGroup = async (date: Date, group: MusicTeam) => {
-        // Resolve member names
         const memberNames = group.memberIds.map(id => users.find(u => u.id === id)?.name).filter(Boolean) as string[];
 
         if (memberNames.length === 0) return;
 
         const localDateStr = date.toLocaleDateString('en-CA');
         const existingPlan = getPlanForDate(date);
-
         let planToSave: ServicePlan;
 
-        // Logic: Assign first member as "Director" (for legacy view compatibility) and ALL as "musicians"
         const newMusicData = {
-            musicDirector: memberNames[0], // Leader/First
+            musicDirector: memberNames[0],
             musicians: memberNames
         };
 
         if (existingPlan) {
             planToSave = {
                 ...existingPlan,
-                team: {
-                    ...existingPlan.team,
-                    ...newMusicData
-                }
+                team: { ...existingPlan.team, ...newMusicData }
             };
         } else {
             planToSave = {
@@ -262,30 +235,25 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                 isActive: false,
                 items: [],
                 tenantId: user?.tenantId,
-                team: {
-                    elder: '', preacher: '', audioOperator: '',
-                    ...newMusicData
-                },
+                team: { elder: '', preacher: '', audioOperator: '', ...newMusicData },
                 isRosterDraft: true
             };
         }
 
         try {
             await savePlan(planToSave);
-            addNotification('success', 'Grupo Asignado', `Se asignaron ${memberNames.length} músicos.`);
+            addNotification('success', t('roster.group_assigned') || 'Grupo Asignado', t('roster.assigned_musicians', { count: memberNames.length.toString() }) || `Se asignaron ${memberNames.length} músicos.`);
         } catch (error) {
             console.error(error);
-            addNotification('error', 'Error', 'No se pudo asignar el grupo.');
+            addNotification('error', 'Error', t('common.error_generic') || 'No se pudo guardar.');
         }
     };
 
     const applyTeam = async (date: Date, team: ShiftTeam) => {
         const localDateStr = date.toLocaleDateString('en-CA');
         const existingPlan = getPlanForDate(date);
-
         let planToSave: ServicePlan;
 
-        // Merge team members into existing team or new team
         const newTeamMembers = {
             elder: team.members.elder || '',
             preacher: team.members.preacher || '',
@@ -298,10 +266,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         if (existingPlan) {
             planToSave = {
                 ...existingPlan,
-                team: {
-                    ...existingPlan.team,
-                    ...newTeamMembers
-                }
+                team: { ...existingPlan.team, ...newTeamMembers }
             };
         } else {
             planToSave = {
@@ -319,32 +284,23 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
         try {
             await savePlan(planToSave);
-            addNotification('success', 'Equipo Asignado', `Se asignó el ${team.name}.`);
+            addNotification('success', t('roster.team_assigned') || 'Equipo Asignado', t('roster.assigned_team_name', { name: team.name }) || `Se asignó el ${team.name}.`);
         } catch (error) {
             console.error(error);
-            addNotification('error', 'Error', 'No se pudo asignar el equipo.');
+            addNotification('error', 'Error', t('common.error_generic') || 'No se pudo guardar.');
         }
     };
 
     const updateAssignment = async (date: Date, roleKey: string, name: string) => {
         const localDateStr = date.toLocaleDateString('en-CA');
         const existingPlan = getPlanForDate(date);
-
         let planToSave: ServicePlan;
 
         if (existingPlan) {
-            // Check if we are "Removing" (name is empty).
-            // If removing musicDirector, we should probably clear musicians too?
-            // Let's explicitly clear musicians if removing musicDirector
             const extraClears = (roleKey === 'musicDirector' && name === '') ? { musicians: [] } : {};
-
             planToSave = {
                 ...existingPlan,
-                team: {
-                    ...existingPlan.team,
-                    [roleKey]: name,
-                    ...extraClears
-                }
+                team: { ...existingPlan.team, [roleKey]: name, ...extraClears }
             };
         } else {
             planToSave = {
@@ -355,30 +311,23 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                 isActive: false,
                 items: [],
                 tenantId: user?.tenantId,
-                team: {
-                    elder: '', preacher: '', musicDirector: '', audioOperator: '',
-                    [roleKey]: name
-                },
+                team: { elder: '', preacher: '', musicDirector: '', audioOperator: '', [roleKey]: name },
                 isRosterDraft: true
             };
         }
 
         try {
             await savePlan(planToSave);
-            addNotification('success', 'Guardado', 'Asignación actualizada.');
+            addNotification('success', t('common.saved') || 'Guardado', t('roster.assignment_updated') || 'Asignación actualizada.');
         } catch (error) {
             console.error(error);
-            addNotification('error', 'Error', 'No se pudo guardar la asignación.');
+            addNotification('error', 'Error', t('common.error_generic') || 'No se pudo guardar.');
         }
     };
 
-    // --- Auto Assign Logic ---
-    // --- Auto Assign Logic ---
     const [showAutoAssignModal, setShowAutoAssignModal] = useState(false);
 
     const handleAutoAssignClick = () => {
-        // If only one day type exists in valid days, maybe auto-select? 
-        // But better to always ask or check available days in "serviceDays".
         setShowAutoAssignModal(true);
     };
 
@@ -387,15 +336,12 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         if (!targetRoleConfig || targetRoleConfig.key === 'teams') return;
 
         setShowAutoAssignModal(false);
-        addNotification('info', 'Autocompletando...', `Asignando turnos de ${targetRoleConfig.label} para los ${selectedDayName}s.`);
+        addNotification('info', t('roster.auto_assigning') || 'Autocompletando...', t('roster.assigning_turns') || 'Asignando turnos...');
 
         const poolIds = settings.dayPools?.[selectedDayName]?.[targetRoleConfig.key] || [];
 
-        // If no pool defined, fallback to ALL users of that role? 
-        // User implied: "me autoasigne solo a ese dia usando las personas que estan dentro de esa seccion de ese dia"
-        // So strictly USE THE POOL.
         if (poolIds.length === 0) {
-            addNotification('warning', 'Poceta Vacía', `No hay voluntarios configurados para ${selectedDayName} en Gestionar Equipos.`);
+            addNotification('warning', t('roster.empty_pool') || 'Poceta Vacía', t('roster.no_volunteers') || `No hay voluntarios configurados para ${selectedDayName}.`);
             return;
         }
 
@@ -404,12 +350,9 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         let updatesCount = 0;
         const promises: Promise<any>[] = [];
         const batchPlans = [...plans];
-
-        // Assignment History Tracker for fairness within this batch
         const usageCount: Record<string, number> = {};
         poolUsers.forEach(u => usageCount[u.id] = 0);
 
-        // Pre-fill usage from existing plans in last 60 days
         const twoMonthsAgo = new Date();
         twoMonthsAgo.setDate(twoMonthsAgo.getDate() - 60);
 
@@ -421,10 +364,8 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             }
         });
 
-        // Filter dates to ONLY match the selected Day Name
         const targetDates = serviceDates.filter(d => {
             const dayName = d.toLocaleString('es-ES', { weekday: 'long' });
-            // Uppercase first letter to match Settings convention "Martes", "Sábado"
             const capitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1);
             return capitalized === selectedDayName;
         });
@@ -433,7 +374,6 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             const localDateStr = date.toLocaleDateString('en-CA');
             let plan = batchPlans.find(p => p.date === localDateStr);
 
-            // Scaffold if needed
             if (!plan) {
                 plan = {
                     id: `auto-${Math.random().toString(36).substr(2, 9)}`,
@@ -449,9 +389,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                 batchPlans.push(plan);
             }
 
-            // Assign if empty
             if (!plan.team[targetRoleConfig.key as keyof typeof plan.team]) {
-                // Find least used candidate
                 const sortedCandidates = [...poolUsers].sort((a, b) => {
                     const diff = usageCount[a.id] - usageCount[b.id];
                     if (diff !== 0) return diff;
@@ -460,17 +398,13 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
                 if (sortedCandidates.length > 0) {
                     const selected = sortedCandidates[0];
-                    usageCount[selected.id]++; // Increment usage for next iteration fairness
+                    usageCount[selected.id]++;
 
                     const updatedPlan = {
                         ...plan,
-                        team: {
-                            ...plan.team,
-                            [targetRoleConfig.key]: selected.name
-                        }
+                        team: { ...plan.team, [targetRoleConfig.key]: selected.name }
                     };
 
-                    // Update batch reference
                     const idx = batchPlans.findIndex(p => p.id === plan!.id);
                     if (idx >= 0) batchPlans[idx] = updatedPlan;
 
@@ -483,13 +417,13 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         try {
             await Promise.all(promises);
             if (updatesCount > 0) {
-                addNotification('success', 'Asignación Completada', `Se asignaron ${updatesCount} turnos para ${selectedDayName}.`);
+                addNotification('success', t('roster.assign_complete') || 'Asignación Completada', t('roster.assigned_count', { count: updatesCount.toString() }) || `Se asignaron ${updatesCount} turnos.`);
             } else {
-                addNotification('info', 'Sin Cambios', `No se requirieron asignaciones nuevas para ${selectedDayName}.`);
+                addNotification('info', t('roster.no_changes') || 'Sin Cambios', t('roster.no_new_assignments') || `No se requirieron asignaciones nuevas.`);
             }
         } catch (error) {
             console.error(error);
-            addNotification('error', 'Error', 'Fallo al guardar turnos.');
+            addNotification('error', 'Error', t('common.error_generic') || 'Fallo al guardar.');
         }
     };
 
@@ -500,11 +434,6 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     };
 
     const currentRoleConfig = ROLES_CONFIG.find(r => r.key === selectedRoleTab);
-
-    // Filter users based on selected Tab
-    // Updated Logic: Include Music Groups
-
-    // --- Bucket Logic ---
     const handleBucketDrop = async (e: React.DragEvent, targetDay: string) => {
         if (!canEdit) return;
         e.preventDefault();
@@ -514,7 +443,6 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         const roleKey = currentRoleConfig?.key;
         if (!roleKey) return;
 
-        // Add to settings.dayPools[targetDay][roleKey]
         const currentPools = settings.dayPools || {};
         const dayPool = currentPools[targetDay] || {};
         const rolePool = dayPool[roleKey] || [];
@@ -524,14 +452,11 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                 ...settings,
                 dayPools: {
                     ...currentPools,
-                    [targetDay]: {
-                        ...dayPool,
-                        [roleKey]: [...rolePool, userId]
-                    }
+                    [targetDay]: { ...dayPool, [roleKey]: [...rolePool, userId] }
                 }
             };
             await onSaveSettings(newSettings);
-            addNotification('success', 'Agregado', 'Usuario agregado al grupo.');
+            addNotification('success', t('common.added') || 'Agregado', t('roster.user_added_pool') || 'Usuario agregado al grupo.');
         }
     };
 
@@ -548,44 +473,35 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             ...settings,
             dayPools: {
                 ...currentPools,
-                [day]: {
-                    ...dayPool,
-                    [roleKey]: rolePool.filter(id => id !== userId)
-                }
+                [day]: { ...dayPool, [roleKey]: rolePool.filter(id => id !== userId) }
             }
         };
         await onSaveSettings(newSettings);
     };
 
-    // Filter users for the Pool (Col 1)
     const roleUsers = users.filter(u => u.role === currentRoleConfig?.roleType);
-
     const isMusicTab = selectedRoleTab === 'musicDirector';
     const isTeamsTab = selectedRoleTab === 'teams';
     const showGroupsColumn = !isMusicTab && !isTeamsTab;
 
     return (
         <div className="p-4 md:p-8 max-w-full mx-auto space-y-1 h-screen flex flex-col overflow-hidden pb-4">
-            {/* Spacer for Global Header */}
             <div className="h-2 md:h-4 w-full flex-shrink-0"></div>
-
-            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0">
                 <div>
-                    <h2 className="text-3xl font-bold text-slate-800">Itinerario de Turnos</h2>
-                    <p className="text-slate-500">Arrastra y asigna roles a los servicios del calendario.</p>
+                    <h2 className="text-3xl font-bold text-slate-800">{t('roster.title') || "Itinerario de Turnos"}</h2>
+                    <p className="text-slate-500">{t('roster.subtitle') || "Arrastra y asigna roles a los servicios del calendario."}</p>
                 </div>
                 {canEdit && (
                     <button
                         onClick={() => setShowTeamManager(true)}
                         className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
                     >
-                        <Settings size={18} /> Gestionar Equipos
+                        <Settings size={18} /> {t('roster.manage_teams') || "Gestionar Equipos"}
                     </button>
                 )}
             </div>
 
-            {/* Role Tabs */}
             <div className="flex gap-4 overflow-x-auto no-scrollbar p-2 flex-shrink-0">
                 {ROLES_CONFIG.map(role => (
                     <button
@@ -597,23 +513,20 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                             }`}
                     >
                         <role.icon size={20} />
-                        <span className="font-bold">{role.label}</span>
+                        <span className="font-bold">{t(role.translationKey) || role.defaultLabel}</span>
                     </button>
                 ))}
             </div>
 
-            {/* Main Content: 3-Column Layout */}
             <div className={`flex-1 min-h-0 grid gap-6 ${showGroupsColumn ? 'grid-cols-1 lg:grid-cols-[260px_260px_1fr]' : 'grid-cols-1 lg:grid-cols-[260px_1fr]'}`}>
 
-                {/* COL 1: POOL (Source) */}
                 <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
                     <div className="p-6 border-b border-slate-50 bg-slate-50/50">
-                        <h3 className="font-bold text-xl text-slate-800">Disponible</h3>
-                        <p className="text-xs text-slate-400">Arrastra a un Grupo o al Calendario</p>
+                        <h3 className="font-bold text-xl text-slate-800">{t('roster.available') || "Disponible"}</h3>
+                        <p className="text-xs text-slate-400">{t('roster.drag_hint') || "Arrastra a un Grupo o al Calendario"}</p>
                     </div>
                     <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
 
-                        {/* Special Case: Teams */}
                         {isTeamsTab && settings.teams?.map(team => (
                             <div
                                 key={team.id}
@@ -628,7 +541,6 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                             </div>
                         ))}
 
-                        {/* Standard Users */}
                         {!isTeamsTab && roleUsers.map(user => (
                             <div
                                 key={user.id}
@@ -645,18 +557,17 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
                         {!isTeamsTab && roleUsers.length === 0 && (
                             <div className="text-center p-8 text-slate-400 text-sm">
-                                No hay usuarios con el rol {currentRoleConfig?.label}.
+                                {t('roster.no_users_role') || "No hay usuarios con este rol."}
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* COL 2: DAY BUCKETS (Config) - Conditionally Rendered */}
                 {showGroupsColumn && (
                     <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
                         <div className="p-6 border-b border-slate-50 bg-slate-50/50">
-                            <h3 className="font-bold text-xl text-slate-800">Grupos</h3>
-                            <p className="text-xs text-slate-400">Organiza voluntarios por día</p>
+                            <h3 className="font-bold text-xl text-slate-800">{t('roster.groups') || "Grupos"}</h3>
+                            <p className="text-xs text-slate-400">{t('roster.groups_subtitle') || "Organiza voluntarios por día"}</p>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
                             {(!isTeamsTab && !isMusicTab) ? settings.meetingDays.map(day => {
@@ -677,7 +588,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
                                         {poolUsers.length === 0 ? (
                                             <div className="border-2 border-dashed border-slate-100 rounded-2xl p-4 text-center">
-                                                <p className="text-[10px] text-slate-400">Arrastra aquí</p>
+                                                <p className="text-[10px] text-slate-400">{t('roster.drag_here') || "Arrastra aquí"}</p>
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
@@ -706,17 +617,14 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                             }) : (
                                 <div className="flex flex-col items-center justify-center h-full text-center text-slate-400 p-6">
                                     <Sparkles className="mb-2 opacity-50" />
-                                    <p className="text-xs">Esta vista solo está disponible para roles individuales (Ancianos, Predicadores, etc).</p>
+                                    <p className="text-xs">{t('roster.view_restricted') || "Esta vista solo está disponible para roles individuales."}</p>
                                 </div>
                             )}
                         </div>
                     </div>
                 )}
 
-                {/* Right Col: Calendar Grid (Scrollable) */}
                 <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
-
-                    {/* Toolbar */}
                     <div className="p-6 flex justify-between items-center border-b border-slate-50 flex-shrink-0">
                         <div className="flex items-center gap-4">
                             <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-100 rounded-full"><ChevronLeft size={20} /></button>
@@ -725,12 +633,11 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                         </div>
                         <div className="flex gap-2">
                             <button className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 rounded-xl border border-slate-200">
-                                Historial
+                                {t('common.history') || "Historial"}
                             </button>
-                            {/* AI Preacher Import Button - Only for Preachers */}
                             {canEdit && selectedRoleTab === 'preacher' && (
                                 <label className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl flex items-center gap-2 cursor-pointer shadow-md transition-colors">
-                                    <Sparkles size={14} /> Importar Lista IA
+                                    <Sparkles size={14} /> {t('roster.import_ai') || "Importar Lista IA"}
                                     <input
                                         type="file"
                                         accept="image/*,.pdf,.docx"
@@ -746,28 +653,26 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                     onClick={handleAutoAssignClick}
                                     className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center gap-2"
                                 >
-                                    <Sparkles size={14} /> Auto Asignar {currentRoleConfig?.label}
+                                    <Sparkles size={14} /> {t('roster.auto_assign') || "Auto Asignar"} {t(currentRoleConfig?.translationKey || '') || currentRoleConfig?.defaultLabel}
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    {/* Global AI Loader */}
                     {isImporting && (
                         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
                             <Sparkles size={48} className="text-emerald-500 animate-pulse mb-4" />
-                            <h3 className="text-xl font-bold text-emerald-800">Analizando Documento...</h3>
-                            <p className="text-sm text-slate-500">Extrayendo itinerario de predicación</p>
+                            <h3 className="text-xl font-bold text-emerald-800">{t('roster.analyzing') || "Analizando Documento..."}</h3>
+                            <p className="text-sm text-slate-500">{t('roster.extracting') || "Extrayendo itinerario de predicación"}</p>
                         </div>
                     )}
 
-                    {/* Auto Assign Modal selection */}
                     {showAutoAssignModal && (
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
                             <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl animate-in zoom-in duration-200">
-                                <h3 className="text-xl font-bold text-slate-800 mb-2">Selecciona un Día</h3>
+                                <h3 className="text-xl font-bold text-slate-800 mb-2">{t('roster.select_day') || "Selecciona un Día"}</h3>
                                 <p className="text-slate-500 text-sm mb-6">
-                                    ¿Para qué día de reunión deseas auto-asignar voluntarios?
+                                    {t('roster.select_day_hint') || "¿Para qué día de reunión deseas auto-asignar voluntarios?"}
                                 </p>
 
                                 <div className="space-y-3">
@@ -789,25 +694,21 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                     onClick={() => setShowAutoAssignModal(false)}
                                     className="mt-6 w-full py-3 text-slate-400 font-bold hover:text-slate-600"
                                 >
-                                    Cancelar
+                                    {t('common.cancel') || "Cancelar"}
                                 </button>
                             </div>
                         </div>
                     )}
 
-
-                    {/* Grid */}
                     <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                             {serviceDates.map(date => {
                                 const dateNum = date.getDate();
-                                const dayName = date.toLocaleString('es-ES', { weekday: 'long' });
+                                const dayName = date.toLocaleString(language || 'es', { weekday: 'long' });
 
                                 const plan = getPlanForDate(date);
                                 const assignedValue = getAssignment(date, selectedRoleTab);
-                                // Check for musicians array if in music tab
                                 const musicians = (selectedRoleTab === 'musicDirector' && plan?.team?.musicians) ? plan.team.musicians : null;
-
 
                                 return (
                                     <div key={date.toISOString()} className="border border-slate-100 rounded-3xl p-5 hover:shadow-lg transition-shadow bg-white">
@@ -815,7 +716,6 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                             <span className="text-sm font-bold text-slate-800 capitalize">{dayName} <span className="text-2xl ml-1">{dateNum}</span></span>
                                         </div>
 
-                                        {/* Slot Container */}
                                         <div className="space-y-3">
                                             <div
                                                 onDragOver={handleDragOver}
@@ -846,8 +746,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                                         </>
                                                     ) : (
                                                         <div className="text-center p-2">
-                                                            <p className="text-xs text-slate-400 mb-2">Arrastra un equipo para asignar todos los roles.</p>
-                                                            {/* Preview current assignments */}
+                                                            <p className="text-xs text-slate-400 mb-2">{t('roster.drag_team_hint') || "Arrastra un equipo para asignar todos los roles."}</p>
                                                             <div className="flex gap-1 justify-center">
                                                                 {['elder', 'sabbathSchoolTeacher', 'preacher', 'musicDirector', 'audioOperator'].map(r => {
                                                                     const val = getAssignment(date, r);
@@ -864,12 +763,11 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                                             {assignedValue.charAt(0)}
                                                         </div>
 
-                                                        {/* Specialized View for Music Group */}
                                                         {musicians ? (
                                                             <div className="text-center">
                                                                 <span className="font-bold text-slate-700 text-sm">{assignedValue}</span>
                                                                 <div className="flex flex-wrap justify-center gap-1 mt-1">
-                                                                    {musicians.slice(0, 3).map((m: string) => ( // Use slice to avoid overflow
+                                                                    {musicians.slice(0, 3).map((m: string) => (
                                                                         <span key={m} className="text-[10px] bg-white/50 px-1 rounded text-slate-500">{m.split(' ')[0]}</span>
                                                                     ))}
                                                                     {musicians.length > 3 && <span className="text-[10px] text-slate-400">+{musicians.length - 3}</span>}
@@ -884,13 +782,13 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                                                 onClick={() => updateAssignment(date, selectedRoleTab, '')}
                                                                 className="text-[10px] text-red-400 font-bold hover:underline"
                                                             >
-                                                                Remover
+                                                                {t('common.remove') || "Remover"}
                                                             </button>
                                                         )}
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <p className="text-xs text-slate-400 text-center">{canEdit ? 'Arrastra un miembro aquí' : 'Sin asignar'}</p>
+                                                        <p className="text-xs text-slate-400 text-center">{canEdit ? (t('roster.drag_member_hint') || 'Arrastra un miembro aquí') : (t('roster.unassigned') || 'Sin asignar')}</p>
                                                     </>
                                                 )}
                                             </div>
@@ -901,7 +799,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                         </div>
                         {serviceDates.length === 0 && (
                             <div className="h-full flex items-center justify-center text-slate-400">
-                                No hay servicios configurados para este mes.
+                                {t('roster.no_services') || "No hay servicios configurados para este mes."}
                             </div>
                         )}
                     </div>

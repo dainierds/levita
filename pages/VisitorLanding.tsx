@@ -19,16 +19,9 @@ const SUPPORTED_LANGUAGES = [
     { code: 'fr', label: 'Français', flagUrl: 'https://flagcdn.com/w80/fr.png' },
 ];
 
-const ROLE_MESSAGES = {
-    es: { visitor: "Soy Visitante", member: "Soy Miembro", admin: "Soy Administrador", title: "¿Quién eres?" },
-    en: { visitor: "I am a Visitor", member: "I am a Member", admin: "I am an Admin", title: "Who are you?" },
-    pt: { visitor: "Sou Visitante", member: "Sou Membro", admin: "Sou Administrador", title: "Quem é você?" },
-    fr: { visitor: "Je suis visiteur", member: "Je suis membre", admin: "Je suis administrateur", title: "Qui êtes-vous ?" }
-};
-
 const VisitorLanding: React.FC = () => {
-    const { setLanguage } = useLanguage();
-    const { login, user, role, isLoading } = useAuth(); // Add isLoading
+    const { t, setLanguage } = useLanguage();
+    const { login, user, role, isLoading } = useAuth();
     const { events } = useEvents();
     const { plans } = usePlans();
     const navigate = useNavigate();
@@ -49,22 +42,16 @@ const VisitorLanding: React.FC = () => {
     // Redirect authenticated users
     useEffect(() => {
         if (!isLoading && user) {
-
-
             // Check for explicit Ministry Context override (Secondary Roles)
             if (ministryContext === 'Junta de Iglesia' && (role === 'BOARD' || user.secondaryRoles?.includes('BOARD'))) {
-                // Keep session storage for AdminApp persistence
-                navigate('/app/board'); // Explicit URL
+                navigate('/app/board');
                 return;
             }
 
             if (ministryContext === 'Audio' && (role === 'AUDIO' || user.secondaryRoles?.includes('AUDIO'))) {
-                // Keep session storage
-                navigate('/app/audio'); // Explicit route for Audio Dashboard
+                navigate('/app/audio');
                 return;
             }
-
-
 
             // Default Redirects based on Role
             if (role === 'ELDER') navigate('/anciano');
@@ -87,8 +74,6 @@ const VisitorLanding: React.FC = () => {
         );
     }
 
-
-
     const handleMinistrySelect = (context: string, demoEmail?: string) => {
         setMinistryContext(context);
         sessionStorage.setItem('ministryContext', context);
@@ -103,10 +88,9 @@ const VisitorLanding: React.FC = () => {
         setLoginError('');
         try {
             await login(email, password);
-            // AuthContext will handle redirect based on role
         } catch (error: any) {
             console.error(error);
-            setLoginError('Error de autenticación');
+            setLoginError(t('auth.error_auth') || 'Error de autenticación');
         } finally {
             setLoginLoading(false);
         }
@@ -117,9 +101,6 @@ const VisitorLanding: React.FC = () => {
             console.log("VisitorLanding: Starting fetch...");
             try {
                 let tid = '';
-
-                // 1. Improved Strategy: Fetch all tenants to find the "active" one
-                // Queries tenants and prefers the one with valid settings or name
                 const qTenants = query(collection(db, 'tenants'));
                 const tenantsSnap = await getDocs(qTenants);
 
@@ -127,9 +108,7 @@ const VisitorLanding: React.FC = () => {
                 let selectedSettings = DEFAULT_SETTINGS;
 
                 if (!tenantsSnap.empty) {
-                    // Prefer one with settings
                     const bestMatch = tenantsSnap.docs.find(d => d.data().settings) || tenantsSnap.docs[0];
-
                     selectedTid = bestMatch.id;
                     const tData = bestMatch.data() as ChurchTenant;
                     selectedSettings = tData.settings || DEFAULT_SETTINGS;
@@ -141,24 +120,17 @@ const VisitorLanding: React.FC = () => {
                     return;
                 }
 
-                // Fallback (keep existing logic just in case)
                 if (!tid) {
-                    console.warn("VisitorLanding: No tenants found. Checking legacy t1...");
-                    // Note: 'churchSettings' collection is likely unused, but we check 'tenants/t1' just in case
                     const tenantRef = await getDoc(doc(db, 'tenants', 't1'));
                     if (tenantRef.exists()) {
                         tid = 't1';
                         const tData = tenantRef.data() as ChurchTenant;
                         const sData = tData.settings || DEFAULT_SETTINGS;
-                        console.log("VisitorLanding: Found t1 tenant directly (with defaults):", sData);
                         setTenantId(tid);
                         setSettings(sData);
                         return;
                     }
                 }
-
-                console.warn("VisitorLanding: No tenant found via discovery or t1 fallback.");
-
             } catch (error) {
                 console.error("Error fetching public settings:", error);
             }
@@ -166,16 +138,11 @@ const VisitorLanding: React.FC = () => {
         fetchPublicSettings();
     }, []);
 
-    const nextPlan = plans.find(p => !p.isActive && new Date(p.date) >= new Date()) || plans[0];
-    const nextPreacher = nextPlan?.team.preacher || 'Por definir';
-
     const handleLanguageSelect = (code: string) => {
         setLanguage(code as any);
         setSelectedLang(code);
         setStep('role_selection');
     };
-
-    const t = ROLE_MESSAGES[selectedLang as keyof typeof ROLE_MESSAGES] || ROLE_MESSAGES.es;
 
     if (step === 'language') {
         return (
@@ -219,8 +186,8 @@ const VisitorLanding: React.FC = () => {
             <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
                 <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
                     <div className="text-center mb-10">
-                        <h1 className="text-2xl font-black text-slate-900 mb-2">{t.title}</h1>
-                        <p className="text-slate-500">Selecciona tu perfil para continuar</p>
+                        <h1 className="text-2xl font-black text-slate-900 mb-2">{t('visitor.who_are_you') || "¿Quién eres?"}</h1>
+                        <p className="text-slate-500">{t('visitor.select_profile') || "Selecciona tu perfil para continuar"}</p>
                     </div>
 
                     <div className="space-y-4">
@@ -231,7 +198,7 @@ const VisitorLanding: React.FC = () => {
                             <div className="w-12 h-12 bg-pink-100 text-pink-500 rounded-xl flex items-center justify-center">
                                 <Heart size={24} />
                             </div>
-                            <span className="text-lg font-bold text-slate-700 group-hover:text-pink-900">{t.visitor}</span>
+                            <span className="text-lg font-bold text-slate-700 group-hover:text-pink-900">{t('role.visitor') || "Soy Visitante"}</span>
                             <div className="absolute right-4 text-pink-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <ArrowRight size={20} />
                             </div>
@@ -244,7 +211,7 @@ const VisitorLanding: React.FC = () => {
                             <div className="w-12 h-12 bg-indigo-100 text-indigo-500 rounded-xl flex items-center justify-center">
                                 <Users size={24} />
                             </div>
-                            <span className="text-lg font-bold text-slate-700 group-hover:text-indigo-900">{t.member}</span>
+                            <span className="text-lg font-bold text-slate-700 group-hover:text-indigo-900">{t('role.member') || "Soy Miembro"}</span>
                             <div className="absolute right-4 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <ArrowRight size={20} />
                             </div>
@@ -258,7 +225,7 @@ const VisitorLanding: React.FC = () => {
                             <div className="w-12 h-12 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center">
                                 <Shield size={24} />
                             </div>
-                            <span className="text-lg font-bold text-slate-700 group-hover:text-slate-900">Líderes y Ministerios</span>
+                            <span className="text-lg font-bold text-slate-700 group-hover:text-slate-900">{t('visitor.leaders_ministries') || "Líderes y Ministerios"}</span>
                             <div className="absolute right-4 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <ArrowRight size={20} />
                             </div>
@@ -269,7 +236,7 @@ const VisitorLanding: React.FC = () => {
                         onClick={() => setStep('language')}
                         className="w-full mt-8 text-center text-sm font-bold text-slate-300 hover:text-indigo-500 transition-colors"
                     >
-                        Volver / Back
+                        {t('common.back') || "Volver"}
                     </button>
                 </div>
                 {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} initialTenantId={tenantId} initialChurchName={settings?.churchName} />}
@@ -282,12 +249,12 @@ const VisitorLanding: React.FC = () => {
             <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
                 <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
                     <button onClick={() => setStep('role_selection')} className="mb-8 text-slate-400 hover:text-slate-600 font-bold flex items-center gap-2">
-                        ← Volver
+                        ← {t('common.back') || "Volver"}
                     </button>
 
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-black text-slate-800 mb-4">Selecciona tu Departamento</h2>
-                        <p className="text-lg text-slate-500">¿A qué área deseas ingresar?</p>
+                        <h2 className="text-3xl font-black text-slate-800 mb-4">{t('visitor.select_department') || "Selecciona tu Departamento"}</h2>
+                        <p className="text-lg text-slate-500">{t('visitor.select_area_hint') || "¿A qué área deseas ingresar?"}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -301,8 +268,8 @@ const VisitorLanding: React.FC = () => {
                                 <span className="text-2xl">🎵</span>
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">Alabanza</h3>
-                                <p className="text-sm text-slate-400">Acceso a la App de Música</p>
+                                <h3 className="text-xl font-bold text-slate-800">{t('role.music') || "Alabanza"}</h3>
+                                <p className="text-sm text-slate-400">{t('visitor.music_desc') || "Acceso a la App de Música"}</p>
                             </div>
                         </button>
 
@@ -316,8 +283,8 @@ const VisitorLanding: React.FC = () => {
                                 <span className="text-2xl">👴</span>
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">Ancianos</h3>
-                                <p className="text-sm text-slate-400">Cuidado Pastoral y Miembros</p>
+                                <h3 className="text-xl font-bold text-slate-800">{t('role.elder') || "Ancianos"}</h3>
+                                <p className="text-sm text-slate-400">{t('visitor.elder_desc') || "Cuidado Pastoral y Miembros"}</p>
                             </div>
                         </button>
 
@@ -331,8 +298,8 @@ const VisitorLanding: React.FC = () => {
                                 <span className="text-2xl">🎧</span>
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">Audio / Multimedia</h3>
-                                <p className="text-sm text-slate-400">Control de Pantalla y Sonido</p>
+                                <h3 className="text-xl font-bold text-slate-800">{t('role.audio') || "Audio / Multimedia"}</h3>
+                                <p className="text-sm text-slate-400">{t('visitor.audio_desc') || "Control de Pantalla y Sonido"}</p>
                             </div>
                         </button>
 
@@ -346,8 +313,8 @@ const VisitorLanding: React.FC = () => {
                                 <Users size={32} />
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">Junta de Iglesia</h3>
-                                <p className="text-sm text-slate-400">Acceso a Panel y Reportes</p>
+                                <h3 className="text-xl font-bold text-slate-800">{t('role.board') || "Junta de Iglesia"}</h3>
+                                <p className="text-sm text-slate-400">{t('visitor.board_desc') || "Acceso a Panel y Reportes"}</p>
                             </div>
                         </button>
 
@@ -361,8 +328,8 @@ const VisitorLanding: React.FC = () => {
                                 <BookOpen size={32} />
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">Líderes / Directores</h3>
-                                <p className="text-sm text-slate-400">Gestión de Turnos y Departamentos</p>
+                                <h3 className="text-xl font-bold text-slate-800">{t('role.leaders') || "Líderes / Directores"}</h3>
+                                <p className="text-sm text-slate-400">{t('visitor.leaders_desc') || "Gestión de Turnos y Departamentos"}</p>
                             </div>
                         </button>
 
@@ -376,8 +343,8 @@ const VisitorLanding: React.FC = () => {
                                 <Shield size={32} />
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">Administración</h3>
-                                <p className="text-sm text-slate-400">Panel General y Configuración</p>
+                                <h3 className="text-xl font-bold text-slate-800">{t('role.admin') || "Administración"}</h3>
+                                <p className="text-sm text-slate-400">{t('visitor.admin_desc') || "Panel General y Configuración"}</p>
                             </div>
                         </button>
                     </div>
@@ -398,9 +365,9 @@ const VisitorLanding: React.FC = () => {
                         <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 mx-auto mb-6">
                             <LogIn size={32} />
                         </div>
-                        <h2 className="text-2xl font-bold text-slate-800">Login</h2>
+                        <h2 className="text-2xl font-bold text-slate-800">{t('common.login') || "Login"}</h2>
                         <p className="text-slate-400 text-sm mt-2">
-                            Acceso a {ministryContext || 'Líderes'}
+                            {t('visitor.access_to') || "Acceso a"} {ministryContext || 'Líderes'}
                         </p>
                     </div>
 
@@ -412,7 +379,7 @@ const VisitorLanding: React.FC = () => {
                         )}
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('common.email') || "Email"}</label>
                             <input
                                 type="email"
                                 value={email}
@@ -423,7 +390,7 @@ const VisitorLanding: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Contraseña</label>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('common.password') || "Contraseña"}</label>
                             <input
                                 type="password"
                                 value={password}
@@ -440,7 +407,7 @@ const VisitorLanding: React.FC = () => {
                             disabled={loginLoading}
                             className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-900/20 transition-all mt-4 disabled:opacity-50 flex justify-center"
                         >
-                            {loginLoading ? <span className="animate-spin">⏳</span> : 'Entrar'}
+                            {loginLoading ? <span className="animate-spin">⏳</span> : (t('common.login') || 'Entrar')}
                         </button>
                     </form>
 

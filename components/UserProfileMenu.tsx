@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, LogOut, Bell, Download, ChevronDown } from 'lucide-react';
-import { useAuth } from '../context/AuthContext'; // Check context path
+import { User, LogOut, Bell, Download, ChevronDown, Globe } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface UserProfileMenuProps {
     user: {
@@ -16,6 +17,7 @@ interface UserProfileMenuProps {
 
 const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user, roleLabel = 'Usuario', onLogout, variant = 'simple', className = '' }) => {
     const { logout } = useAuth();
+    const { t, language, setLanguage } = useLanguage();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
@@ -31,7 +33,7 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user, roleLabel = 'Us
 
     const handleInstallClick = async () => {
         if (!deferredPrompt) {
-            alert('Para instalar la App:\n\n1. Busca los 3 puntos o el botón Compartir en tu navegador.\n2. Selecciona "Instalar aplicación" o "Agregar a Inicio".');
+            alert(t('pwa.install_instructions') || 'Para instalar la App:\n\n1. Busca los 3 puntos o el botón Compartir en tu navegador.\n2. Selecciona "Instalar aplicación" o "Agregar a Inicio".');
             return;
         }
         deferredPrompt.prompt();
@@ -52,12 +54,13 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user, roleLabel = 'Us
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                alert('¡Notificaciones activadas!');
-                // Here we would ideally sync the token again, but AuthContext/App handles that usually on mount
+                alert(t('notifications.enabled') || '¡Notificaciones activadas!');
             } else {
-                alert('Permiso denegado.');
+                alert(t('notifications.denied') || 'Permiso denegado.');
             }
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     return (
@@ -85,9 +88,32 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user, roleLabel = 'Us
                     <div className="absolute top-12 right-0 bg-white rounded-2xl shadow-xl shadow-slate-200 border border-slate-100 p-2 min-w-[240px] animate-in fade-in slide-in-from-top-2 z-50">
                         {/* Header Info */}
                         <div className="px-4 py-3 border-b border-slate-50 mb-2">
-                            <p className="text-sm font-bold text-slate-800 truncate">{user?.name || 'Invitado'}</p>
+                            <p className="text-sm font-bold text-slate-800 truncate">{user?.name || (t('common.guest') || 'Invitado')}</p>
                             <p className="text-xs text-slate-400">{user?.email}</p>
-                            <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mt-1">{roleLabel}</p>
+                            <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mt-1">{t(`role.${roleLabel?.toLowerCase()}`) || roleLabel}</p>
+                        </div>
+
+                        {/* Language Switcher */}
+                        <div className="px-4 py-2 border-b border-slate-50 mb-2">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <Globe size={10} /> {t('common.language') || "Idioma"}
+                            </p>
+                            <div className="flex gap-2 justify-between">
+                                {['es', 'en', 'pt', 'fr'].map((lang) => (
+                                    <button
+                                        key={lang}
+                                        onClick={() => setLanguage(lang as any)}
+                                        className={`w-8 h-8 rounded-full text-xs font-bold transition-all flex items-center justify-center uppercase border
+                                            ${language === lang
+                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                                            }
+                                        `}
+                                    >
+                                        {lang}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Actions */}
@@ -97,7 +123,7 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user, roleLabel = 'Us
                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors text-left"
                             >
                                 <Bell size={16} />
-                                Activar Avisos
+                                {t('common.enable_notifications') || "Activar Avisos"}
                             </button>
 
                             {/* PWA Install */}
@@ -107,7 +133,7 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user, roleLabel = 'Us
                                     className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors text-left"
                                 >
                                     <Download size={16} />
-                                    Instalar App
+                                    {t('common.install_app') || "Instalar App"}
                                 </button>
                             )}
 
@@ -118,7 +144,7 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ user, roleLabel = 'Us
                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors text-left"
                             >
                                 <LogOut size={16} />
-                                Cerrar Sesión
+                                {t('common.logout') || "Cerrar Sesión"}
                             </button>
                         </div>
                     </div>

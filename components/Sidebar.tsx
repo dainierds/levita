@@ -26,20 +26,20 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
 
   // 1. Define all possible items
   const allMenuItems = [
-    { id: 'dashboard', label: t('menu.dashboard'), icon: LayoutDashboard },
-    { id: 'planner', label: t('menu.planner'), icon: FileText },
-    { id: 'team', label: t('menu.team'), icon: UserCheck },
-    { id: 'music_dept', label: 'Dep. Música', icon: Music }, // New Item
-    { id: 'sermons', label: t('menu.sermons'), icon: BookOpen },
-    { id: 'roster', label: t('menu.roster'), icon: Users },
-    { id: 'prayers', label: t('menu.prayers'), icon: Heart },
-    { id: 'statistics', label: t('menu.statistics'), icon: BarChart3 },
-    { id: 'resources', label: t('menu.resources'), icon: Library },
-    { id: 'events', label: t('menu.events'), icon: Calendar },
-    { id: 'notifications', label: t('menu.notifications'), icon: Bell },
-    { id: 'users', label: t('menu.users'), icon: UserPlus },
-    { id: 'voting_admin', label: 'Votación (Admin)', icon: Users }, // New
-    { id: 'settings', label: t('menu.settings'), icon: Settings },
+    { id: 'dashboard', label: t('menu.dashboard') || 'Dashboard', icon: LayoutDashboard },
+    { id: 'planner', label: t('menu.planner') || 'Planificador', icon: FileText },
+    { id: 'team', label: t('menu.team') || 'Equipos', icon: UserCheck },
+    { id: 'music_dept', label: t('menu.music_dept') || 'Dep. Música', icon: Music },
+    { id: 'sermons', label: t('menu.sermons') || 'Sermones', icon: BookOpen },
+    { id: 'roster', label: t('menu.roster') || 'Itinerario', icon: Users },
+    { id: 'prayers', label: t('menu.prayers') || 'Oraciones', icon: Heart },
+    { id: 'statistics', label: t('menu.statistics') || 'Estadísticas', icon: BarChart3 },
+    { id: 'resources', label: t('menu.resources') || 'Recursos', icon: Library },
+    { id: 'events', label: t('menu.events') || 'Eventos', icon: Calendar },
+    { id: 'notifications', label: t('menu.notifications') || 'Notificaciones', icon: Bell },
+    { id: 'users', label: t('menu.users') || 'Usuarios', icon: UserPlus },
+    { id: 'voting_admin', label: t('menu.voting_admin') || 'Votación (Admin)', icon: Users },
+    { id: 'settings', label: t('menu.settings') || 'Configuración', icon: Settings },
   ];
 
   // 2. Define Permissions Helper
@@ -93,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
       // Note: The app should automatically reflect this if it's listening to user changes
     } catch (error) {
       console.error("Error uploading profile photo:", error);
-      alert("Error al subir la imagen. Verifica tus permisos o intenta de nuevo.");
+      alert(t('common.error_upload') || "Error al subir la imagen. Verifica tus permisos o intenta de nuevo.");
     } finally {
       setIsUploading(false);
     }
@@ -164,12 +164,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
 
             <div className="overflow-hidden">
               <p className="text-sm font-bold text-slate-700 truncate max-w-[100px]" title={user.name}>{user.name || 'Usuario'}</p>
-              <p className="text-xs text-slate-400">{role}</p>
+              <p className="text-xs text-slate-400">{t(`role.${role.toLowerCase()}`) || role}</p>
             </div>
           </div>
 
           <div className="mt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-white px-2 py-1 rounded-lg inline-block border border-slate-100">
-            Plan {tier}
+            {t('common.plan', { tier }) || `Plan ${tier}`}
           </div>
         </div>
       </div>

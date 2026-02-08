@@ -8,31 +8,32 @@ import { useLanguage } from '../context/LanguageContext';
 
 const QuickActionsGrid = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   return (
     <div className="grid grid-cols-2 lg:grid-cols-2 md:grid-cols-4 gap-4 px-6 mb-8">
       <button className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform">
         <div className="w-14 h-14 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center">
           <Globe size={26} strokeWidth={2} />
         </div>
-        <span className="text-sm font-bold text-slate-600">Traducción</span>
+        <span className="text-sm font-bold text-slate-600">{t('member.translation') || "Traducción"}</span>
       </button>
       <button className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform">
         <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
           <Gift size={26} strokeWidth={2} />
         </div>
-        <span className="text-sm font-bold text-slate-600">Donaciones</span>
+        <span className="text-sm font-bold text-slate-600">{t('member.donations') || "Donaciones"}</span>
       </button>
       <button onClick={() => navigate('/miembro/liturgia')} className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform">
         <div className="w-14 h-14 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
           <List size={26} strokeWidth={2} />
         </div>
-        <span className="text-sm font-bold text-slate-600">Programa</span>
+        <span className="text-sm font-bold text-slate-600">{t('member.program') || "Programa"}</span>
       </button>
       <button onClick={() => navigate('/miembro/oracion')} className="bg-white py-6 px-4 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col items-center justify-center gap-4 text-center active:scale-95 transition-transform">
         <div className="w-14 h-14 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center">
           <Heart size={26} strokeWidth={2} />
         </div>
-        <span className="text-sm font-bold text-slate-600">Oración</span>
+        <span className="text-sm font-bold text-slate-600">{t('member.prayer') || "Oración"}</span>
       </button>
     </div>
   );
@@ -41,9 +42,6 @@ const QuickActionsGrid = () => {
 const EventStoryCard = ({ event, index }: { event: ChurchEvent, index: number }) => {
   const colors = ["bg-indigo-600", "bg-pink-600", "bg-orange-500", "bg-emerald-500", "bg-purple-600", "bg-blue-600"];
   const color = colors[index % colors.length];
-  // Removed uppercase to match refined look if needed, but keeping for now.
-  // The screenshot shows "Culto Joven", "Clase de Mú...". Not entirely uppercase. 
-  // Adjusting formatting.
 
   return (
     <div className={`relative w-40 h-64 rounded-[1.5rem] overflow-hidden flex-shrink-0 bg-slate-900 snap-start shadow-md group`}>
@@ -100,8 +98,8 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
       {/* Stories Carousel */}
       <div className="mb-6">
         <div className="flex items-center justify-between px-6 mb-4">
-          <h3 className="font-bold text-slate-900 text-lg tracking-tight">Historias Destacadas</h3>
-          <span onClick={() => navigate('/miembro/eventos')} className="text-indigo-600 text-xs font-bold cursor-pointer">Ver todo</span>
+          <h3 className="font-bold text-slate-900 text-lg tracking-tight">{t('member.featured_stories') || "Historias Destacadas"}</h3>
+          <span onClick={() => navigate('/miembro/eventos')} className="text-indigo-600 text-xs font-bold cursor-pointer">{t('common.see_all') || "Ver todo"}</span>
         </div>
 
         <div className="flex gap-4 overflow-x-auto px-6 pb-4 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
@@ -109,7 +107,7 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
             <EventStoryCard key={event.id} event={event} index={i} />
           )) : (
             <div className="w-full text-center py-10 text-slate-400 text-sm font-bold bg-slate-50 rounded-3xl mx-6 border-dashed border-2 border-slate-200">
-              No hay historias
+              {t('member.no_stories') || "No hay historias"}
             </div>
           )}
         </div>
@@ -135,7 +133,9 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
             <>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
                 <Radio size={32} className="mb-2 opacity-50" />
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t('member.offline')}</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-600">
+                  {t('member.offline') || "OFFLINE"}
+                </p>
               </div>
               <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-white text-[10px] font-bold">
                 OFFLINE
@@ -144,7 +144,7 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
           )}
           {activePlan?.isActive && (
             <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600 px-3 py-1 rounded-full z-20">
-              <span className="text-[10px] font-bold text-white tracking-wider animate-pulse">EN VIVO</span>
+              <span className="text-[10px] font-bold text-white tracking-wider animate-pulse">{t('member.live_status') || "EN VIVO"}</span>
             </div>
           )}
         </div>
@@ -161,7 +161,7 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
               <MapPin size={24} />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ubicación</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('common.location') || "Ubicación"}</p>
               <p className="font-bold text-slate-800 text-sm line-clamp-1">{address}</p>
             </div>
             <ChevronRight size={20} className="text-slate-300" />
@@ -174,24 +174,24 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
 
           <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2 relative z-10">
             <UserCheck size={20} className="text-indigo-600" />
-            <span className="text-lg">{displayTeam?.teamName || 'Equipo de Hoy'}</span>
+            <span className="text-lg">{displayTeam?.teamName || (t('member.todays_team') || 'Equipo de Hoy')}</span>
           </h3>
 
           <div className="grid grid-cols-2 gap-4 relative z-10">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Predicador</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">{t('role.preacher') || "Predicador"}</p>
               <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.preacher || '---'}</p>
             </div>
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Anciano</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">{t('role.elder') || "Anciano"}</p>
               <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.elder || '---'}</p>
             </div>
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Música</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">{t('role.music') || "Música"}</p>
               <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.musicDirector || '---'}</p>
             </div>
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Audio</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">{t('role.audio') || "Audio"}</p>
               <p className="font-bold text-slate-800 text-sm truncate">{displayTeam?.audioOperator || '---'}</p>
             </div>
           </div>
@@ -205,16 +205,16 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
               <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
                 <Heart className="text-white fill-white" size={20} />
               </div>
-              <h3 className="font-bold text-lg">Petición de Oración</h3>
+              <h3 className="font-bold text-lg">{t('prayer.title') || "Petición de Oración"}</h3>
             </div>
             <p className="text-indigo-100 text-sm mb-6 leading-relaxed opacity-90">
-              ¿Necesitas apoyo espiritual? Envíanos tu petición y nuestro equipo orará por ti.
+              {t('prayer.description_short') || "¿Necesitas apoyo espiritual? Envíanos tu petición y nuestro equipo orará por ti."}
             </p>
             <button
               onClick={() => navigate('/miembro/oracion')}
               className="w-full py-4 bg-white text-indigo-600 rounded-2xl font-bold text-sm shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
             >
-              <span>Enviar Petición</span>
+              <span>{t('prayer.send_button') || "Enviar Petición"}</span>
               <List size={16} className="rotate-0" />
             </button>
           </div>
@@ -225,4 +225,4 @@ const MemberApp: React.FC<MemberAppProps> = ({ activePlan, events, onLoginReques
   );
 };
 
-
+export default MemberApp;

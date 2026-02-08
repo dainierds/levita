@@ -1,14 +1,18 @@
+
 import React, { useState, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import {
     Home, Video, List, Heart, User, Menu, Bell, Calendar, LogOut,
     Signal, Wifi, Battery, Share, Book
 } from 'lucide-react';
 import { useNextService } from '../../hooks/useNextService';
+import { motion } from 'framer-motion';
 
 const MiembroLayout: React.FC = () => {
     const { user, logout } = useAuth();
+    const { t, language } = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
     const [menuOpen, setMenuOpen] = useState(false);
@@ -28,21 +32,39 @@ const MiembroLayout: React.FC = () => {
     };
 
     const navItems = [
-        { path: '/miembro/inicio', icon: Home, label: 'Inicio' },
-        { path: '/miembro/eventos', icon: Calendar, label: 'Eventos' },
-        // Middle button handled separately
-        { path: '/miembro/biblia', icon: Book, label: 'Biblia' }, // Future placeholder or link to external? Or keep 'Orden'?
-        { path: '/miembro/perfil', icon: User, label: 'Perfil' },
+        { path: '/miembro/inicio', icon: Home, label: t('menu.home') || 'Inicio' },
+        { path: '/miembro/eventos', icon: Calendar, label: t('menu.events') || 'Eventos' },
+        { path: '/miembro/biblia', icon: Book, label: t('menu.bible') || 'Biblia' },
+        { path: '/miembro/perfil', icon: User, label: t('menu.profile') || 'Perfil' },
     ];
-    // Note: The original 'En Vivo' and 'Orden' might need to be fit into the 5-tab native bar or the + button.
-    // Sandbox uses: Home, Events, [PLUS], Bible, Profile.
-    // Original MiembroLayout uses: Home, Live, Events, Order, Prayer.
-    // Strategy: Map closest matches.
-    // Home -> Inicio
-    // Events -> Eventos
-    // [PLUS] -> Actions Menu? Or 'En Vivo'?
-    // Bible -> (Not in original, maybe 'Orden'?)
-    // Profile -> Perfil (was in menu, now in tab)
+
+    const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: any, label: string, isActive: boolean, onClick: () => void, isSpecial?: boolean }) => {
+        return (
+            <button
+                onClick={onClick}
+                className="relative w-16 h-full"
+            >
+                {/* Active Bubble Background (The "Curve") */}
+                {isActive && (
+                    <motion.div
+                        layoutId="activeTabBubble"
+                        className="absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.4)] border-[3px] border-white z-0"
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    />
+                )}
+
+                {/* Icon - Absolute Positioning for Perfect Alignment */}
+                <div className={`absolute left-1/2 -translate-x-1/2 transition-all duration-300 z-10 ${isActive ? '-top-[10px] text-white' : 'top-[17px] text-slate-400'}`}>
+                    <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
+                </div>
+
+                {/* Label */}
+                <span className={`absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-bold transition-opacity duration-300 ${isActive ? 'opacity-0' : 'text-slate-400'}`}>
+                    {label}
+                </span>
+            </button>
+        );
+    };
 
     return (
         <div className="fixed inset-0 bg-gray-100 flex items-center justify-center lg:p-4">
@@ -59,15 +81,15 @@ const MiembroLayout: React.FC = () => {
                                 {user?.name?.charAt(0).toUpperCase() || 'A'}
                             </div>
                             <div>
-                                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Buenos días</h2>
-                                <p className="text-lg font-black text-slate-900 leading-none truncate max-w-[150px]">{user?.name?.split(' ')[0] || 'Miembro'}</p>
+                                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('dashboard.welcome_prefix') || "Hola"}</h2>
+                                <p className="text-lg font-black text-slate-900 leading-none truncate max-w-[150px]">{user?.name?.split(' ')[0] || (t('common.member') || 'Miembro')}</p>
                             </div>
                         </div>
                         <div className="flex gap-4 text-slate-600">
                             <button
                                 onClick={logout}
                                 className="p-2 hover:bg-slate-100 rounded-full transition-colors relative text-red-500 hover:text-red-600"
-                                title="Cerrar Sesión"
+                                title={t('common.logout') || "Cerrar Sesión"}
                             >
                                 <LogOut size={20} strokeWidth={2} />
                             </button>
@@ -84,7 +106,7 @@ const MiembroLayout: React.FC = () => {
                         {/* Marquee Content */}
                         <div className="w-full flex items-center overflow-hidden mb-1 relative z-10">
                             <div className="whitespace-nowrap animate-[marquee_20s_linear_infinite] flex items-center w-full">
-                                <span className="text-[10px] font-black text-white tracking-widest px-4">
+                                <span className="text-[10px] font-black text-white tracking-widest px-4 uppercase">
                                     {/* Content injected via logic below */}
                                     {(() => {
                                         // Helper for 12h format
@@ -96,9 +118,13 @@ const MiembroLayout: React.FC = () => {
                                             return `${hours12}:${minutes.toString().padStart(2, '0')} ${suffix}`;
                                         };
 
-                                        if (!nextService) return 'BIENVENIDOS A LA APP DE MIEMBROS  ✦  LEVITA 3.0  ✦  ';
+                                        if (!nextService) return (t('ticker.welcome') || 'BIENVENIDOS A LA APP DE MIEMBROS') + '  ✦  LEVITA 3.0  ✦  ';
 
-                                        const text = `PRÓXIMO CULTO: ${nextService.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${formatTime12h(nextService.time)}  ✦  PREDICADOR: ${nextService.preacher?.toUpperCase() || 'POR DEFINIR'}  ✦  `;
+                                        const nextServiceLabel = t('ticker.next_service') || 'PRÓXIMO CULTO';
+                                        const preacherLabel = t('role.preacher') || 'PREDICADOR';
+                                        const tbdLabel = t('common.tbd') || 'POR DEFINIR';
+
+                                        const text = `${nextServiceLabel}: ${nextService.dateObj.toLocaleDateString(language || 'es', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${formatTime12h(nextService.time)}  ✦  ${preacherLabel}: ${nextService.preacher?.toUpperCase() || tbdLabel}  ✦  `;
                                         return text.repeat(4);
                                     })()}
                                 </span>
@@ -127,13 +153,13 @@ const MiembroLayout: React.FC = () => {
                     {/* Items */}
                     <TabItem
                         icon={Home}
-                        label="Inicio"
+                        label={t('menu.home') || "Inicio"}
                         isActive={location.pathname.includes('/miembro/inicio')}
                         onClick={() => navigate('/miembro/inicio')}
                     />
                     <TabItem
                         icon={Calendar}
-                        label="Eventos"
+                        label={t('menu.events') || "Eventos"}
                         isActive={location.pathname.includes('/miembro/eventos')}
                         onClick={() => navigate('/miembro/eventos')}
                     />
@@ -141,7 +167,7 @@ const MiembroLayout: React.FC = () => {
                     {/* Live Button (Center) */}
                     <TabItem
                         icon={Video}
-                        label="En Vivo"
+                        label={t('menu.live') || "En Vivo"}
                         isActive={location.pathname.includes('/miembro/en-vivo')}
                         onClick={() => navigate('/miembro/en-vivo')}
                         isSpecial
@@ -149,13 +175,13 @@ const MiembroLayout: React.FC = () => {
 
                     <TabItem
                         icon={List}
-                        label="Orden"
+                        label={t('menu.order') || "Orden"}
                         isActive={location.pathname.includes('/miembro/liturgia')}
                         onClick={() => navigate('/miembro/liturgia')}
                     />
                     <TabItem
                         icon={User}
-                        label="Perfil"
+                        label={t('menu.profile') || "Perfil"}
                         isActive={location.pathname.includes('/miembro/perfil')}
                         onClick={() => navigate('/miembro/perfil')}
                     />
@@ -163,36 +189,6 @@ const MiembroLayout: React.FC = () => {
 
             </div>
         </div>
-    );
-};
-
-import { motion } from 'framer-motion';
-
-const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: any, label: string, isActive: boolean, onClick: () => void, isSpecial?: boolean }) => {
-    return (
-        <button
-            onClick={onClick}
-            className="relative w-16 h-full"
-        >
-            {/* Active Bubble Background (The "Curve") */}
-            {isActive && (
-                <motion.div
-                    layoutId="activeTabBubble"
-                    className="absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.4)] border-[3px] border-white z-0"
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                />
-            )}
-
-            {/* Icon - Absolute Positioning for Perfect Alignment */}
-            <div className={`absolute left-1/2 -translate-x-1/2 transition-all duration-300 z-10 ${isActive ? '-top-[10px] text-white' : 'top-[17px] text-slate-400'}`}>
-                <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
-            </div>
-
-            {/* Label */}
-            <span className={`absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-bold transition-opacity duration-300 ${isActive ? 'opacity-0' : 'text-slate-400'}`}>
-                {label}
-            </span>
-        </button>
     );
 };
 
