@@ -76,7 +76,7 @@ const MiembroLayout: React.FC = () => {
                 </div>
 
                 {/* --- TICKER TAPE (Under-Glow Ribbon) --- */}
-                <div className={`absolute top-[85px] left-0 right-0 h-10 bg-gradient-to-r from-blue-900 to-indigo-900 z-30 flex items-center overflow-hidden border-b border-indigo-800/50 shadow-lg shadow-indigo-500/20 transition-all duration-500 ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+                <div className={`absolute top-[110px] left-0 right-0 h-10 bg-gradient-to-r from-blue-900 to-indigo-900 z-30 flex items-center overflow-hidden border-b border-indigo-800/50 shadow-lg shadow-indigo-500/20 transition-all duration-500 ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
                     <div className="w-full flex whitespace-nowrap overflow-hidden">
                         <div className="animate-marquee inline-block text-[10px] font-bold text-white/90 tracking-widest px-4 uppercase">
                             {/* Content injected via logic below */}
@@ -101,7 +101,7 @@ const MiembroLayout: React.FC = () => {
 
                 {/* --- CONTENT AREA --- */}
                 <div
-                    className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-36 pb-24 scroll-smooth"
+                    className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-48 pb-24 scroll-smooth"
                     onScroll={handleScroll}
                     ref={scrollRef}
                     style={{ WebkitOverflowScrolling: 'touch' }}
