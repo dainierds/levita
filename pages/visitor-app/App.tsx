@@ -124,10 +124,32 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
           .filter(p => !p.isActive && new Date(p.date + 'T00:00:00') >= searchStart)
           .map(p => {
             const [y, m, d] = p.date.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+
+            let time = p.startTime;
+
+            // AUTO-FIX: If plan uses default '10:00' but settings have a specific time (e.g. 19:00), use settings.
+            if (time === '10:00' || !time) {
+              const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+              const dayName = DAYS_MAP[dateObj.getDay()];
+              const meetingTimes = currentSettings?.meetingTimes || {};
+
+              // Robust lookup
+              const normalizedDay = dayName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+              const matchedKey = Object.keys(meetingTimes).find(
+                k => k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalizedDay
+              );
+
+              if (matchedKey && meetingTimes[matchedKey]) {
+                time = meetingTimes[matchedKey];
+              }
+            }
+
             return {
               dateStr: p.date,
-              dateObj: new Date(y, m - 1, d),
-              time: p.startTime,
+              dateObj: dateObj,
+              time: time,
               preacher: p.team.preacher,
               type: 'PLAN' as const
             };

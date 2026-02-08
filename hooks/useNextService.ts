@@ -66,10 +66,27 @@ export const useNextService = (tenantId?: string | null) => {
                     .filter(p => !p.isActive && new Date(p.date + 'T00:00:00') >= searchStart)
                     .map(p => {
                         const [y, m, d] = p.date.split('-').map(Number);
+                        const dateObj = new Date(y, m - 1, d);
+                        let time = p.startTime;
+
+                        // Override "10:00" if settings exist
+                        if (time === '10:00' || !time) {
+                            const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                            const dayName = DAYS_MAP[dateObj.getDay()];
+                            const meetingTimes = currentSettings?.meetingTimes || {};
+                            const normalizedDay = dayName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                            const matchedKey = Object.keys(meetingTimes).find(
+                                k => k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalizedDay
+                            );
+                            if (matchedKey && meetingTimes[matchedKey]) {
+                                time = meetingTimes[matchedKey];
+                            }
+                        }
+
                         return {
                             dateStr: p.date,
-                            dateObj: new Date(y, m - 1, d),
-                            time: formatTime12h(p.startTime),
+                            dateObj: dateObj,
+                            time: formatTime12h(time),
                             preacher: p.team.preacher,
                             type: 'PLAN' as const
                         };
