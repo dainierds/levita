@@ -49,59 +49,71 @@ const MiembroLayout: React.FC = () => {
             {/* Phone Frame Simulator - Responsive: Full Screen on Mobile/Tablet, Framed on Desktop */}
             <div className="w-full h-full lg:w-full lg:max-w-[400px] lg:h-[850px] bg-white lg:rounded-[3rem] overflow-hidden shadow-2xl relative lg:border-[8px] lg:border-slate-900 lg:ring-4 ring-slate-800">
 
-                {/* --- NATIVE LAYER: HEADER --- */}
-                <div className={`absolute top-0 left-0 right-0 bg-white/80 backdrop-blur-xl z-40 transition-all duration-300 transform px-6 py-6 pt-12 flex justify-between items-center border-b border-slate-100 ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg shadow-sm">
-                            {user?.name?.charAt(0).toUpperCase() || 'A'}
+                {/* --- NATIVE LAYER: HEADER + TICKER COMBO --- */}
+                <div className={`absolute top-0 left-0 right-0 z-40 transition-all duration-300 transform ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+
+                    {/* WHITE FRONT CARD */}
+                    <div className="relative z-20 bg-white rounded-b-[2.5rem] shadow-sm px-6 py-4 pt-12 pb-6 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg shadow-sm">
+                                {user?.name?.charAt(0).toUpperCase() || 'A'}
+                            </div>
+                            <div>
+                                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Buenos días</h2>
+                                <p className="text-lg font-black text-slate-900 leading-none truncate max-w-[150px]">{user?.name?.split(' ')[0] || 'Miembro'}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Buenos días</h2>
-                            <p className="text-lg font-black text-slate-900 leading-none truncate max-w-[150px]">{user?.name?.split(' ')[0] || 'Miembro'}</p>
+                        <div className="flex gap-4 text-slate-600">
+                            <button
+                                onClick={logout}
+                                className="p-2 hover:bg-slate-100 rounded-full transition-colors relative text-red-500 hover:text-red-600"
+                                title="Cerrar Sesión"
+                            >
+                                <LogOut size={20} strokeWidth={2} />
+                            </button>
+                            <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative">
+                                <Bell size={20} strokeWidth={2} />
+                                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                            </button>
                         </div>
                     </div>
-                    <div className="flex gap-4 text-slate-600">
-                        <button
-                            onClick={logout}
-                            className="p-2 hover:bg-slate-100 rounded-full transition-colors relative text-red-500 hover:text-red-600"
-                            title="Cerrar Sesión"
-                        >
-                            <LogOut size={20} strokeWidth={2} />
-                        </button>
-                        <button className="p-2 hover:bg-slate-100 rounded-full transition-colors relative">
-                            <Bell size={20} strokeWidth={2} />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-                        </button>
-                    </div>
-                </div>
 
-                {/* --- TICKER TAPE (Under-Glow Ribbon) --- */}
-                <div className={`absolute top-[110px] left-0 right-0 h-10 bg-gradient-to-r from-blue-900 to-indigo-900 z-30 flex items-center overflow-hidden border-b border-indigo-800/50 shadow-lg shadow-indigo-500/20 transition-all duration-500 ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-                    <div className="w-full flex whitespace-nowrap overflow-hidden">
-                        <div className="animate-marquee inline-block text-[10px] font-bold text-white/90 tracking-widest px-4 uppercase">
-                            {/* Content injected via logic below */}
-                            {(() => {
-                                // Helper for 12h format
-                                const formatTime12h = (time24: string) => {
-                                    if (!time24) return '';
-                                    const [hours, minutes] = time24.split(':').map(Number);
-                                    const suffix = hours >= 12 ? 'PM' : 'AM';
-                                    const hours12 = hours % 12 || 12;
-                                    return `${hours12}:${minutes.toString().padStart(2, '0')} ${suffix}`;
-                                };
+                    {/* COLORED BOTTOM CARD (Ticker) - Layered Behind */}
+                    <div className="absolute inset-x-0 top-10 -bottom-10 z-10 rounded-b-[2.5rem] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-[0_20px_40px_-12px_rgba(79,70,229,0.5)] flex items-end justify-center pb-2 overflow-hidden">
 
-                                if (!nextService) return 'BIENVENIDOS A LA APP DE MIEMBROS  ✦  LEVITA 3.0  ✦  ';
+                        {/* Marquee Content */}
+                        <div className="w-full flex items-center overflow-hidden mb-1">
+                            <div className="whitespace-nowrap animate-[marquee_20s_linear_infinite] flex items-center w-full">
+                                <span className="text-[10px] font-black text-white tracking-widest px-4">
+                                    {/* Content injected via logic below */}
+                                    {(() => {
+                                        // Helper for 12h format
+                                        const formatTime12h = (time24: string) => {
+                                            if (!time24) return '';
+                                            const [hours, minutes] = time24.split(':').map(Number);
+                                            const suffix = hours >= 12 ? 'PM' : 'AM';
+                                            const hours12 = hours % 12 || 12;
+                                            return `${hours12}:${minutes.toString().padStart(2, '0')} ${suffix}`;
+                                        };
 
-                                const text = `PRÓXIMO CULTO: ${nextService.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${formatTime12h(nextService.time)}  ✦  PREDICADOR: ${nextService.preacher?.toUpperCase() || 'POR DEFINIR'}  ✦  `;
-                                return text.repeat(4);
-                            })()}
+                                        if (!nextService) return 'BIENVENIDOS A LA APP DE MIEMBROS  ✦  LEVITA 3.0  ✦  ';
+
+                                        const text = `PRÓXIMO CULTO: ${nextService.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${formatTime12h(nextService.time)}  ✦  PREDICADOR: ${nextService.preacher?.toUpperCase() || 'POR DEFINIR'}  ✦  `;
+                                        return text.repeat(4);
+                                    })()}
+                                </span>
+                            </div>
                         </div>
+
+                        {/* Masks for gradient fade at edges */}
+                        <div className="absolute left-0 bottom-0 top-20 w-8 bg-gradient-to-r from-blue-600 to-transparent z-20 pointer-events-none"></div>
+                        <div className="absolute right-0 bottom-0 top-20 w-8 bg-gradient-to-l from-purple-600 to-transparent z-20 pointer-events-none"></div>
                     </div>
                 </div>
 
                 {/* --- CONTENT AREA --- */}
                 <div
-                    className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-48 pb-24 scroll-smooth"
+                    className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-44 pb-24 scroll-smooth"
                     onScroll={handleScroll}
                     ref={scrollRef}
                     style={{ WebkitOverflowScrolling: 'touch' }}
