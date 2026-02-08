@@ -5,12 +5,14 @@ import {
     Home, Video, List, Heart, User, Menu, Bell, Calendar, LogOut,
     Signal, Wifi, Battery, Share, Book
 } from 'lucide-react';
+import { useNextService } from '../../hooks/useNextService';
 
 const MiembroLayout: React.FC = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [menuOpen, setMenuOpen] = useState(false);
+    const { nextService } = useNextService(user?.tenantId);
 
     // Native Shell Logic
     const [showNativeHeader, setShowNativeHeader] = useState(true);
@@ -73,9 +75,33 @@ const MiembroLayout: React.FC = () => {
                     </div>
                 </div>
 
+                {/* --- TICKER TAPE (Under-Glow Ribbon) --- */}
+                <div className={`absolute top-[85px] left-0 right-0 h-10 bg-gradient-to-r from-blue-900 to-indigo-900 z-30 flex items-center overflow-hidden border-b border-indigo-800/50 shadow-lg shadow-indigo-500/20 transition-all duration-500 ${showNativeHeader ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+                    <div className="w-full flex whitespace-nowrap overflow-hidden">
+                        <div className="animate-marquee inline-block text-[10px] font-bold text-white/90 tracking-widest px-4 uppercase">
+                            {/* Content injected via logic below */}
+                            {(() => {
+                                // Helper for 12h format
+                                const formatTime12h = (time24: string) => {
+                                    if (!time24) return '';
+                                    const [hours, minutes] = time24.split(':').map(Number);
+                                    const suffix = hours >= 12 ? 'PM' : 'AM';
+                                    const hours12 = hours % 12 || 12;
+                                    return `${hours12}:${minutes.toString().padStart(2, '0')} ${suffix}`;
+                                };
+
+                                if (!nextService) return 'BIENVENIDOS A LA APP DE MIEMBROS  ✦  LEVITA 3.0  ✦  ';
+
+                                const text = `PRÓXIMO CULTO: ${nextService.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${formatTime12h(nextService.time)}  ✦  PREDICADOR: ${nextService.preacher?.toUpperCase() || 'POR DEFINIR'}  ✦  `;
+                                return text.repeat(4);
+                            })()}
+                        </div>
+                    </div>
+                </div>
+
                 {/* --- CONTENT AREA --- */}
                 <div
-                    className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-32 pb-24 scroll-smooth"
+                    className="w-full h-full overflow-y-auto bg-[#F2F4F7] pt-36 pb-24 scroll-smooth"
                     onScroll={handleScroll}
                     ref={scrollRef}
                     style={{ WebkitOverflowScrolling: 'touch' }}
