@@ -7,6 +7,7 @@ import { db } from '../services/firebase';
 import { doc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { Invitation, ChurchSettings } from '../types';
 import { updateTenantSettings } from '../services/tenantService';
+import { useLanguage } from '../context/LanguageContext';
 
 interface UserManagementProps {
   users: User[];
@@ -17,17 +18,18 @@ interface UserManagementProps {
 }
 
 const ROLES_TO_CREATE = [
-  { key: 'ADMIN', label: 'Admin' },
-  { key: 'ELDER', label: 'Ancianos' },
-  { key: 'PREACHER', label: 'Predicadores' },
-  { key: 'MUSIC', label: 'Música' },
-  { key: 'AUDIO', label: 'Audio' },
-  { key: 'TEACHER', label: 'Maestro de ES' },
-  { key: 'BOARD', label: 'Junta de Iglesia' },
-  { key: 'LEADER', label: 'Líderes / Directores' },
+  { key: 'ADMIN', label: 'role.admin' },
+  { key: 'ELDER', label: 'role.elder' },
+  { key: 'PREACHER', label: 'role.preacher' },
+  { key: 'MUSIC', label: 'role.music' },
+  { key: 'AUDIO', label: 'role.audio' },
+  { key: 'TEACHER', label: 'role.teacher' },
+  { key: 'BOARD', label: 'role.board' },
+  { key: 'LEADER', label: 'role.leader' },
 ];
 
 const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, currentUser, settings }) => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({ name: '', role: 'ELDER' as Role });
   // Custom Job State
   const [jobName, setJobName] = useState('');
@@ -63,10 +65,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
     try {
       await deleteInvitation(code);
       setPendingInvitations(prev => prev.filter(i => i.id !== code));
-      addNotification('success', 'Invitación Cancelada', 'La invitación se ha borrado.');
+      addNotification('success', t('common.deleted'), t('common.success'));
     } catch (err) {
       console.error(err);
-      addNotification('error', 'Error', 'No se pudo cancelar.');
+      addNotification('error', t('common.error'), t('common.error'));
     }
   };
 
@@ -77,7 +79,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
     if (formData.role !== 'LEADER') {
       const limit = TIER_LIMITS[tier];
       if (users.length >= limit) {
-        addNotification('error', 'Límite Alcanzado', `Tu plan ${tier} solo permite hasta ${limit} usuarios.`);
+        addNotification('error', t('common.limit_reached'), t('users.plan_info', { tier, current: users.length.toString(), max: limit.toString() }));
         return;
       }
     }
@@ -90,7 +92,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
 
       // --- CUSTOM ROLE CREATION FLOW ---
       if (formData.role === 'LEADER') {
-        if (!jobName.trim()) { addNotification('error', 'Falta Nombre', 'Escribe el nombre del cargo.'); setIsLoading(false); return; }
+        if (!jobName.trim()) { addNotification('error', t('common.required'), t('users.role_name')); setIsLoading(false); return; }
 
         const newJob = {
           id: `job-${Math.random().toString(36).substr(2, 9)}`,
@@ -104,7 +106,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
           customJobRoles: [...currentJobs, newJob]
         });
 
-        addNotification('success', 'Cargo Creado', `Se ha creado el cargo "${jobName}" con permisos de "${permMapping}".`);
+        addNotification('success', t('common.success'), t('users.create_job'));
         setJobName('');
         setIsLoading(false);
         return;
@@ -123,7 +125,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
         };
 
         await setDoc(doc(db, 'users', newUserId), newUser);
-        addNotification('success', 'Usuario Agregado', `${formData.name} ha sido añadido al equipo.`);
+        addNotification('success', t('common.success'), t('users.add_to_team'));
         setFormData(prev => ({ ...prev, name: '' }));
         setIsLoading(false);
         return;
@@ -134,21 +136,21 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
       const link = `${origin}/join?code=${code}`;
 
       setInvitationLink(link);
-      addNotification('success', 'Invitación Generada', 'Copia el enlace y envíalo al nuevo usuario.');
+      addNotification('success', t('users.invitation_ready'), t('users.share_link'));
 
       const invites = await getPendingInvitations(tenantId);
       setPendingInvitations(invites);
 
     } catch (error) {
       console.error(error);
-      addNotification('error', 'Error', 'No se pudo generar la invitación.');
+      addNotification('error', t('common.error'), t('common.error'));
     } finally {
       setIsLoading(false);
     }
   };
 
   const copyToClipboard = () => {
-    const roleLabel = ROLES_TO_CREATE.find(r => r.key === formData.role)?.label || formData.role;
+    const roleLabel = t(ROLES_TO_CREATE.find(r => r.key === formData.role)?.label || `role.${formData.role.toLowerCase()}`);
     const message = `Hola, has sido invitado a Levita por ${currentUser.name} como ${roleLabel}. Por favor, completa tu registro para acceder al panel de control: ${invitationLink}`;
 
     navigator.clipboard.writeText(message);
@@ -161,11 +163,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
 
     try {
       await deleteDoc(doc(db, 'users', userId));
-      addNotification('success', 'Usuario Eliminado', 'El usuario ha sido removido correctamente.');
+      addNotification('success', t('common.deleted'), t('common.success'));
       setUserToDelete(null);
     } catch (error) {
       console.error(error);
-      addNotification('error', 'Error', 'No se pudo eliminar el usuario.');
+      addNotification('error', t('common.error'), t('common.error'));
     }
   };
 
@@ -219,10 +221,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
         ...settings,
         customJobRoles: newJobs
       });
-      addNotification('success', 'Cargo Eliminado', 'El cargo ha sido removido.');
+      addNotification('success', t('common.deleted'), t('common.success'));
     } catch (error) {
       console.error(error);
-      addNotification('error', 'Error', 'No se pudo eliminar el cargo.');
+      addNotification('error', t('common.error'), t('common.error'));
     }
   };
 
@@ -233,11 +235,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
         secondaryRoles: editingUser.secondaryRoles || [],
         assignedJobIds: editingUser.assignedJobIds || []
       });
-      addNotification('success', 'Roles Actualizados', `Permisos de ${editingUser.name} guardados.`);
+      addNotification('success', t('common.saved'), t('common.success'));
       setEditingUser(null);
     } catch (error) {
       console.error("Error updating roles:", error);
-      addNotification('error', 'Error', 'No se pudieron guardar los cambios.');
+      addNotification('error', t('common.error'), t('common.error'));
     }
   };
 
@@ -245,10 +247,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
   return (
     <div className="p-4 md:p-8 max-w-full mx-auto space-y-8">
       <header>
-        <h2 className="text-3xl font-bold text-slate-800">Gestión de Usuarios</h2>
+        <h2 className="text-3xl font-bold text-slate-800">{t('users.title')}</h2>
         <p className="text-slate-500">
-          Plan Actual: <span className="font-bold text-indigo-600">{tier}</span> •
-          Usuarios: <span className={`${users.length >= TIER_LIMITS[tier] ? 'text-red-500 font-bold' : 'text-slate-700'}`}>{users.length} / {TIER_LIMITS[tier]}</span>
+          {t('users.plan_info', { tier, current: users.length.toString(), max: TIER_LIMITS[tier].toString() })}
         </p>
       </header>
 
@@ -256,7 +257,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
         {/* Create Invitation Form */}
         <div className="lg:col-span-1 xl:col-span-1 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 h-fit">
           <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <Link size={20} className="text-indigo-500" /> {formData.role === 'LEADER' ? 'Crear Cargo Dirección' : 'Invitar Usuario'}
+            <Link size={20} className="text-indigo-500" /> {formData.role === 'LEADER' ? t('users.create_role_title') : t('users.invite_title')}
           </h3>
 
           {!invitationLink ? (
@@ -264,7 +265,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
               {formData.role === 'LEADER' ? (
                 // Custom Job Form
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre del Cargo</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('users.role_name')}</label>
                   <input
                     type="text"
                     value={jobName}
@@ -272,23 +273,23 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                     className="w-full px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 transition-all font-bold text-indigo-900"
                     placeholder="Ej. Director de Escuela Sabática"
                   />
-                  <label className="block text-xs font-bold text-slate-500 uppercase mt-4 mb-1">Permisos de Sistema (Base)</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mt-4 mb-1">{t('users.base_permissions')}</label>
                   <select
                     value={permMapping}
                     onChange={(e) => setPermMapping(e.target.value as Role)}
                     className="w-full px-4 py-3 bg-slate-50 rounded-xl outline-none"
                   >
-                    <option value="MEMBER">Sin Permisos Especiales (Solo Lectura)</option>
-                    <option value="TEACHER">Director de Esc. Sabática (Editar Roster Maestros)</option>
-                    <option value="MUSIC">Director de Música (Editar Dep. Música)</option>
-                    <option value="ELDER">Director de Ancianos (Editar Roster Ancianos)</option>
-                    <option value="AUDIO">Director de Audio (Editar Roster Audio)</option>
+                    <option value="MEMBER">{t('role.member')}</option>
+                    <option value="TEACHER">{t('role.teacher')}</option>
+                    <option value="MUSIC">{t('role.music')}</option>
+                    <option value="ELDER">{t('role.elder')}</option>
+                    <option value="AUDIO">{t('role.audio')}</option>
                   </select>
                 </div>
               ) : (
                 // Normal User Form
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre Sugerido (Opcional)</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('users.suggested_name')}</label>
                   <input
                     type="text"
                     value={formData.name}
@@ -300,7 +301,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
               )}
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rol Principal</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('users.primary_role')}</label>
                 <div className="grid grid-cols-2 gap-2">
                   {ROLES_TO_CREATE.map((r) => (
                     <button
@@ -312,7 +313,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                         }`}
                     >
-                      {r.label}
+                      {t(r.label)}
                     </button>
                   ))}
 
@@ -324,9 +325,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                 disabled={isLoading}
                 className="w-full py-3 mt-4 bg-slate-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isLoading ? 'Procesando...' :
-                  formData.role === 'LEADER' ? 'Crear Cargo' :
-                    ['PREACHER', 'TEACHER'].includes(formData.role) ? 'Agregar al Equipo' : 'Generar Link'}
+                {isLoading ? t('common.processing') :
+                  formData.role === 'LEADER' ? t('users.create_job') :
+                    ['PREACHER', 'TEACHER'].includes(formData.role) ? t('users.add_to_team') : t('users.generate_link')}
               </button>
             </form>
           ) : (
@@ -335,8 +336,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                 <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
                   <CheckCircle size={20} />
                 </div>
-                <h4 className="font-bold text-green-800">¡Invitación Lista!</h4>
-                <p className="text-xs text-green-600 mt-1">Comparte este enlace con el usuario.</p>
+                <h4 className="font-bold text-green-800">{t('users.invitation_ready')}</h4>
+                <p className="text-xs text-green-600 mt-1">{t('users.share_link')}</p>
               </div>
 
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 break-all text-xs font-mono text-slate-600">
@@ -347,14 +348,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                 onClick={copyToClipboard}
                 className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
               >
-                {copied ? <><Check size={18} /> Copiado</> : <><Copy size={18} /> Copiar Link</>}
+                {copied ? <><Check size={18} /> {t('common.link_copied')}</> : <><Copy size={18} /> {t('common.copy_link')}</>}
               </button>
 
               <button
                 onClick={() => { setInvitationLink(''); setFormData(prev => ({ ...prev, name: '' })); }}
                 className="w-full py-3 mt-2 text-slate-400 font-bold hover:text-slate-600 text-xs"
               >
-                Generar Otra
+                {t('common.create')} {t('common.back')}
               </button>
             </div>
           )}
@@ -363,24 +364,24 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
         {/* Pending Invitations Card */}
         <div className="lg:col-span-1 xl:col-span-1 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 h-fit">
           <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <Clock size={20} className="text-orange-500" /> Invitaciones ({pendingInvitations.length})
+            <Clock size={20} className="text-orange-500" /> {t('users.pending_invites')} ({pendingInvitations.length})
           </h3>
 
           <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
             {pendingInvitations.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-4">No hay invitaciones pendientes.</p>
+              <p className="text-xs text-slate-400 text-center py-4">{t('users.no_pending')}</p>
             ) : (
               pendingInvitations.map((inv) => (
                 <div key={inv.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100 group hover:border-indigo-100 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="text-xs font-bold text-slate-700">{inv.suggestedName || 'Sin nombre'}</p>
-                      <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">{inv.role}</span>
+                      <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">{t(`role.${inv.role.toLowerCase()}`)}</span>
                     </div>
                     <button
                       onClick={() => handleCancelInvitation(inv.id)}
                       className="text-slate-300 hover:text-red-500 transition-colors"
-                      title="Cancelar Invitación"
+                      title={t('common.delete')}
                     >
                       <X size={14} />
                     </button>
@@ -389,15 +390,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                   <button
                     onClick={() => {
                       const link = `${window.location.origin}/join?code=${inv.id}`;
-                      const roleLabel = ROLES_TO_CREATE.find(r => r.key === inv.role)?.label || inv.role;
+                      const roleLabel = t(`role.${inv.role.toLowerCase()}`);
                       const message = `Hola, has sido invitado a Levita por ${currentUser.name} como ${roleLabel}. Por favor, completa tu registro para acceder al panel de control: ${link}`;
 
                       navigator.clipboard.writeText(message);
-                      addNotification('success', 'Mensaje Copiado', 'Invitación lista para compartir.');
+                      addNotification('success', t('common.link_copied'), t('users.copy_message'));
                     }}
                     className="w-full py-1.5 bg-white border border-indigo-100 text-indigo-600 text-xs font-bold rounded-lg hover:bg-indigo-50 flex items-center justify-center gap-1 shadow-sm"
                   >
-                    <Copy size={12} /> Copiar Link
+                    <Copy size={12} /> {t('common.copy_link')}
                   </button>
                 </div>
               ))
@@ -411,14 +412,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
           {(() => {
             // Define sections order and configuration
             const ROLE_SECTIONS = [
-              { key: 'ADMIN', label: 'Administradores', icon: Shield, color: 'text-indigo-600', bg: 'bg-indigo-100' },
-              { key: 'ELDER', label: 'Ancianos', icon: CheckCircle, color: 'text-blue-600', bg: 'bg-blue-100' },
-              { key: 'PREACHER', label: 'Predicadores', icon: UserIcon, color: 'text-purple-600', bg: 'bg-purple-100' },
-              { key: 'MUSIC', label: 'Músicos & Vocales', icon: UserIcon, color: 'text-pink-600', bg: 'bg-pink-100' },
-              { key: 'AUDIO', label: 'Operadores de Audio', icon: UserIcon, color: 'text-orange-600', bg: 'bg-orange-100' },
-              { key: 'TEACHER', label: 'Maestros ES', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-              { key: 'BOARD', label: 'Junta de Iglesia', icon: Users, color: 'text-slate-600', bg: 'bg-slate-100' },
-              { key: 'LEADER', label: 'Líderes / Directores', icon: Shield, color: 'text-cyan-600', bg: 'bg-cyan-100' },
+              { key: 'ADMIN', label: 'users.role_admin', icon: Shield, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+              { key: 'ELDER', label: 'users.role_elders', icon: CheckCircle, color: 'text-blue-600', bg: 'bg-blue-100' },
+              { key: 'PREACHER', label: 'users.role_preachers', icon: UserIcon, color: 'text-purple-600', bg: 'bg-purple-100' },
+              { key: 'MUSIC', label: 'users.role_music', icon: UserIcon, color: 'text-pink-600', bg: 'bg-pink-100' },
+              { key: 'AUDIO', label: 'users.role_audio', icon: UserIcon, color: 'text-orange-600', bg: 'bg-orange-100' },
+              { key: 'TEACHER', label: 'users.role_teachers', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+              { key: 'BOARD', label: 'users.role_board', icon: Users, color: 'text-slate-600', bg: 'bg-slate-100' },
+              { key: 'LEADER', label: 'users.role_leaders', icon: Shield, color: 'text-cyan-600', bg: 'bg-cyan-100' },
             ];
 
             // Filter users into groups
@@ -431,7 +432,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
             if (groupedUsers.length === 0) {
               return (
                 <div className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-100 text-center text-slate-400">
-                  <p>No hay usuarios registrados aún.</p>
+                  <p>{t('common.no_results')}</p>
                 </div>
               );
             }
@@ -442,7 +443,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                   <div className={`w-8 h-8 rounded-full ${group.bg} flex items-center justify-center`}>
                     <group.icon size={16} />
                   </div>
-                  {group.label}
+                  {t(group.label)}
                   <span className="text-xs ml-auto bg-slate-100 text-slate-500 px-2 py-1 rounded-full">{group.users.length}</span>
                 </h3>
 
@@ -450,9 +451,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                   <table className="w-full">
                     <thead>
                       <tr className="text-left text-xs font-bold text-slate-400 uppercase border-b border-slate-100">
-                        <th className="pb-4 pl-4">Usuario</th>
-                        <th className="pb-4">Estado</th>
-                        <th className="pb-4 text-right pr-4">Acciones</th>
+                        <th className="pb-4 pl-4">{t('role.usuario')}</th>
+                        <th className="pb-4">{t('common.status')}</th>
+                        <th className="pb-4 text-right pr-4">{t('common.actions')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -481,12 +482,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                               {u.status === 'ACTIVE' ? (
                                 <>
                                   <CheckCircle size={14} className="text-green-500" />
-                                  <span className="text-xs font-bold text-green-600">Activo</span>
+                                  <span className="text-xs font-bold text-green-600">{t('common.active')}</span>
                                 </>
                               ) : (
                                 <>
                                   <Shield size={14} className="text-orange-400" />
-                                  <span className="text-xs font-bold text-orange-500">Pendiente</span>
+                                  <span className="text-xs font-bold text-orange-500">{t('common.pending')}</span>
                                 </>
                               )}
                             </div>
@@ -498,14 +499,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                                 <button
                                   onClick={() => setEditingUser(u)}
                                   className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                                  title="Editar Roles"
+                                  title={t('common.edit')}
                                 >
                                   <Edit2 size={16} />
                                 </button>
 
                                 {userToDelete === u.id ? (
                                   <div className="flex items-center justify-end gap-2 animate-in fade-in slide-in-from-right-4">
-                                    <span className="text-xs font-bold text-red-500 mr-2">¿Seguro?</span>
+                                    <span className="text-xs font-bold text-red-500 mr-2">{t('users.delete_confirm')}</span>
                                     <button
                                       onClick={() => handleDeleteUser(u.id)}
                                       className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
@@ -523,7 +524,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                                   <button
                                     onClick={() => setUserToDelete(u.id)}
                                     className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                    title="Eliminar Usuario"
+                                    title={t('common.delete')}
                                   >
                                     <Trash2 size={16} />
                                   </button>
@@ -548,8 +549,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
           <div className="bg-white rounded-[2rem] w-full max-w-lg p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h3 className="text-2xl font-bold text-slate-800">Editar Permisos</h3>
-                <p className="text-slate-500">Asigna roles adicionales a <span className="font-bold text-indigo-600">{editingUser.name}</span>.</p>
+                <h3 className="text-2xl font-bold text-slate-800">{t('users.edit_permissions')}</h3>
+                <p className="text-slate-500">{t('users.edit_permissions_subtitle', { name: editingUser.name })}</p>
               </div>
               <button
                 onClick={() => setEditingUser(null)}
@@ -560,15 +561,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
             </div>
 
             <div className="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-2">Rol Principal (Fijo)</p>
+              <p className="text-xs font-bold text-slate-400 uppercase mb-2">{t('users.primary_role_fixed')}</p>
               <div className="flex items-center gap-2 font-bold text-slate-700">
                 <Shield size={16} className="text-indigo-500" />
-                {ROLES_TO_CREATE.find(r => r.key === editingUser.role)?.label || editingUser.role}
+                {t(ROLES_TO_CREATE.find(r => r.key === editingUser.role)?.label || `role.${editingUser.role.toLowerCase()}`)}
               </div>
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs font-bold text-slate-400 uppercase">Roles Secundarios (Opcional)</p>
+              <p className="text-xs font-bold text-slate-400 uppercase">{t('users.secondary_roles')}</p>
               <div className="grid grid-cols-2 gap-3">
                 {ROLES_TO_CREATE.filter(r => r.key !== editingUser.role && r.key !== 'LEADER').map((option) => {
                   const isSelected = editingUser.secondaryRoles?.includes(option.key as Role);
@@ -581,7 +582,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                     >
-                      <span className="text-sm font-bold">{option.label}</span>
+                      <span className="text-sm font-bold">{t(option.label)}</span>
                       {isSelected && <CheckCircle size={16} className="text-indigo-600" />}
                     </button>
                   );
@@ -592,7 +593,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
             {/* Custom Jobs Section */}
             {settings?.customJobRoles && settings.customJobRoles.length > 0 && (
               <div className="space-y-3 mt-6 pt-6 border-t border-slate-100">
-                <p className="text-xs font-bold text-slate-400 uppercase">Cargos de Liderazgo (Personalizados)</p>
+                <p className="text-xs font-bold text-slate-400 uppercase">{t('users.custom_jobs')}</p>
                 <div className="grid grid-cols-1 gap-2">
                   {settings.customJobRoles.map((job) => {
                     const isSelected = editingUser.assignedJobIds?.includes(job.id);
@@ -607,14 +608,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                         >
                           <div className="text-left">
                             <span className="text-sm font-bold block">{job.name}</span>
-                            <span className="text-[10px] text-slate-400">Permiso Base: {job.permissionRole}</span>
+                            <span className="text-[10px] text-slate-400">Permiso Base: {t(`role.${job.permissionRole.toLowerCase()}`)}</span>
                           </div>
                           {isSelected && <CheckCircle size={16} className="text-emerald-600" />}
                         </button>
                         <button
                           onClick={() => handleDeleteCustomJob(job.id)}
                           className="p-3 bg-white border border-slate-100 text-slate-300 hover:text-red-500 hover:border-red-100 hover:bg-red-50 rounded-xl transition-all"
-                          title="Eliminar Cargo Definitivamente"
+                          title={t('common.delete')}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -630,13 +631,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
                 onClick={() => setEditingUser(null)}
                 className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSaveRoles}
                 className="flex-1 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors shadow-lg"
               >
-                Guardar Cambios
+                {t('common.save_changes')}
               </button>
             </div>
           </div>

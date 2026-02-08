@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { ChurchSettings, DayOfWeek } from '../types';
 import { Calendar, Clock, BookOpen, Mic2, Save, Check, BellRing, Church, Facebook, Instagram, Youtube, Shield } from 'lucide-react';
 import { useNotification } from './NotificationSystem';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ChurchConfigProps {
   settings: ChurchSettings;
@@ -11,7 +12,18 @@ interface ChurchConfigProps {
 
 const DAYS: DayOfWeek[] = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
+const dayMapping: Record<DayOfWeek, string> = {
+  'Lunes': 'day.monday',
+  'Martes': 'day.tuesday',
+  'Miércoles': 'day.wednesday',
+  'Jueves': 'day.thursday',
+  'Viernes': 'day.friday',
+  'Sábado': 'day.saturday',
+  'Domingo': 'day.sunday'
+};
+
 const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
+  const { t } = useLanguage();
   const [config, setConfig] = useState<ChurchSettings>(settings);
   const [isSaving, setIsSaving] = useState(false);
   const { addNotification } = useNotification();
@@ -35,7 +47,7 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
     setTimeout(() => {
       onSave(config);
       setIsSaving(false);
-      addNotification('success', 'Configuración Guardada', 'Los ajustes de la iglesia se han actualizado correctamente.');
+      addNotification('success', t('common.saved'), t('common.success'));
     }, 1000);
   };
 
@@ -64,7 +76,7 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
           >
             {isSelected && <div className="absolute top-2 right-2"><Check size={12} /></div>}
             {icon && <div className={isSelected ? 'opacity-100' : 'opacity-50'}>{icon}</div>}
-            <span className="text-sm font-semibold">{day}</span>
+            <span className="text-sm font-semibold">{t(dayMapping[day])}</span>
           </button>
         );
       })}
@@ -75,15 +87,15 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
     <div className="p-4 md:p-8 md:pt-20 max-w-full mx-auto space-y-8 pb-12">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold text-slate-800">Configuración de Iglesia</h2>
-          <p className="text-slate-500">Personaliza los días y horarios de mikata</p>
+          <h2 className="text-3xl font-bold text-slate-800">{t('config.title')}</h2>
+          <p className="text-slate-500">{t('config.subtitle')}</p>
         </div>
         <button
           onClick={handleSave}
           disabled={isSaving}
           className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-70"
         >
-          {isSaving ? 'Guardando...' : <><Save size={18} /> Guardar Cambios</>}
+          {isSaving ? t('common.saving') : <><Save size={18} /> {t('common.save_changes')}</>}
         </button>
       </div>
 
@@ -91,12 +103,12 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
       <section className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
         <div className="flex items-center gap-2 mb-6 text-slate-800">
           <Church className="text-indigo-500" size={24} />
-          <h3 className="text-xl font-bold">Información General</h3>
+          <h3 className="text-xl font-bold">{t('config.general_info')}</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre de la Iglesia</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('config.church_name')}</label>
             <input
               type="text"
               value={config.churchName || ''}
@@ -106,7 +118,7 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Dirección Física</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('config.address')}</label>
             <input
               type="text"
               value={config.address || ''}
@@ -118,7 +130,7 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
         </div>
 
         <div className="mt-6">
-          <label className="block text-xs font-bold text-slate-500 uppercase mb-3">Redes Sociales</label>
+          <label className="block text-xs font-bold text-slate-500 uppercase mb-3">{t('config.socials')}</label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <div className="absolute left-4 top-3 text-slate-400"><Facebook size={18} /></div>
@@ -158,9 +170,9 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
       <section className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
         <div className="flex items-center gap-2 mb-6 text-slate-800">
           <Calendar className="text-indigo-500" size={24} />
-          <h3 className="text-xl font-bold">Días de Reunión</h3>
+          <h3 className="text-xl font-bold">{t('config.meeting_days')}</h3>
         </div>
-        <p className="text-sm text-slate-500 mb-6">Selecciona los días en que la iglesia tiene reuniones regulares</p>
+        <p className="text-sm text-slate-500 mb-6">{t('config.meeting_days_subtitle')}</p>
         <DaySelector
           selectedDays={config.meetingDays}
           onChange={(d) => toggleDay(config.meetingDays, d, 'meetingDays')}
@@ -173,9 +185,9 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
         <section className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in slide-in-from-top-4 duration-300">
           <div className="flex items-center gap-2 mb-6 text-slate-800">
             <Clock className="text-indigo-500" size={24} />
-            <h3 className="text-xl font-bold">Horarios de Reunión</h3>
+            <h3 className="text-xl font-bold">{t('config.meeting_times')}</h3>
           </div>
-          <p className="text-sm text-slate-500 mb-6 font-medium">Define el horario de inicio (Formato 12h)</p>
+          <p className="text-sm text-slate-500 mb-6 font-medium">{t('config.meeting_times_subtitle')}</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {DAYS.map(day => {
@@ -197,7 +209,7 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
 
               return (
                 <div key={day} className={`transition-all duration-300 ${isActive ? 'opacity-100 transform scale-100' : 'opacity-40 grayscale pointer-events-none scale-95'}`}>
-                  <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider">{day}</label>
+                  <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-wider">{t(dayMapping[day])}</label>
 
                   <div className={`
                     flex items-center justify-between p-2 border rounded-xl bg-slate-50/50
@@ -258,9 +270,9 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
       <section className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
         <div className="flex items-center gap-2 mb-6 text-slate-800">
           <BookOpen className="text-purple-500" size={24} />
-          <h3 className="text-xl font-bold">Días de Predicación</h3>
+          <h3 className="text-xl font-bold">{t('config.preaching_days')}</h3>
         </div>
-        <p className="text-sm text-slate-500 mb-6">Selecciona los días en que hay sermones/predicaciones programadas</p>
+        <p className="text-sm text-slate-500 mb-6">{t('config.preaching_days_subtitle')}</p>
         <DaySelector
           selectedDays={config.preachingDays}
           onChange={(d) => toggleDay(config.preachingDays, d, 'preachingDays')}
@@ -273,21 +285,21 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
       <section className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
         <div className="flex items-center gap-2 mb-6 text-slate-800">
           <Mic2 className="text-green-500" size={24} />
-          <h3 className="text-xl font-bold">Turnos de Plataforma</h3>
+          <h3 className="text-xl font-bold">{t('config.roster_config')}</h3>
         </div>
-        <p className="text-sm text-slate-500 mb-6">Configura la frecuencia, días y automatizaciones para los turnos.</p>
+        <p className="text-sm text-slate-500 mb-6">{t('config.roster_config_subtitle')}</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <div className="max-w-xs">
-            <label className="block text-xs font-bold text-slate-500 mb-2">Frecuencia de Turnos</label>
+            <label className="block text-xs font-bold text-slate-500 mb-2">{t('config.roster_frequency')}</label>
             <select
               value={config.rosterFrequency}
               onChange={(e) => setConfig({ ...config, rosterFrequency: e.target.value as any })}
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
             >
-              <option>Semanal</option>
-              <option>Quincenal</option>
-              <option>Mensual</option>
+              <option value="Semanal">{t('config.weekly')}</option>
+              <option value="Quincenal">{t('config.biweekly')}</option>
+              <option value="Mensual">{t('config.monthly')}</option>
             </select>
           </div>
 
@@ -295,9 +307,9 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
           <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between border border-slate-100">
             <div>
               <h4 className="font-bold text-slate-700 flex items-center gap-2">
-                <BellRing size={16} className="text-orange-500" /> Notificar Asignaciones
+                <BellRing size={16} className="text-orange-500" /> {t('config.notify_assignments')}
               </h4>
-              <p className="text-xs text-slate-400 mt-1">Enviar email automático al voluntario.</p>
+              <p className="text-xs text-slate-400 mt-1">{t('config.notify_assignments_desc')}</p>
             </div>
             <button
               onClick={() => setConfig({ ...config, rosterAutoNotifications: !config.rosterAutoNotifications })}
@@ -309,7 +321,7 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-4">Días Activos para Turnos</label>
+          <label className="block text-xs font-bold text-slate-500 mb-4">{t('config.active_days_roster')}</label>
           <DaySelector
             selectedDays={config.rosterDays}
             onChange={(d) => toggleDay(config.rosterDays, d, 'rosterDays')}
@@ -323,12 +335,12 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
       <section className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
         <div className="flex items-center gap-2 mb-6 text-slate-800">
           <Shield className="text-pink-500" size={24} />
-          <h3 className="text-xl font-bold">Acceso de Miembros</h3>
+          <h3 className="text-xl font-bold">{t('config.member_access')}</h3>
         </div>
-        <p className="text-sm text-slate-500 mb-6">Configura el PIN único para que los miembros accedan a la app.</p>
+        <p className="text-sm text-slate-500 mb-6">{t('config.member_access_subtitle')}</p>
 
         <div className="max-w-xs">
-          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">PIN de Acceso</label>
+          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('config.access_pin')}</label>
           <input
             type="text"
             value={config.memberPin || ''}
@@ -337,11 +349,11 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
             placeholder="0000"
             maxLength={6}
           />
-          <p className="text-xs text-slate-400 mt-2">Comparte este PIN con tu congregación.</p>
+          <p className="text-xs text-slate-400 mt-2">{t('config.access_pin_desc')}</p>
         </div>
 
         <div className="max-w-xs mt-6">
-          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">PIN Ministerio de Música</label>
+          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('config.music_pin')}</label>
           <input
             type="text"
             value={config.musicMinistryPin || ''}
@@ -350,7 +362,7 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
             placeholder="0000"
             maxLength={6}
           />
-          <p className="text-xs text-slate-400 mt-2">Acceso exclusivo para el equipo de alabanza.</p>
+          <p className="text-xs text-slate-400 mt-2">{t('config.music_pin_desc')}</p>
         </div>
       </section>
 
@@ -358,12 +370,12 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
       <section className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
         <div className="flex items-center gap-2 mb-6 text-slate-800">
           <Youtube className="text-red-500" size={24} />
-          <h3 className="text-xl font-bold">Transmisión en Vivo</h3>
+          <h3 className="text-xl font-bold">{t('config.live_stream')}</h3>
         </div>
-        <p className="text-sm text-slate-500 mb-6">Configura tu canal de YouTube para la transmisión.</p>
+        <p className="text-sm text-slate-500 mb-6">{t('config.live_stream_subtitle')}</p>
 
         <div>
-          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">YouTube Channel ID</label>
+          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('config.youtube_id')}</label>
           <input
             type="text"
             value={config.youtubeChannelId || ''}
@@ -382,15 +394,15 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex-1 w-full grid grid-cols-3 gap-4 text-xs">
             <div>
-              <p className="font-bold text-indigo-600 mb-1">📅 Reuniones</p>
-              <p className="text-slate-500 truncate">{config.meetingDays.join(', ') || 'Ninguno'}</p>
+              <p className="font-bold text-indigo-600 mb-1">📅 {t('common.date')}</p>
+              <p className="text-slate-500 truncate">{config.meetingDays.map(d => t(dayMapping[d])).join(', ') || t('common.none')}</p>
             </div>
             <div>
-              <p className="font-bold text-purple-600 mb-1">📖 Predicación</p>
-              <p className="text-slate-500 truncate">{config.preachingDays.join(', ') || 'Ninguno'}</p>
+              <p className="font-bold text-purple-600 mb-1">📖 {t('config.preaching_days')}</p>
+              <p className="text-slate-500 truncate">{config.preachingDays.map(d => t(dayMapping[d])).join(', ') || t('common.none')}</p>
             </div>
             <div>
-              <p className="font-bold text-green-600 mb-1">🎤 Turnos</p>
+              <p className="font-bold text-green-600 mb-1">🎤 {t('config.roster_config')}</p>
               <p className="text-slate-500 truncate">{config.rosterFrequency} {config.rosterAutoNotifications && '(Auto-Notif.)'}</p>
             </div>
           </div>
@@ -399,7 +411,7 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
             disabled={isSaving}
             className="w-full md:w-auto bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 disabled:opacity-70"
           >
-            {isSaving ? 'Guardando...' : 'Guardar Configuración'}
+            {isSaving ? t('common.saving') : t('common.save_changes')}
           </button>
         </div>
       </div>
