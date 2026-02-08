@@ -330,42 +330,11 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
           {renderContent()}
         </div>
 
-        {/* --- NATIVE TAB BAR (CURVED FULL WIDTH) --- */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] flex items-center justify-around px-2 z-50">
-
-          <TabItem
-            icon={Home}
-            label="Inicio"
-            isActive={activeView === ViewState.HOME}
-            onClick={() => setActiveView(ViewState.HOME)}
-          />
-          <TabItem
-            icon={Calendar}
-            label="Eventos"
-            isActive={activeView === ViewState.EVENTS}
-            onClick={() => setActiveView(ViewState.EVENTS)}
-          />
-
-          {/* Live Button (Center) */}
-          <TabItem
-            icon={Video}
-            label="En Vivo"
-            isActive={activeView === ViewState.LIVE}
-            onClick={() => setActiveView(ViewState.LIVE)}
-            isSpecial
-          />
-
-          <TabItem
-            icon={Globe}
-            label="Traducción"
-            isActive={activeView === ViewState.TRANSLATION}
-            onClick={() => setActiveView(ViewState.TRANSLATION)}
-          />
-          <TabItem
-            icon={User}
-            label="Perfil"
-            isActive={activeView === ViewState.PROFILE}
-            onClick={() => setActiveView(ViewState.PROFILE)}
+        {/* --- NATIVE TAB BAR (Notch Style) --- */}
+        <div className="absolute bottom-0 left-0 right-0 h-[5.5rem] z-50">
+          <NotchedNavBar
+            activeView={activeView}
+            onNavigate={setActiveView}
           />
         </div>
 
@@ -374,32 +343,108 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
   );
 };
 
-const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: any, label: string, isActive: boolean, onClick: () => void, isSpecial?: boolean }) => {
+// --- SVG NOTCHED NAV BAR COMPONENT ---
+const NotchedNavBar = ({ activeView, onNavigate }: { activeView: ViewState, onNavigate: (v: ViewState) => void }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      // Use requestAnimationFrame to avoid ResizeObserver loop limit errors
+      requestAnimationFrame(() => {
+        if (entries[0]) setWidth(entries[0].contentRect.width);
+      });
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const tabs = [
+    { id: ViewState.HOME, icon: Home, label: 'Inicio' },
+    { id: ViewState.EVENTS, icon: Calendar, label: 'Eventos' },
+    { id: ViewState.LIVE, icon: Video, label: 'En Vivo' },
+    { id: ViewState.TRANSLATION, icon: Globe, label: 'Traducción' },
+    { id: ViewState.PROFILE, icon: User, label: 'Perfil' },
+  ];
+
+  const activeIndex = tabs.findIndex(t => t.id === activeView);
+  const validIndex = activeIndex === -1 ? 0 : activeIndex;
+
+  // Render nothing until we have width to prevent hydration mismatch/jumps
+  if (width === 0) return <div ref={containerRef} className="w-full h-full" />;
+
+  // Geometry
+  const tabWidth = width / 5;
+  const centerX = (validIndex * tabWidth) + (tabWidth / 2);
+  const holeWidth = 76; // Slightly wider than button
+  const depth = 38; // Deep enough for 50% of button
+
+  // Construct SV Path with dynamic notch
+  // We use slightly complex bezier curves to get that 'gooey' or 'liquid' connection
+  // M = Move, L = Line, C = Cubic Bezier, Q = Quadratic Bezier
+  const path = `
+    M 0 30 
+    Q 0 0 30 0
+    L ${centerX - holeWidth / 2 - 15} 0
+    C ${centerX - holeWidth / 2} 0, ${centerX - holeWidth / 2.5} ${depth}, ${centerX} ${depth}
+    C ${centerX + holeWidth / 2.5} ${depth}, ${centerX + holeWidth / 2} 0, ${centerX + holeWidth / 2 + 15} 0
+    L ${width - 30} 0
+    Q ${width} 0 ${width} 30
+    L ${width} 100
+    L 0 100
+    Z
+  `;
+
   return (
-    <button
-      onClick={onClick}
-      className="relative w-16 h-full"
-    >
-      {/* Active Bubble Background (The "Curve") */}
-      {isActive && (
-        <motion.div
-          layoutId="activeVisitorTabBubble"
-          className="absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.4)] border-[3px] border-white z-0"
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+    <div ref={containerRef} className="relative w-full h-full">
+      {/* SVG Background */}
+      <svg className="absolute inset-0 w-full h-full drop-shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pointer-events-none">
+        <motion.path
+          d={path}
+          className="fill-white"
+          animate={{ d: path }}
+          transition={{ type: "spring", stiffness: 350, damping: 30 }}
         />
-      )}
+      </svg>
 
-      {/* Icon - Absolute Positioning for Perfect Alignment */}
-      <div className={`absolute left-1/2 -translate-x-1/2 transition-all duration-300 z-10 ${isActive ? '-top-[10px] text-white' : 'top-[17px] text-slate-400'}`}>
-        <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
+      {/* Tabs */}
+      <div className="relative w-full h-full flex items-end">
+        {tabs.map((tab, idx) => {
+          const isActive = idx === validIndex;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onNavigate(tab.id as any)}
+              className="flex-1 h-full flex flex-col items-center justify-end pb-4 relative z-10 group"
+            >
+              <div className="relative">
+                {/* Active Floating Bubble */}
+                {isActive && (
+                  <motion.div
+                    layoutId="active-notch-bubble"
+                    className="absolute -left-[1.75rem] -top-[3.25rem] w-14 h-14 bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.5)] border-[3px] border-white flex items-center justify-center text-white z-20"
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  >
+                    <tab.icon size={26} strokeWidth={2.5} />
+                  </motion.div>
+                )}
+
+                {/* Inactive Icon */}
+                <div className={`transition-all duration-300 ${isActive ? 'opacity-0 scale-50' : 'opacity-100 scale-100 text-slate-400 group-hover:text-indigo-500'}`}>
+                  {isActive ? <div className="w-6 h-6" /> : <tab.icon size={26} strokeWidth={2} />}
+                </div>
+              </div>
+
+              {/* Label */}
+              <span className={`text-[10px] font-bold mt-1 transition-all duration-300 ${isActive ? 'opacity-0 translate-y-2' : 'text-slate-400 opacity-100'}`}>
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
-
-      {/* Label */}
-      <span className={`absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-bold transition-opacity duration-300 ${isActive ? 'opacity-0' : 'text-slate-400'}`}>
-        {label}
-      </span>
-    </button>
+    </div>
   );
 };
-
 export default App;
