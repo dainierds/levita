@@ -122,7 +122,7 @@ const MiembroLayout: React.FC = () => {
                 </div>
 
                 {/* --- NATIVE TAB BAR (CURVED FULL WIDTH) --- */}
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] flex items-end justify-around pb-6 px-2 z-50">
+                <div className="absolute bottom-0 left-0 right-0 h-20 bg-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] flex items-center justify-around px-2 z-50">
 
                     {/* Items */}
                     <TabItem
@@ -172,26 +172,26 @@ const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: an
     return (
         <button
             onClick={onClick}
-            className="relative flex flex-col items-center justify-end w-16 h-14 mb-1"
+            className="relative flex flex-col items-center justify-center w-16 h-full"
         >
             {/* Active Bubble Background (The "Curve") */}
             {isActive && (
                 <motion.div
                     layoutId="activeTabBubble"
-                    className="absolute -top-6 w-14 h-14 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.4)] border-[3px] border-white"
+                    className="absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.4)] border-[3px] border-white z-0"
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 />
             )}
 
             {/* Icon */}
-            <div className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-white -translate-y-5' : 'text-slate-400'}`}>
+            <div className={`relative z-10 transition-transform duration-300 ${isActive ? '-translate-y-10 text-white' : 'text-slate-400'}`}>
                 <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
             </div>
 
             {/* Label (Hidden when active to mimic curve effect clean look) */}
-            {!isActive && (
-                <span className="text-[10px] font-bold text-slate-400 mt-1">{label}</span>
-            )}
+            <span className={`text-[10px] font-bold mt-1 transition-opacity duration-300 ${isActive ? 'opacity-0' : 'text-slate-400'}`}>
+                {label}
+            </span>
         </button>
     );
 };
