@@ -139,15 +139,20 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
             if (!t.date || !currentSettings?.meetingTimes) return false;
             const [y, m, d] = t.date.split('-').map(Number);
             const dateObj = new Date(y, m - 1, d);
-            const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
-            const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
+            const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const capitalizedDay = DAYS_MAP[dateObj.getDay()];
+
             return Object.keys(currentSettings.meetingTimes).includes(capitalizedDay);
           })
           .map(t => {
             const [y, m, d] = t.date!.split('-').map(Number);
             const dateObj = new Date(y, m - 1, d);
-            const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
-            const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
+            // Explicit lookup to match ChurchSettings keys
+            const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const capitalizedDay = DAYS_MAP[dateObj.getDay()];
+
             const recTime = currentSettings?.meetingTimes?.[capitalizedDay as any] || '10:00';
 
             return {
