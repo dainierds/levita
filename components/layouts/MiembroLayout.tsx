@@ -121,8 +121,8 @@ const MiembroLayout: React.FC = () => {
                     <Outlet />
                 </div>
 
-                {/* --- NATIVE TAB BAR --- */}
-                <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-6 py-4 pb-8 flex justify-between items-center z-50 text-slate-400">
+                {/* --- NATIVE TAB BAR (FLOATING MODERN) --- */}
+                <div className="absolute bottom-6 left-4 right-4 bg-white/95 backdrop-blur-xl border border-white/20 rounded-[2.5rem] px-8 py-4 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] flex justify-between items-center z-50 text-slate-400">
                     <TabIcon
                         icon={Home}
                         label="Inicio"
@@ -136,13 +136,15 @@ const MiembroLayout: React.FC = () => {
                         onClick={() => navigate('/miembro/eventos')}
                     />
 
-                    {/* FAB */}
-                    <button
-                        onClick={() => navigate('/miembro/en-vivo')}
-                        className="w-14 h-14 bg-indigo-600 rounded-full shadow-lg shadow-indigo-500/40 flex items-center justify-center text-white mb-8 transform hover:scale-105 transition-transform active:scale-95"
-                    >
-                        <Video size={24} strokeWidth={2.5} />
-                    </button>
+                    {/* FAB (Floating Action Button) - Centered and Slightly Larger */}
+                    <div className="relative -top-8">
+                        <button
+                            onClick={() => navigate('/miembro/en-vivo')}
+                            className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.5)] flex items-center justify-center text-white transform hover:scale-105 transition-transform active:scale-95 border-4 border-gray-100"
+                        >
+                            <Video size={28} strokeWidth={2.5} />
+                        </button>
+                    </div>
 
                     <TabIcon
                         icon={List}
