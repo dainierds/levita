@@ -121,41 +121,47 @@ const MiembroLayout: React.FC = () => {
                     <Outlet />
                 </div>
 
-                {/* --- NATIVE TAB BAR (FLOATING MODERN) --- */}
-                <div className="absolute bottom-6 left-4 right-4 bg-white/95 backdrop-blur-xl border border-white/20 rounded-[2.5rem] px-8 py-4 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] flex justify-between items-center z-50 text-slate-400">
-                    <TabIcon
+                {/* --- NATIVE TAB BAR (CURVED STYLE) --- */}
+                <div className="absolute bottom-6 left-4 right-4 h-20 bg-white/95 backdrop-blur-xl border border-white/20 rounded-[2.5rem] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] flex items-center justify-around z-50 px-2 relative">
+
+                    {/* Animated Active Indicator (The "Curve" Bubble) */}
+                    {/* We calculate position based on active index. Since we can't easily rely on just CSS, we use a shared layoutId or absolute positioning. 
+                        To simplify, we render the 'active' bubble BEHIND the active icon but constrained to its cell. 
+                        Actually, 'CurvedNavigationBar' moves the bubble. We will use Framer Motion's layoutId for smooth transition. 
+                    */}
+
+                    <TabItem
                         icon={Home}
                         label="Inicio"
-                        active={location.pathname.includes('/miembro/inicio')}
+                        isActive={location.pathname.includes('/miembro/inicio')}
                         onClick={() => navigate('/miembro/inicio')}
                     />
-                    <TabIcon
+                    <TabItem
                         icon={Calendar}
                         label="Eventos"
-                        active={location.pathname.includes('/miembro/eventos')}
+                        isActive={location.pathname.includes('/miembro/eventos')}
                         onClick={() => navigate('/miembro/eventos')}
                     />
 
-                    {/* FAB (Floating Action Button) - Centered and Slightly Larger */}
-                    <div className="relative -top-8">
-                        <button
-                            onClick={() => navigate('/miembro/en-vivo')}
-                            className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.5)] flex items-center justify-center text-white transform hover:scale-105 transition-transform active:scale-95 border-4 border-gray-100"
-                        >
-                            <Video size={28} strokeWidth={2.5} />
-                        </button>
-                    </div>
+                    {/* Live Button (Center) */}
+                    <TabItem
+                        icon={Video}
+                        label="En Vivo"
+                        isActive={location.pathname.includes('/miembro/en-vivo')}
+                        onClick={() => navigate('/miembro/en-vivo')}
+                        isSpecial
+                    />
 
-                    <TabIcon
+                    <TabItem
                         icon={List}
                         label="Orden"
-                        active={location.pathname.includes('/miembro/liturgia')}
+                        isActive={location.pathname.includes('/miembro/liturgia')}
                         onClick={() => navigate('/miembro/liturgia')}
                     />
-                    <TabIcon
+                    <TabItem
                         icon={User}
                         label="Perfil"
-                        active={location.pathname.includes('/miembro/perfil')}
+                        isActive={location.pathname.includes('/miembro/perfil')}
                         onClick={() => navigate('/miembro/perfil')}
                     />
                 </div>
@@ -165,14 +171,34 @@ const MiembroLayout: React.FC = () => {
     );
 };
 
-const TabIcon = ({ icon: Icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) => (
-    <button
-        onClick={onClick}
-        className={`flex flex-col items-center gap-1.5 w-16 transition-colors ${active ? 'text-indigo-600' : 'hover:text-slate-600'}`}
-    >
-        <Icon size={24} fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 2.5} />
-        <span className={`text-[10px] font-bold ${active ? 'text-indigo-600' : 'text-slate-400'}`}>{label}</span>
-    </button>
-);
+import { motion } from 'framer-motion';
+
+const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: any, label: string, isActive: boolean, onClick: () => void, isSpecial?: boolean }) => {
+    return (
+        <button
+            onClick={onClick}
+            className="relative flex flex-col items-center justify-center w-14 h-full"
+        >
+            {/* Active Bubble Background (The "Curve") */}
+            {isActive && (
+                <motion.div
+                    layoutId="activeTabBubble"
+                    className="absolute -top-6 w-14 h-14 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.5)] border-4 border-[#F2F4F7]"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+            )}
+
+            {/* Icon */}
+            <div className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-white -translate-y-6' : 'text-slate-400'}`}>
+                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+            </div>
+
+            {/* Label (Hidden when active to mimic curve effect clean look, or keep small) */}
+            {!isActive && (
+                <span className="text-[9px] font-bold text-slate-400 mt-1">{label}</span>
+            )}
+        </button>
+    );
+};
 
 export default MiembroLayout;
