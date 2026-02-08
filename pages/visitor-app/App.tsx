@@ -153,7 +153,9 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
             const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
             const capitalizedDay = DAYS_MAP[dateObj.getDay()];
 
-            const recTime = currentSettings?.meetingTimes?.[capitalizedDay as any] || '10:00';
+            // Trim key to handle potential whitespace issues in DB
+            const key = Object.keys(currentSettings?.meetingTimes || {}).find(k => k.trim() === capitalizedDay) || capitalizedDay;
+            const recTime = currentSettings?.meetingTimes?.[key as any] || '10:00';
 
             return {
               dateStr: t.date!,
@@ -230,9 +232,18 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
     }
   };
 
+  // Helper for 12h format
+  const formatTime12h = (time24: string) => {
+    if (!time24) return '';
+    const [hours, minutes] = time24.split(':').map(Number);
+    const suffix = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours % 12 || 12;
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${suffix}`;
+  };
+
   // Ticker Content for Header
   const tickerText = nextService
-    ? `PRÓXIMO CULTO: ${nextService.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${nextService.time}  ✦  PREDICADOR: ${nextService.preacher?.toUpperCase() || 'POR DEFINIR'}  ✦  `
+    ? `PRÓXIMO CULTO: ${nextService.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${formatTime12h(nextService.time)}  ✦  PREDICADOR: ${nextService.preacher?.toUpperCase() || 'POR DEFINIR'}  ✦  `
     : 'BIENVENIDOS A LA IGLESIA  ✦  ';
   const displayTicker = tickerText.repeat(4);
 

@@ -136,6 +136,15 @@ const InicioMiembro: React.FC = () => {
         elder: globalActiveTeam.members.elder
     } : (activePlan?.team || null);
 
+    // Helper for 12h format
+    const formatTime12h = (time24: string) => {
+        if (!time24) return '';
+        const [hours, minutes] = time24.split(':').map(Number);
+        const suffix = hours >= 12 ? 'PM' : 'AM';
+        const hours12 = hours % 12 || 12;
+        return `${hours12}:${minutes.toString().padStart(2, '0')} ${suffix}`;
+    };
+
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 pt-2 relative">
 
@@ -188,7 +197,7 @@ const InicioMiembro: React.FC = () => {
                                 <Radio size={32} className="mb-2 opacity-50" />
                                 <p className="text-xs font-bold uppercase tracking-widest text-slate-600">OFFLINE</p>
                                 {activePlan && (
-                                    <p className="text-[10px] text-slate-600 mt-1">Próximo: {new Date(activePlan.date).toLocaleDateString()} {activePlan.startTime}</p>
+                                    <p className="text-[10px] text-slate-600 mt-1">Próximo: {new Date(activePlan.date).toLocaleDateString()} {formatTime12h(activePlan.startTime)}</p>
                                 )}
                             </div>
                         </>
