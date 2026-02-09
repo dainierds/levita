@@ -423,7 +423,7 @@ const NotchedNavBar = ({ activeView, onNavigate }: { activeView: ViewState, onNa
                 {isActive && (
                   <motion.div
                     layoutId="active-notch-bubble"
-                    className="absolute -left-[1.75rem] -top-[3.25rem] w-14 h-14 bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.5)] border-[3px] border-white flex items-center justify-center text-white z-20"
+                    className="absolute left-1/2 -translate-x-1/2 -top-[3.25rem] w-14 h-14 bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.5)] border-[3px] border-white flex items-center justify-center text-white z-20"
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   >
                     <tab.icon size={26} strokeWidth={2.5} />
