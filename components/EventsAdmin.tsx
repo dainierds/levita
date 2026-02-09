@@ -449,7 +449,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
 
                 {/* Days Header */}
                 <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50">
-                    {[t('days.sunday') || 'Domingo', t('days.monday') || 'Lunes', t('days.tuesday') || 'Martes', t('days.wednesday') || 'Miércoles', t('days.thursday') || 'Jueves', t('days.friday') || 'Viernes', t('days.saturday') || 'Sábado'].map(d => (
+                    {[t('day.sunday') || 'Domingo', t('day.monday') || 'Lunes', t('day.tuesday') || 'Martes', t('day.wednesday') || 'Miércoles', t('day.thursday') || 'Jueves', t('day.friday') || 'Viernes', t('day.saturday') || 'Sábado'].map(d => (
                         <div key={d} className="p-3 text-center text-xs font-bold text-slate-400 uppercase">{d.slice(0, 3)}</div>
                     ))}
                 </div>
