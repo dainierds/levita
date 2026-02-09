@@ -69,32 +69,46 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
       const [y, m, d] = t.date.split('-').map(Number);
       const dateObj = new Date(y, m - 1, d);
 
-      // Robust Filter Logic
-      const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-      const dayName = DAYS_MAP[dateObj.getDay()];
-
+      // Bilingual Lookup (ES/EN)
+      const DAYS_LOOKUP = [
+        ['Domingo', 'Sunday'],
+        ['Lunes', 'Monday'],
+        ['Martes', 'Tuesday'],
+        ['Miércoles', 'Wednesday'],
+        ['Jueves', 'Thursday'],
+        ['Viernes', 'Friday'],
+        ['Sábado', 'Saturday']
+      ];
+      const dayNames = DAYS_LOOKUP[dateObj.getDay()]; // [es, en]
       const meetingTimes = settings?.meetingTimes || {};
-      const normalizedDay = dayName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-      return Object.keys(meetingTimes).some(k =>
-        k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalizedDay
-      );
+      return Object.keys(meetingTimes).some(k => {
+        const normK = k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return dayNames.some(d => d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normK);
+      });
     })
     .map(t => {
-      // Robust Meeting Time Lookup
+      // Robust Meeting Time Lookup (Bilingual)
       const [y, m, d] = t.date!.split('-').map(Number);
       const dateObj = new Date(y, m - 1, d);
 
-      const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-      const dayName = DAYS_MAP[dateObj.getDay()];
-
+      const DAYS_LOOKUP = [
+        ['Domingo', 'Sunday'],
+        ['Lunes', 'Monday'],
+        ['Martes', 'Tuesday'],
+        ['Miércoles', 'Wednesday'],
+        ['Jueves', 'Thursday'],
+        ['Viernes', 'Friday'],
+        ['Sábado', 'Saturday']
+      ];
+      const dayNames = DAYS_LOOKUP[dateObj.getDay()]; // [es, en]
       const meetingTimes = settings?.meetingTimes || {};
-      const normalizedDay = dayName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-      // Try exact match, then normalized match
-      const matchedKey = Object.keys(meetingTimes).find(k =>
-        k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalizedDay
-      );
+      // Find matching key (Priority: Check both ES and EN)
+      const matchedKey = Object.keys(meetingTimes).find(k => {
+        const normK = k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return dayNames.some(d => d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normK);
+      });
 
       const recTime = matchedKey ? meetingTimes[matchedKey] : '';
 
@@ -105,7 +119,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
         preacher: t.members.preacher,
         type: 'TEAM'
       };
-    });
+    })
+    .filter(t => t.time !== '');
 
   // 3. Merge & Sort
   const allUpcoming = [...futurePlans, ...futureTeams].sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());

@@ -71,13 +71,23 @@ export const useNextService = (tenantId?: string | null) => {
 
                         // Override "10:00" if settings exist
                         if (time === '10:00' || !time) {
-                            const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                            const dayName = DAYS_MAP[dateObj.getDay()];
+                            const DAYS_LOOKUP = [
+                                ['Domingo', 'Sunday'],
+                                ['Lunes', 'Monday'],
+                                ['Martes', 'Tuesday'],
+                                ['Miércoles', 'Wednesday'],
+                                ['Jueves', 'Thursday'],
+                                ['Viernes', 'Friday'],
+                                ['Sábado', 'Saturday']
+                            ];
+                            const dayNames = DAYS_LOOKUP[dateObj.getDay()];
                             const meetingTimes = currentSettings?.meetingTimes || {};
-                            const normalizedDay = dayName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                            const matchedKey = Object.keys(meetingTimes).find(
-                                k => k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalizedDay
-                            );
+
+                            const matchedKey = Object.keys(meetingTimes).find(k => {
+                                const normK = k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                return dayNames.some(d => d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normK);
+                            });
+
                             if (matchedKey && meetingTimes[matchedKey]) {
                                 time = meetingTimes[matchedKey];
                             }
@@ -98,19 +108,25 @@ export const useNextService = (tenantId?: string | null) => {
                     .map(t => {
                         const [y, m, d] = t.date!.split('-').map(Number);
                         const dateObj = new Date(y, m - 1, d);
-                        const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                        const dayName = DAYS_MAP[dateObj.getDay()]; // e.g., "Martes"
+                        const DAYS_LOOKUP = [
+                            ['Domingo', 'Sunday'],
+                            ['Lunes', 'Monday'],
+                            ['Martes', 'Tuesday'],
+                            ['Miércoles', 'Wednesday'],
+                            ['Jueves', 'Thursday'],
+                            ['Viernes', 'Friday'],
+                            ['Sábado', 'Saturday']
+                        ];
+                        const dayNames = DAYS_LOOKUP[dateObj.getDay()];
 
-                        // Robust Lookup: Case-insensitive & Trimmed
-                        // We iterate all keys in meetingTimes to find a match for the day name
+                        // Robust Lookup: Case-insensitive & Trimmed & Bilingual
                         const meetingTimes = currentSettings?.meetingTimes || {};
-                        const matchedKey = Object.keys(meetingTimes).find(
-                            k => k.trim().toLowerCase() === dayName.toLowerCase()
-                        );
+                        const matchedKey = Object.keys(meetingTimes).find(k => {
+                            const normK = k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                            return dayNames.some(d => d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normK);
+                        });
 
-                        // If match found, use it; otherwise default to '10:00' (or keep raw if not found, but '10:00' is the fallback in original)
-                        // User screenshot shows "Martes" -> "19:00". If we find "martes", we get "19:00".
-                        const rawTime = matchedKey ? meetingTimes[matchedKey] : '10:00';
+                        const rawTime = matchedKey ? meetingTimes[matchedKey] : '';
 
                         return {
                             dateStr: t.date!,
@@ -120,10 +136,6 @@ export const useNextService = (tenantId?: string | null) => {
                             type: 'TEAM' as const
                         };
                     })
-                    // Filter out teams where we theoretically shouldn't have a service if strictly based on meetingDays setting?
-                    // The previous code filtered based on `meetingTimes.includes(key)`. We implicitly do tha via `matchedKey`.
-                    // But let's keep all teams if they exist in the roster, just ensuring time is correct.
-                    // If a team is scheduled on a non-meeting day, that's a user data anomaly, but we should still show it if it's in the roster.
                     .filter(t => t.time !== '');
 
                 const planDates = new Set(futurePlans.map(p => p.dateStr));
