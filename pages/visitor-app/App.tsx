@@ -173,8 +173,8 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
               k => k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalizedDay
             );
 
-            // If match found, use it; otherwise default to '10:00'
-            const recTime = matchedKey ? meetingTimes[matchedKey] : '10:00';
+            // If match found, use it; otherwise default to '' so it gets filtered out
+            const recTime = matchedKey ? meetingTimes[matchedKey] : '';
 
             return {
               dateStr: t.date!,

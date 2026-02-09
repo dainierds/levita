@@ -69,21 +69,34 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
       const [y, m, d] = t.date.split('-').map(Number);
       const dateObj = new Date(y, m - 1, d);
 
-      // We still use es-ES here for matching the KEYS in settings (which are likely stored in Spanish)
-      // If settings keys change to English, this logic needs update. For now assuming keys are Spanish.
-      const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
-      const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-      // Only include if this day is a configured meeting day
-      return Object.keys(settings.meetingTimes).includes(capitalizedDay);
+      // Robust Filter Logic
+      const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const dayName = DAYS_MAP[dateObj.getDay()];
+
+      const meetingTimes = settings?.meetingTimes || {};
+      const normalizedDay = dayName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      return Object.keys(meetingTimes).some(k =>
+        k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalizedDay
+      );
     })
     .map(t => {
-      // Find recurrent time for this day of week
+      // Robust Meeting Time Lookup
       const [y, m, d] = t.date!.split('-').map(Number);
       const dateObj = new Date(y, m - 1, d);
 
-      const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
-      const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-      const recTime = settings?.meetingTimes?.[capitalizedDay as any] || '10:00';
+      const DAYS_MAP = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const dayName = DAYS_MAP[dateObj.getDay()];
+
+      const meetingTimes = settings?.meetingTimes || {};
+      const normalizedDay = dayName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      // Try exact match, then normalized match
+      const matchedKey = Object.keys(meetingTimes).find(k =>
+        k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalizedDay
+      );
+
+      const recTime = matchedKey ? meetingTimes[matchedKey] : '';
 
       return {
         dateStr: t.date!,
