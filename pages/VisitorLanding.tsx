@@ -187,7 +187,7 @@ const VisitorLanding: React.FC = () => {
                 <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
                     <div className="text-center mb-10">
                         <h1 className="text-2xl font-black text-slate-900 mb-2">{t('visitor.who_are_you') || "¿Quién eres?"}</h1>
-                        <p className="text-slate-500">{t('visitor.select_profile') || "Selecciona tu perfil para continuar"}</p>
+                        <p className="text-slate-500">{t('visitor.select_profile') || "Selecciona tu perfil"}</p>
                     </div>
 
                     <div className="space-y-4">

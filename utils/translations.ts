@@ -287,6 +287,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'visitor.watch_live': 'Ver en Vivo',
         'visitor.plan_visit': 'Planifica tu Visita',
         'visitor.faq': 'Preguntas Frecuentes',
+        'visitor.select_profile': 'Selecciona tu perfil',
+        'visitor.leaders_ministries': 'Líderes y Ministerios',
 
         // --- DATE & TIME ---
         'day.monday': 'Lunes',
@@ -669,6 +671,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'visitor.watch_live': 'Watch Live',
         'visitor.plan_visit': 'Plan Your Visit',
         'visitor.faq': 'FAQ',
+        'visitor.select_profile': 'Select your profile',
+        'visitor.leaders_ministries': 'Leaders & Ministries',
 
         // --- DATE & TIME ---
         'day.monday': 'Monday',
@@ -822,6 +826,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'visitor.board_desc': 'Membros da Junta',
         'visitor.leaders_desc': 'Líderes de Depto',
         'visitor.admin_desc': 'Administração',
+        'visitor.leaders_ministries': 'Líderes e Ministérios',
 
         // Missing Roles
         'role.board': 'Junta',
@@ -884,6 +889,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'visitor.board_desc': 'Comité d\'Église',
         'visitor.leaders_desc': 'Responsables',
         'visitor.admin_desc': 'Administration',
+        'visitor.leaders_ministries': 'Leaders et Ministères',
 
         // Missing Roles
         'role.board': 'Comité',
