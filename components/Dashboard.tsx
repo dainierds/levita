@@ -174,7 +174,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-8 max-w-full mx-auto">
+    <div className="p-4 md:p-8 pt-32 md:pt-32 space-y-8 max-w-full mx-auto">
       <header className="mb-8">
         <h2 className="text-3xl font-bold text-slate-800">{t('dashboard.welcome', { name: user?.name?.split(' ')[0] || 'Pastor' })}</h2>
         <p className="text-slate-500">{t('dashboard.subtitle') || "Aquí está lo que sucede hoy en la iglesia."}</p>

@@ -480,7 +480,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
     }
 
     return (
-        <div className="p-4 md:p-8 pt-32 max-w-full mx-auto pb-20">
+        <div className="p-4 md:p-8 pt-32 md:pt-32 max-w-full mx-auto pb-20">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                 <div>
                     <h2 className="text-3xl font-bold text-slate-800">{t('events.title_banner') || "Eventos y Banner"}</h2>

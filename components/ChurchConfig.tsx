@@ -84,7 +84,7 @@ const ChurchConfig: React.FC<ChurchConfigProps> = ({ settings, onSave }) => {
   );
 
   return (
-    <div className="p-4 md:p-8 md:pt-20 max-w-full mx-auto space-y-8 pb-12">
+    <div className="p-4 md:p-8 md:pt-32 max-w-full mx-auto space-y-8 pb-12">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-slate-800">{t('config.title')}</h2>

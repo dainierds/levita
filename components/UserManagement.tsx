@@ -245,7 +245,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, tier, 
 
 
   return (
-    <div className="p-4 md:p-8 max-w-full mx-auto space-y-8">
+    <div className="p-4 md:p-8 pt-32 md:pt-32 max-w-full mx-auto space-y-8">
       <header>
         <h2 className="text-3xl font-bold text-slate-800">{t('users.title')}</h2>
         <p className="text-slate-500">
