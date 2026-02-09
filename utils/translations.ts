@@ -130,6 +130,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'role.leader': 'Líder',
         'role.board': 'Junta',
         'role.usuario': 'Usuario',
+        'role.leaders': 'Líderes',
 
         // --- SERMONS ---
         'sermons.title': 'Gestor de Sermones',
@@ -289,6 +290,14 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'visitor.faq': 'Preguntas Frecuentes',
         'visitor.select_profile': 'Selecciona tu perfil',
         'visitor.leaders_ministries': 'Líderes y Ministerios',
+        'visitor.select_department': 'Selecciona tu Departamento',
+        'visitor.select_area_hint': '¿A qué área deseas ingresar?',
+        'visitor.music_desc': 'Departamento de Música',
+        'visitor.elder_desc': 'Ancionato',
+        'visitor.audio_desc': 'Equipo de Audio',
+        'visitor.board_desc': 'Miembros de la Junta',
+        'visitor.leaders_desc': 'Líderes de Depto',
+        'visitor.admin_desc': 'Administración',
 
         // --- DATE & TIME ---
         'day.monday': 'Lunes',
@@ -514,6 +523,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'role.leader': 'Leader',
         'role.board': 'Board',
         'role.usuario': 'User',
+        'role.leaders': 'Leaders',
 
         // --- SERMONS ---
         'sermons.title': 'Sermon Manager',
@@ -673,6 +683,14 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'visitor.faq': 'FAQ',
         'visitor.select_profile': 'Select your profile',
         'visitor.leaders_ministries': 'Leaders & Ministries',
+        'visitor.select_department': 'Select Department',
+        'visitor.select_area_hint': 'Which area do you want to access?',
+        'visitor.music_desc': 'Music Department',
+        'visitor.elder_desc': 'Elders',
+        'visitor.audio_desc': 'Audio Team',
+        'visitor.board_desc': 'Board Members',
+        'visitor.leaders_desc': 'Dept Leaders',
+        'visitor.admin_desc': 'Administration',
 
         // --- DATE & TIME ---
         'day.monday': 'Monday',
