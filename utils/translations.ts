@@ -61,6 +61,9 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'common.welcome': 'Bienvenido',
         'common.guest': 'Invitado',
         'common.language': 'Idioma',
+        'language.spanish': 'Español',
+        'language.english': 'Inglés',
+        'language.portuguese': 'Portugués',
         'common.enable_notifications': 'Activar Avisos',
         'common.install_app': 'Instalar App',
         'common.min': 'min',
@@ -131,6 +134,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'role.board': 'Junta',
         'role.usuario': 'Usuario',
         'role.leaders': 'Líderes',
+        'role.sabbathSchoolTeacher': 'Maestro de ES',
+        'role.audioOperator': 'Operador de Audio',
 
         // --- SERMONS ---
         'sermons.title': 'Gestor de Sermones',
@@ -151,6 +156,21 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'sermons.status.completed': 'Completado',
         'sermons.upload_audio': 'Subir Audio',
         'sermons.upload_slides': 'Subir Presentación',
+        'sermons.no_passage': 'Sin pasaje',
+        'sermons.title_placeholder': 'Título del Sermón...',
+        'sermons.passage_placeholder': 'Ej. Juan 3:16',
+        'sermons.tone': 'Tono',
+        'sermons.tone_exhortative': 'Exhortativo',
+        'sermons.tone_comforting': 'Consolador',
+        'sermons.tone_theological': 'Teológico',
+        'sermons.tone_narrative': 'Narrativo',
+        'sermons.generating': 'Generando...',
+        'sermons.content_placeholder': 'Escribe tu bosquejo aquí o genéralo con IA...',
+        'sermons.select_create': 'Selecciona o crea un sermón',
+        'sermons.ai_hint': 'Usa la inteligencia artificial para generar bosquejos bíblicos en segundos.',
+        'sermons.no_sermons': 'No tienes sermones guardados.',
+        'sermons.error_ai': 'Error al generar con IA',
+        'sermons.confirm_delete': '¿Borrar sermón?',
         'sermons.error_title': 'Por favor añade un título',
 
         // --- ROSTER (TURNOS) ---
@@ -177,6 +197,9 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'teams.add_member': 'Añadir Miembro',
         'teams.remove_member': 'Quitar Miembro',
         'teams.leader': 'Líder de Equipo',
+        'team_manager.title': 'Equipo de Turno',
+        'team_manager.subtitle': 'Asignaciones automáticas basadas en el calendario de turnos.',
+        'team_manager.next_service': 'Próximo Servicio',
 
         // --- EVENTS ---
         'events.title': 'Gestión de Eventos',
@@ -501,6 +524,9 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'common.welcome': 'Welcome',
         'common.guest': 'Guest',
         'common.language': 'Language',
+        'language.spanish': 'Spanish',
+        'language.english': 'English',
+        'language.portuguese': 'Portuguese',
         'common.enable_notifications': 'Enable Notifications',
         'common.install_app': 'Install App',
         'common.min': 'min',
@@ -571,6 +597,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'role.board': 'Board',
         'role.usuario': 'User',
         'role.leaders': 'Leaders',
+        'role.sabbathSchoolTeacher': 'Sabbath School Teacher',
+        'role.audioOperator': 'Audio Operator',
 
         // --- SERMONS ---
         'sermons.title': 'Sermon Manager',
@@ -591,6 +619,21 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'sermons.status.completed': 'Completed',
         'sermons.upload_audio': 'Upload Audio',
         'sermons.upload_slides': 'Upload Slides',
+        'sermons.no_passage': 'No passage',
+        'sermons.title_placeholder': 'Sermon Title...',
+        'sermons.passage_placeholder': 'e.g. John 3:16',
+        'sermons.tone': 'Tone',
+        'sermons.tone_exhortative': 'Exhortative',
+        'sermons.tone_comforting': 'Comforting',
+        'sermons.tone_theological': 'Theological',
+        'sermons.tone_narrative': 'Narrative',
+        'sermons.generating': 'Generating...',
+        'sermons.content_placeholder': 'Write your outline here or generate it with AI...',
+        'sermons.select_create': 'Select or create a sermon',
+        'sermons.ai_hint': 'Use artificial intelligence to generate biblical outlines in seconds.',
+        'sermons.no_sermons': 'You have no saved sermons.',
+        'sermons.error_ai': 'Error generating with AI',
+        'sermons.confirm_delete': 'Delete sermon?',
         'sermons.error_title': 'Please add a title',
 
         // --- ROSTER (TURNOS) ---
@@ -617,6 +660,9 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'teams.add_member': 'Add Member',
         'teams.remove_member': 'Remove Member',
         'teams.leader': 'Team Leader',
+        'team_manager.title': 'Duty Team',
+        'team_manager.subtitle': 'Automatic assignments based on the roster.',
+        'team_manager.next_service': 'Next Service',
 
         // --- EVENTS ---
         'events.title': 'Events Manager',

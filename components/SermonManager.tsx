@@ -154,28 +154,28 @@ const SermonManager: React.FC = () => {
                                             />
                                         </div>
                                         <div className="w-full md:w-40">
-                                            <label className="block text-xs font-bold text-indigo-400 uppercase mb-1">{t('sermons.tone') || "Tono"}</label>
+                                            <label className="block text-xs font-bold text-indigo-400 uppercase mb-1">{t('sermons.tone')}</label>
                                             <select
                                                 value={aiParams.tone}
                                                 onChange={(e) => setAiParams({ ...aiParams, tone: e.target.value })}
                                                 className="w-full px-3 py-2 bg-white rounded-xl border border-indigo-200 text-sm outline-none"
                                             >
-                                                <option>Exhortativo</option>
-                                                <option>Consolador</option>
-                                                <option>Teológico</option>
-                                                <option>Narrativo</option>
+                                                <option value="Exhortativo">{t('sermons.tone_exhortative') || 'Exhortativo'}</option>
+                                                <option value="Consolador">{t('sermons.tone_comforting') || 'Consolador'}</option>
+                                                <option value="Teológico">{t('sermons.tone_theological') || 'Teológico'}</option>
+                                                <option value="Narrativo">{t('sermons.tone_narrative') || 'Narrativo'}</option>
                                             </select>
                                         </div>
                                         <div className="w-full md:w-32">
-                                            <label className="block text-xs font-bold text-indigo-400 uppercase mb-1">{t('common.language') || "Idioma"}</label>
+                                            <label className="block text-xs font-bold text-indigo-400 uppercase mb-1">{t('common.language')}</label>
                                             <select
                                                 value={aiParams.language}
                                                 onChange={(e) => setAiParams({ ...aiParams, language: e.target.value })}
                                                 className="w-full px-3 py-2 bg-white rounded-xl border border-indigo-200 text-sm outline-none"
                                             >
-                                                <option value="Spanish">Español</option>
-                                                <option value="English">English</option>
-                                                <option value="Portuguese">Português</option>
+                                                <option value="Spanish">{t('language.spanish') || 'Español'}</option>
+                                                <option value="English">{t('language.english') || 'English'}</option>
+                                                <option value="Portuguese">{t('language.portuguese') || 'Português'}</option>
                                             </select>
                                         </div>
                                         <div className="w-full md:w-auto">

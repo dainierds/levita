@@ -12,9 +12,9 @@ interface TeamRosterProps {
 
 const ROLES_CONFIG = [
     { key: 'elder', translationKey: 'role.elder', icon: UserCheck, color: 'text-blue-500 bg-blue-50', border: 'border-blue-100' },
-    { key: 'sabbathSchoolTeacher', translationKey: 'role.teacher', icon: BookOpen, color: 'text-emerald-500 bg-emerald-50', border: 'border-emerald-100' },
+    { key: 'sabbathSchoolTeacher', translationKey: 'role.sabbathSchoolTeacher', icon: BookOpen, color: 'text-emerald-500 bg-emerald-50', border: 'border-emerald-100' },
     { key: 'preacher', translationKey: 'role.preacher', icon: Mic2, color: 'text-purple-500 bg-purple-50', border: 'border-purple-100' },
-    { key: 'audioOperator', translationKey: 'role.audio', icon: Mic, color: 'text-orange-500 bg-orange-50', border: 'border-orange-100' },
+    { key: 'audioOperator', translationKey: 'role.audioOperator', icon: Mic, color: 'text-orange-500 bg-orange-50', border: 'border-orange-100' },
 ];
 
 const TeamRoster: React.FC<TeamRosterProps> = ({ settings, plans }) => {
@@ -168,8 +168,8 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ settings, plans }) => {
                                                 <roleItem.icon size={28} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t(roleItem.translationKey) || roleItem.key}</span>
-                                                <span className="font-black text-xl text-slate-800 tracking-tight leading-none mt-1">{t(`role.${roleItem.key}`) || roleItem.key}</span>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t(roleItem.translationKey)}</span>
+                                                <span className="font-black text-xl text-slate-800 tracking-tight leading-none mt-1">{t(roleItem.translationKey)}</span>
                                             </div>
                                         </div>
 

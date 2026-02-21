@@ -12,8 +12,8 @@ interface TeamManagerProps {
 const ROLES = [
     { key: 'elder', translationKey: 'role.elder', icon: UserIcon },
     { key: 'preacher', translationKey: 'role.preacher', icon: Mic2 },
-    { key: 'sabbathSchoolTeacher', translationKey: 'role.teacher', icon: BookOpen },
-    { key: 'audioOperator', translationKey: 'role.audio', icon: Mic },
+    { key: 'sabbathSchoolTeacher', translationKey: 'role.sabbathSchoolTeacher', icon: BookOpen },
+    { key: 'audioOperator', translationKey: 'role.audioOperator', icon: Mic },
 ];
 
 const TeamManager: React.FC<TeamManagerProps> = ({ settings, plans, onClose }) => {
