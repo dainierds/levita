@@ -811,10 +811,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             {showTeamManager && (
                 <TeamManager
                     settings={settings}
-                    users={users}
                     plans={plans}
-                    savePlan={savePlan}
-                    onSave={onSaveSettings}
                     onClose={() => setShowTeamManager(false)}
                 />
             )}

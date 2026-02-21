@@ -1,31 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { ChurchSettings, ServicePlan, User, DayOfWeek } from '../types';
+import { ChurchSettings, ServicePlan, User } from '../types';
 import { useLanguage } from '../context/LanguageContext';
-import { Users, X, Calendar, User as UserIcon, Mic2, Music, Mic, ChevronRight, Edit2, CheckCircle2, MousePointer2 } from 'lucide-react';
+import { Users, X, User as UserIcon, Mic2, Mic, CheckCircle2, BookOpen } from 'lucide-react';
 
 interface TeamManagerProps {
     settings: ChurchSettings;
-    users: User[];
     plans: ServicePlan[];
-    savePlan: (plan: ServicePlan) => Promise<any>;
-    onSave: (settings: ChurchSettings) => Promise<void>;
     onClose: () => void;
 }
 
 const ROLES = [
-    { key: 'elder', translationKey: 'role.elder', icon: UserIcon, role: 'ELDER' },
-    { key: 'preacher', translationKey: 'role.preacher', icon: Mic2, role: 'PREACHER' },
-    { key: 'esMaster', translationKey: 'role.teacher', icon: MousePointer2, role: 'ES_MASTER' }, // Updated from musicDirector
-    { key: 'audioOperator', translationKey: 'role.audio', icon: Mic, role: 'AUDIO' },
+    { key: 'elder', translationKey: 'role.elder', icon: UserIcon },
+    { key: 'preacher', translationKey: 'role.preacher', icon: Mic2 },
+    { key: 'sabbathSchoolTeacher', translationKey: 'role.teacher', icon: BookOpen },
+    { key: 'audioOperator', translationKey: 'role.audio', icon: Mic },
 ];
 
-const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, plans, savePlan, onSave, onClose }) => {
+const TeamManager: React.FC<TeamManagerProps> = ({ settings, plans, onClose }) => {
     const { t, language } = useLanguage();
-    // We strictly follow the rule: One team/card per Meeting Day
     const [upcomingPlans, setUpcomingPlans] = useState<{ dayName: string; date: Date; plan: ServicePlan | null }[]>([]);
-    const [loading, setLoading] = useState(false);
 
-    // Calculate dates on mount
     useEffect(() => {
         calculateUpcomingDates();
     }, [settings.meetingDays, plans]);
@@ -34,7 +28,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, plans, saveP
         const calculated = settings.meetingDays.map(dayName => {
             const date = getNextDayOfWeek(dayName);
             const localDateStr = date.toLocaleDateString('en-CA');
-            const foundPlan = plans.find(p => p.date === localDateStr); // Match exact date
+            const foundPlan = plans.find(p => p.date === localDateStr);
             return {
                 dayName,
                 date,
@@ -45,72 +39,20 @@ const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, plans, saveP
     };
 
     const getNextDayOfWeek = (dayName: string) => {
-        // Map Spanish day names to JS getDay() indices (0-6)
-        // This relies on settings.meetingDays being stored in Spanish.
-        // If we internationalize settings later, this mapping needs to be dynamic.
-        // For now, assume settings matches the hardcoded keys.
         const daysMap: { [key: string]: number } = {
             'Domingo': 0, 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5, 'Sábado': 6
         };
         const targetDay = daysMap[dayName];
-        // Fallback if dayName is not in Spanish map (e.g. if we switch language but settings still has Spanish names) -> should ideally map by value not name
         const date = new Date();
         const currentDay = date.getDay();
 
         if (targetDay === undefined) return date;
 
         let daysUntil = targetDay - currentDay;
-        if (daysUntil <= 0) {
-            // If today is the day, assume NEXT week? Or Today? 
-            // Usually "Upcoming" includes today if service hasn't happened.
-            // Let's assume if daysUntil < 0 (past in week), add 7. If 0 (today), keep 0.
-            if (daysUntil < 0) daysUntil += 7;
-        }
+        if (daysUntil < 0) daysUntil += 7;
+
         date.setDate(date.getDate() + daysUntil);
         return date;
-    };
-
-    const handleAssignmentChange = async (plan: ServicePlan | null, date: Date, roleKey: string, userName: string) => {
-        setLoading(true);
-        try {
-            const localDateStr = date.toLocaleDateString('en-CA');
-
-            // If plan exists, update it. If not, CREATE it.
-            let planToSave: ServicePlan;
-
-            if (plan) {
-                planToSave = {
-                    ...plan,
-                    team: {
-                        ...plan.team,
-                        [roleKey]: userName
-                    }
-                };
-            } else {
-                // Create skeleton plan
-                planToSave = {
-                    id: `auto-team-${Math.random().toString(36).substr(2, 9)}`,
-                    title: `Servicio ${localDateStr}`,
-                    date: localDateStr,
-                    startTime: settings.meetingTimes[date.toLocaleDateString('es-ES', { weekday: 'long' }) as DayOfWeek] || '10:00',
-                    isActive: false,
-                    items: [],
-                    tenantId: users[0]?.tenantId || '', // Fallback tenant
-                    team: {
-                        elder: '', preacher: '', musicDirector: '', audioOperator: '',
-                        [roleKey]: userName
-                    },
-                    isRosterDraft: true
-                };
-            }
-
-            await savePlan(planToSave);
-            // Refresh local state handled by parent re-render (plans prop update)
-        } catch (error) {
-            console.error("Failed to update plan", error);
-        } finally {
-            setLoading(false);
-        }
     };
 
     return (
@@ -121,10 +63,10 @@ const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, plans, saveP
                     <div>
                         <h3 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
                             <Users className="text-indigo-600" size={32} />
-                            {t('team_manager.title') || "Gestión de Equipos"}
+                            {t('team_manager.title') || "Equipo de Turno"}
                         </h3>
                         <p className="text-slate-500 mt-1 ml-11">
-                            {t('team_manager.subtitle') || "Crea los equipos de la semana. El más cercano será el activo por defecto."}
+                            {t('team_manager.subtitle') || "Asignaciones automáticas basadas en el calendario de turnos."}
                         </p>
                     </div>
                     <button onClick={onClose} className="p-3 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600">
@@ -135,7 +77,7 @@ const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, plans, saveP
                 <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                         {upcomingPlans.map(({ dayName, date, plan }) => (
-                            <div key={dayName} className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden flex flex-col group hover:border-indigo-100 transition-colors">
+                            <div key={dayName} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden flex flex-col group hover:border-indigo-100 transition-colors">
                                 <div className="p-6 bg-slate-50/50 border-b border-slate-100 flex justify-between items-start">
                                     <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-100 flex flex-col items-center justify-center text-indigo-600">
@@ -156,17 +98,11 @@ const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, plans, saveP
                                             </p>
                                         </div>
                                     </div>
-                                    {plan && (
-                                        <button className="p-2 text-slate-300 hover:text-indigo-500 transition-colors">
-                                            <Edit2 size={18} />
-                                        </button>
-                                    )}
                                 </div>
 
                                 <div className="p-8 grid grid-cols-1 gap-6">
                                     {ROLES.map(role => {
                                         const assignedName = plan ? (plan.team as any)[role.key] : '';
-                                        const roleUsers = users.filter(u => u.role === role.role || u.secondaryRoles?.includes(role.role as any));
 
                                         return (
                                             <div key={role.key} className="space-y-2">
@@ -174,19 +110,20 @@ const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, plans, saveP
                                                     <role.icon size={12} className="text-indigo-400" />
                                                     {t(role.translationKey)}
                                                 </label>
-                                                <div className="relative">
-                                                    <select
-                                                        value={assignedName || ''}
-                                                        onChange={(e) => handleAssignmentChange(plan, date, role.key, e.target.value)}
-                                                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer hover:bg-white transition-colors"
-                                                        disabled={loading}
-                                                    >
-                                                        <option value="">{t('common.unassigned') || "-- Sin Asignar --"}</option>
-                                                        {roleUsers.map(u => (
-                                                            <option key={u.id} value={u.name}>{u.name}</option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 rotate-90 pointer-events-none" size={16} />
+                                                <div className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 flex items-center justify-between group/item hover:bg-indigo-50/50 transition-colors">
+                                                    {assignedName ? (
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                                                                {assignedName.charAt(0)}
+                                                            </div>
+                                                            <span className="text-lg font-bold text-slate-700">{assignedName}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-slate-400 font-medium italic">{t('common.tbd') || "por definir"}</span>
+                                                    )}
+                                                    {assignedName && (
+                                                        <CheckCircle2 size={18} className="text-indigo-500 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -196,7 +133,6 @@ const TeamManager: React.FC<TeamManagerProps> = ({ settings, users, plans, saveP
                         ))}
                     </div>
                 </div>
-
             </div>
         </div>
     );
