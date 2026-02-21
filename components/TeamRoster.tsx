@@ -1,33 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { User, ChurchSettings, ServicePlan, DayOfWeek, Role } from '../types';
 import { UserCheck, Mic2, Music, Mic, ChevronRight, Calendar, Info, CheckCircle2, BookOpen } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TeamRosterProps {
-    users: User[];
     settings: ChurchSettings;
     plans: ServicePlan[];
-    savePlan: (plan: ServicePlan) => Promise<any>;
-    onSaveSettings: (settings: ChurchSettings) => Promise<void>;
-    role?: Role;
 }
 
 const ROLES_CONFIG = [
-    { key: 'elder', label: 'Anciano de Turno', icon: UserCheck, color: 'text-blue-500 bg-blue-50', border: 'border-blue-100', role: 'ELDER' },
-    { key: 'sabbathSchoolTeacher', label: 'Maestro de ES', icon: BookOpen, color: 'text-emerald-500 bg-emerald-50', border: 'border-emerald-100', role: 'TEACHER' },
-    { key: 'preacher', label: 'Predicador', icon: Mic2, color: 'text-purple-500 bg-purple-50', border: 'border-purple-100', role: 'PREACHER' },
-    { key: 'audioOperator', label: 'Operador de Audio', icon: Mic, color: 'text-orange-500 bg-orange-50', border: 'border-orange-100', role: 'AUDIO' },
+    { key: 'elder', translationKey: 'role.elder', icon: UserCheck, color: 'text-blue-500 bg-blue-50', border: 'border-blue-100' },
+    { key: 'sabbathSchoolTeacher', translationKey: 'role.teacher', icon: BookOpen, color: 'text-emerald-500 bg-emerald-50', border: 'border-emerald-100' },
+    { key: 'preacher', translationKey: 'role.preacher', icon: Mic2, color: 'text-purple-500 bg-purple-50', border: 'border-purple-100' },
+    { key: 'audioOperator', translationKey: 'role.audio', icon: Mic, color: 'text-orange-500 bg-orange-50', border: 'border-orange-100' },
 ];
 
-const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePlan, role = 'ADMIN' }) => {
+const TeamRoster: React.FC<TeamRosterProps> = ({ settings, plans }) => {
+    const { t, language } = useLanguage();
     const { user: currentUser } = useAuth();
-    const isRestricted = role === 'LEADER' || role === 'BOARD';
-    // Logic similar to TeamManager: Display ONE card/view per Meeting Day
     const [activeDayIdx, setActiveDayIdx] = useState(0);
     const [upcomingServices, setUpcomingServices] = useState<{ dayName: string; date: Date; plan: ServicePlan | null }[]>([]);
-    const [loading, setLoading] = useState(false);
 
-    // Calculate dates on mount
     useEffect(() => {
         calculateUpcomingDates();
     }, [settings.meetingDays, plans]);
@@ -52,6 +47,8 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
         };
         const targetDay = daysMap[dayName];
         const date = new Date();
+        if (targetDay === undefined) return date;
+
         const currentDay = date.getDay();
 
         let daysUntil = targetDay - currentDay;
@@ -60,47 +57,6 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
 
         date.setDate(date.getDate() + daysUntil);
         return date;
-    };
-
-    const handleAssignmentChange = async (serviceIdx: number, roleKey: string, userName: string) => {
-        setLoading(true);
-        try {
-            const service = upcomingServices[serviceIdx];
-            const localDateStr = service.date.toLocaleDateString('en-CA');
-
-            let planToSave: ServicePlan;
-
-            if (service.plan) {
-                planToSave = {
-                    ...service.plan,
-                    team: {
-                        ...service.plan.team,
-                        [roleKey]: userName
-                    }
-                };
-            } else {
-                planToSave = {
-                    id: `auto-roster-${Math.random().toString(36).substr(2, 9)}`,
-                    title: `Servicio ${localDateStr}`,
-                    date: localDateStr,
-                    startTime: settings.meetingTimes[service.date.toLocaleDateString('es-ES', { weekday: 'long' }) as DayOfWeek] || '10:00',
-                    isActive: false,
-                    items: [],
-                    tenantId: users[0]?.tenantId || '',
-                    team: {
-                        elder: '', preacher: '', musicDirector: '', audioOperator: '',
-                        [roleKey]: userName
-                    },
-                    isRosterDraft: true
-                };
-            }
-
-            await savePlan(planToSave);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
     };
 
     const currentService = upcomingServices[activeDayIdx]; // Derived state
@@ -118,49 +74,53 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
     if (!currentService) return <div className="p-8 text-center text-gray-400">Cargando...</div>;
 
     return (
-        <div className="p-4 md:p-8 max-w-full mx-auto space-y-8">
+        <div className="p-4 md:p-8 max-w-full mx-auto space-y-8 animate-in fade-in duration-500">
 
             {/* Header */}
-            <div>
-                <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
-                    <UserCheck className="text-indigo-600" size={32} />
-                    Equipo de Turno
-                </h2>
-                <p className="text-slate-500">Gestión de roles para los próximos servicios.</p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h2 className="text-4xl font-black text-slate-800 flex items-center gap-3 tracking-tight">
+                        <UserCheck className="text-indigo-600" size={40} />
+                        {t('team_manager.title') || "Equipo de Turno"}
+                    </h2>
+                    <p className="text-slate-500 font-medium mt-1 ml-1 pt-1 border-t border-slate-100 inline-block">
+                        {t('team_manager.subtitle') || "Asignaciones automáticas basadas en el calendario de turnos."}
+                    </p>
+                </div>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-8 items-start">
 
                 {/* LEFT: Service Selector (Tabs) */}
                 <div className="w-full lg:w-80 flex flex-col gap-4">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-2">Próximos Servicios</h3>
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Próximos Servicios</h3>
                     {upcomingServices.map((service, idx) => (
                         <button
                             key={idx}
                             onClick={() => setActiveDayIdx(idx)}
-                            className={`flex items-center gap-4 p-4 rounded-[2rem] text-left transition-all group relative overflow-hidden ${activeDayIdx === idx
-                                ? 'bg-white shadow-xl shadow-indigo-100 ring-2 ring-indigo-500'
-                                : 'bg-slate-50 hover:bg-white hover:shadow-md text-slate-500'
+                            className={`flex items-center gap-4 p-4 rounded-[2.5rem] text-left transition-all group relative overflow-hidden ${activeDayIdx === idx
+                                ? 'bg-white shadow-2xl shadow-indigo-100 ring-1 ring-indigo-100 translate-x-1'
+                                : 'bg-white/50 hover:bg-white hover:shadow-lg text-slate-500 border border-transparent'
                                 }`}
                         >
-                            <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center border transition-colors ${activeDayIdx === idx
-                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                : 'bg-white text-slate-400 border-slate-200 group-hover:border-indigo-200'
+                            <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center border-2 transition-all duration-300 ${activeDayIdx === idx
+                                ? 'bg-indigo-600 text-white border-indigo-400 rotate-3'
+                                : 'bg-slate-50 text-slate-400 border-slate-200 group-hover:border-indigo-200'
                                 }`}>
-                                <span className="text-xl font-bold">{service.date.getDate()}</span>
-                                <span className="text-[9px] font-bold uppercase">{service.date.toLocaleString('es-ES', { month: 'short' }).replace('.', '')}</span>
+                                <span className="text-xl font-black">{service.date.getDate()}</span>
+                                <span className="text-[9px] font-black uppercase tracking-tighter">{service.date.toLocaleString(language || 'es', { month: 'short' }).replace('.', '')}</span>
                             </div>
 
                             <div className="flex-1">
-                                <h4 className={`font-bold text-lg capitalize ${activeDayIdx === idx ? 'text-indigo-900' : 'text-slate-600'}`}>
+                                <h4 className={`font-black text-lg capitalize tracking-tight ${activeDayIdx === idx ? 'text-indigo-900' : 'text-slate-600'}`}>
                                     {service.dayName}
                                 </h4>
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-xs font-medium ${activeDayIdx === idx ? 'text-indigo-500' : 'text-slate-400'}`}>
+                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${activeDayIdx === idx ? 'text-indigo-500' : 'text-slate-400'}`}>
                                         {service.plan ? 'Programado' : 'Sin asignar'}
                                     </span>
                                     {service.plan?.isActive && (
-                                        <span className="flex items-center gap-1 text-[9px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                                        <span className="flex items-center gap-1 text-[9px] font-black bg-green-100 text-green-700 px-2 py-0.5 rounded-full animate-pulse">
                                             <CheckCircle2 size={8} /> LIVE
                                         </span>
                                     )}
@@ -168,7 +128,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
                             </div>
 
                             {activeDayIdx === idx && (
-                                <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-indigo-500" />
+                                <motion.div layoutId="active-indicator" className="absolute right-0 top-2 bottom-2 w-1.5 bg-indigo-600 rounded-l-full" />
                             )}
                         </button>
                     ))}
@@ -176,58 +136,59 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
 
                 {/* RIGHT: Team Editor Card */}
                 <div className="flex-1 w-full">
-                    <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden min-h-[500px] flex flex-col">
+                    <div className="bg-white rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden min-h-[500px] flex flex-col group/card">
 
                         {/* Card Header */}
-                        <div className="p-8 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
-                            <div>
-                                <h3 className="text-2xl font-bold text-slate-800 capitalize flex items-center gap-2">
+                        <div className="p-10 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center relative">
+                            <div className="relative z-10">
+                                <h3 className="text-4xl font-black text-slate-800 capitalize flex items-center gap-3 tracking-tight">
                                     Equipo del {currentService.dayName}
                                     {currentService.plan?.isActive && (
-                                        <span className="bg-green-500 text-white text-[10px] px-2 py-1 rounded-full font-bold shadow-lg shadow-green-200">
+                                        <span className="bg-green-500 text-white text-[11px] px-3 py-1.5 rounded-full font-black shadow-lg shadow-green-200 animate-pulse">
                                             EN VIVO
                                         </span>
                                     )}
                                 </h3>
-                                <p className="text-slate-400 font-medium">
-                                    {currentService.date.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                <p className="text-slate-400 text-lg font-bold mt-1 tracking-tight">
+                                    {currentService.date.toLocaleDateString(language || 'es', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                 </p>
                             </div>
+                            <Calendar className="absolute right-10 top-10 text-slate-100 w-24 h-24 rotate-12 -z-0 opacity-50 group-hover/card:scale-110 group-hover/card:text-indigo-50 transition-all duration-700" />
                         </div>
 
                         {/* Roles Grid */}
-                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
                             {ROLES_CONFIG.map(roleItem => {
                                 const assignedName = currentService.plan ? (currentService.plan.team as any)[roleItem.key] : '';
-                                const roleUsers = users.filter(u => u.role === roleItem.role || u.secondaryRoles?.includes(roleItem.role as any));
-                                // Sort A-Z
-                                roleUsers.sort((a, b) => a.name.localeCompare(b.name));
-
-                                const canEdit = !isRestricted || currentUser?.secondaryRoles?.includes(roleItem.role as any);
-                                const isDisabled = loading || !canEdit;
 
                                 return (
-                                    <div key={roleItem.key} className={`p-5 rounded-3xl border transition-all hover:shadow-md ${roleItem.border} bg-white group`}>
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${roleItem.color}`}>
-                                                <roleItem.icon size={20} />
+                                    <div key={roleItem.key} className={`p-8 rounded-[2.5rem] border-2 transition-all duration-300 hover:scale-[1.02] ${roleItem.border} bg-white group/item shadow-sm hover:shadow-xl hover:shadow-slate-100`}>
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover/item:rotate-6 ${roleItem.color}`}>
+                                                <roleItem.icon size={28} />
                                             </div>
-                                            <span className="font-bold text-slate-700">{roleItem.label}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t(roleItem.translationKey) || roleItem.key}</span>
+                                                <span className="font-black text-xl text-slate-800 tracking-tight leading-none mt-1">{t(`role.${roleItem.key}`) || roleItem.key}</span>
+                                            </div>
                                         </div>
 
-                                        <div className="relative">
-                                            <select
-                                                value={assignedName || ''}
-                                                onChange={(e) => handleAssignmentChange(activeDayIdx, roleItem.key, e.target.value)}
-                                                disabled={isDisabled}
-                                                className={`w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 font-bold text-slate-700 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/20 transition-colors appearance-none ${isDisabled ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-100'}`}
-                                            >
-                                                <option value="">-- Seleccionar --</option>
-                                                {roleUsers.map(u => (
-                                                    <option key={u.id} value={u.name}>{u.name}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 rotate-90 pointer-events-none" size={16} />
+                                        <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex items-center justify-between group-hover/item:bg-white group-hover/item:border-indigo-100 transition-colors">
+                                            {assignedName ? (
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-indigo-100">
+                                                        {assignedName.charAt(0)}
+                                                    </div>
+                                                    <span className="text-xl font-black text-slate-700 tracking-tight">{assignedName}</span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-400 font-bold italic text-lg tracking-tight">{t('common.tbd') || "por definir"}</span>
+                                            )}
+                                            {assignedName && (
+                                                <div className="w-10 h-10 rounded-full bg-green-50 text-green-500 flex items-center justify-center">
+                                                    <CheckCircle2 size={24} />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -235,10 +196,13 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
                         </div>
 
                         {!currentService.plan && (
-                            <div className="px-8 pb-8 text-center">
-                                <p className="text-xs text-slate-300 italic">
-                                    Al seleccionar un miembro, se creará automáticamente el itinerario para este día.
-                                </p>
+                            <div className="px-10 pb-10 text-center">
+                                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-100 inline-flex items-center gap-3">
+                                    <Info className="text-amber-500" size={18} />
+                                    <p className="text-xs text-amber-700 font-bold tracking-tight">
+                                        No hay información disponible para este día en el calendario de turnos.
+                                    </p>
+                                </div>
                             </div>
                         )}
 
@@ -249,7 +213,5 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ users, settings, plans, savePla
         </div>
     );
 };
-
-
 
 export default TeamRoster;

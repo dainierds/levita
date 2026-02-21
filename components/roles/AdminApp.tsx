@@ -334,12 +334,8 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
 
                     {currentView === 'team' && (
                         <TeamRoster
-                            users={users}
                             settings={settings}
                             plans={plans}
-                            savePlan={savePlan}
-                            onSaveSettings={handleSaveSettings}
-                            role={role}
                         />
                     )}
 
