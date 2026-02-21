@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, Mic2, Activity, Globe, Power, Settings, Volume2, AlertTriangle, Monitor } from 'lucide-react';
+import { Mic, Mic2, Activity, Globe, Power, Settings, Volume2, AlertTriangle, Monitor, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
-import { doc, setDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, arrayUnion, serverTimestamp, onSnapshot, getDoc } from 'firebase/firestore';
 
 const TranslationMaster: React.FC = () => {
     const { user } = useAuth();
@@ -17,6 +17,12 @@ const TranslationMaster: React.FC = () => {
     const [permissionError, setPermissionError] = useState('');
     const [lastLog, setLastLog] = useState<string>(''); // DEBUG STATE
     const [retryCount, setRetryCount] = useState(0); // Auto-reconnect trigger
+    const [remoteStatus, setRemoteStatus] = useState<{
+        isActive: boolean;
+        operatorId: string;
+        operatorName: string;
+    } | null>(null);
+    const [isSyncing, setIsSyncing] = useState(true);
 
     // Audio Context Refs
     const audioContextRef = useRef<AudioContext | null>(null);
@@ -28,6 +34,34 @@ const TranslationMaster: React.FC = () => {
     // Deepgram/Socket Refs
     const wsRef = useRef<WebSocket | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
+    // 0. Listen for Remote Status
+    useEffect(() => {
+        if (!user?.tenantId) return;
+
+        const docRef = doc(db, 'tenants', user.tenantId, 'live', 'translation_status');
+        const unsubscribe = onSnapshot(docRef, (doc) => {
+            if (doc.exists()) {
+                const data = doc.data();
+                setRemoteStatus({
+                    isActive: data.isActive,
+                    operatorId: data.operatorId,
+                    operatorName: data.operatorName
+                });
+
+                // If remote says INACTIVE but we are LOCAL ACTIVE -> stop
+                // This handles "Force Reset" from another admin
+                if (!data.isActive && isActive) {
+                    setIsActive(false);
+                }
+            } else {
+                setRemoteStatus(null);
+            }
+            setIsSyncing(false);
+        });
+
+        return () => unsubscribe();
+    }, [user?.tenantId, isActive]);
 
 
     // 1. Initial Device Enumeration (and permission request if needed)
@@ -207,10 +241,45 @@ const TranslationMaster: React.FC = () => {
             } catch (err) {
                 console.error("Audio Start Error:", err);
                 setIsActive(false);
+                // Also reset remote if we failed to start
+                if (user?.tenantId) {
+                    const docRef = doc(db, 'tenants', user.tenantId, 'live', 'translation_status');
+                    setDoc(docRef, { isActive: false }, { merge: true });
+                }
             }
         };
 
-        startAudio();
+        const updateRemote = async () => {
+            if (!user?.tenantId) return;
+            const docRef = doc(db, 'tenants', user.tenantId, 'live', 'translation_status');
+
+            if (isActive) {
+                // LOCK
+                await setDoc(docRef, {
+                    isActive: true,
+                    operatorId: user.id,
+                    operatorName: user.name,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            } else {
+                // Only release if we own the lock OR it's a generic stop
+                const snap = await getDoc(docRef);
+                const data = snap.data();
+                if (data?.operatorId === user.id || !data?.isActive) {
+                    await setDoc(docRef, {
+                        isActive: false,
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                }
+            }
+        };
+
+        if (isActive) {
+            updateRemote().then(() => startAudio());
+        } else {
+            updateRemote();
+            cleanupAudio();
+        }
 
         return () => {
             cleanupAudio();
@@ -255,6 +324,21 @@ const TranslationMaster: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-3">
                     <button
+                        onClick={async () => {
+                            if (!user?.tenantId) return;
+                            const docRef = doc(db, 'tenants', user.tenantId, 'live', 'translation_status');
+                            await setDoc(docRef, {
+                                isActive: false,
+                                updatedAt: serverTimestamp()
+                            }, { merge: true });
+                            setIsActive(false);
+                        }}
+                        className="w-10 h-10 rounded-full flex items-center justify-center transition-all bg-slate-800 text-slate-400 hover:text-red-400"
+                        title="Forzar Reinicio (Solo si hay error de bloqueo)"
+                    >
+                        <RefreshCw size={18} />
+                    </button>
+                    <button
                         onClick={() => window.open(`/projection/${user?.tenantId}`, '_blank', 'width=1920,height=1080')}
                         className="w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-900/50"
                         title="Proyectar Traducción (HDMI)"
@@ -262,15 +346,35 @@ const TranslationMaster: React.FC = () => {
                         <Monitor size={20} />
                     </button>
                     <button
-                        onClick={() => setIsActive(!isActive)}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${isActive ? 'bg-green-500 text-white shadow-green-900/50' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'
+                        onClick={() => {
+                            if (!isActive && remoteStatus?.isActive && remoteStatus.operatorId !== user?.id) {
+                                return; // Blocked by someone else
+                            }
+                            setIsActive(!isActive);
+                        }}
+                        disabled={!isActive && remoteStatus?.isActive && remoteStatus.operatorId !== user?.id}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${isActive ? 'bg-green-500 text-white shadow-green-900/50' :
+                                (remoteStatus?.isActive && remoteStatus.operatorId !== user?.id) ? 'bg-slate-800 text-slate-600 cursor-not-allowed' :
+                                    'bg-slate-800 text-slate-500 hover:bg-slate-700'
                             }`}
-                        title={isActive ? "Detener Transmisión" : "Iniciar Transmisión"}
+                        title={isActive ? "Detener Transmisión" : (remoteStatus?.isActive && remoteStatus.operatorId !== user?.id) ? `Ocupado por ${remoteStatus.operatorName}` : "Iniciar Transmisión"}
                     >
                         <Power size={20} />
                     </button>
                 </div>
             </div>
+
+            {remoteStatus?.isActive && remoteStatus.operatorId !== user?.id && !isActive && (
+                <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-2">
+                    <div className="p-2 bg-amber-500/20 rounded-lg text-amber-500">
+                        <Mic size={20} />
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-amber-400">Traducción en uso</p>
+                        <p className="text-xs text-amber-500/80">Actualmente activa por <span className="text-white font-bold">{remoteStatus.operatorName}</span>. Solo una sesión puede estar activa a la vez.</p>
+                    </div>
+                </div>
+            )}
 
             {permissionError && (
                 <div className="mb-4 bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center gap-2 text-red-400 text-xs font-bold">
@@ -280,7 +384,6 @@ const TranslationMaster: React.FC = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Input Control */}
                 <div className="space-y-4">
                     <div>
                         <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Dispositivo de Entrada</label>
@@ -307,7 +410,6 @@ const TranslationMaster: React.FC = () => {
                                 </p>
                             </div>
                         )}
-
                         {inputDevice !== 'default' && (
                             <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg flex gap-2 items-start">
                                 <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={14} />
@@ -324,21 +426,16 @@ const TranslationMaster: React.FC = () => {
                             <span>Nivel de Entrada (Real)</span>
                             <span className="text-slate-600 font-mono">{Math.round(level)}%</span>
                         </label>
-                        {/* Audio Meter Visualizer */}
                         <div className="h-12 bg-slate-800 rounded-xl p-2 flex items-center gap-1 relative overflow-hidden">
-                            {/* Background Grid */}
                             <div className="absolute inset-0 flex gap-0.5 opacity-10 pointer-events-none">
                                 {[...Array(40)].map((_, i) => <div key={i} className="flex-1 bg-slate-500 h-full" />)}
                             </div>
-
-                            {/* Active Bars */}
                             {[...Array(20)].map((_, i) => {
                                 const threshold = (i / 20) * 100;
                                 const isLit = level > threshold;
                                 let color = 'bg-green-500';
                                 if (i > 12) color = 'bg-yellow-500';
                                 if (i > 17) color = 'bg-red-500';
-
                                 return (
                                     <div
                                         key={i}
@@ -354,7 +451,6 @@ const TranslationMaster: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Output Control */}
                 <div className="space-y-4">
                     <div>
                         <div className="flex justify-between items-center mb-4">
@@ -413,7 +509,6 @@ const TranslationMaster: React.FC = () => {
                 </div>
             )}
 
-            {/* DEBUG PANEL - Hidden in Production but useful now */}
             <div className="mt-4 p-4 bg-black/40 rounded-xl border border-dashed border-slate-700">
                 <p className="text-[10px] font-bold text-slate-500 uppercase mb-2 flex justify-between">
                     <span>WebSocket Debugger</span>
@@ -424,7 +519,6 @@ const TranslationMaster: React.FC = () => {
                 <div className="font-mono text-[10px] text-green-400 break-all bg-black/50 p-2 rounded mb-2">
                     {lastLog || "Esperando datos del servidor..."}
                 </div>
-                {/* Visual confirmation of parsing */}
                 {lastLog && lastLog.includes('translation') && (
                     <div className="text-[10px] text-indigo-300">
                         Parsed Translation: {(() => { try { return JSON.parse(lastLog).translation || "EMPTY USERKEY"; } catch (e) { return "PARSE ERROR"; } })()}
@@ -432,6 +526,7 @@ const TranslationMaster: React.FC = () => {
                 )}
             </div>
         </div>
+
     );
 };
 
