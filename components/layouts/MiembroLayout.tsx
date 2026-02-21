@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -31,40 +31,7 @@ const MiembroLayout: React.FC = () => {
         }
     };
 
-    const navItems = [
-        { path: '/miembro/inicio', icon: Home, label: t('menu.home') || 'Inicio' },
-        { path: '/miembro/eventos', icon: Calendar, label: t('menu.events') || 'Eventos' },
-        { path: '/miembro/biblia', icon: Book, label: t('menu.bible') || 'Biblia' },
-        { path: '/miembro/perfil', icon: User, label: t('menu.profile') || 'Perfil' },
-    ];
 
-    const TabItem = ({ icon: Icon, label, isActive, onClick, isSpecial }: { icon: any, label: string, isActive: boolean, onClick: () => void, isSpecial?: boolean }) => {
-        return (
-            <button
-                onClick={onClick}
-                className="relative w-16 h-full"
-            >
-                {/* Active Bubble Background (The "Curve") */}
-                {isActive && (
-                    <motion.div
-                        layoutId="activeTabBubble"
-                        className="absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.4)] border-[3px] border-white z-0"
-                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    />
-                )}
-
-                {/* Icon - Absolute Positioning for Perfect Alignment */}
-                <div className={`absolute left-1/2 -translate-x-1/2 transition-all duration-300 z-10 ${isActive ? '-top-[10px] text-white' : 'top-[17px] text-slate-400'}`}>
-                    <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
-                </div>
-
-                {/* Label */}
-                <span className={`absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-bold transition-opacity duration-300 ${isActive ? 'opacity-0' : 'text-slate-400'}`}>
-                    {label}
-                </span>
-            </button>
-        );
-    };
 
     return (
         <div className="fixed inset-0 bg-gray-100 flex items-center justify-center lg:p-4">
@@ -148,45 +115,107 @@ const MiembroLayout: React.FC = () => {
                 </div>
 
                 {/* --- NATIVE TAB BAR (CURVED FULL WIDTH) --- */}
-                <div className="absolute bottom-0 left-0 right-0 h-20 bg-white shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] flex items-center justify-around px-2 z-50">
-
-                    {/* Items */}
-                    <TabItem
-                        icon={Home}
-                        label={t('menu.home') || "Inicio"}
-                        isActive={location.pathname.includes('/miembro/inicio')}
-                        onClick={() => navigate('/miembro/inicio')}
-                    />
-                    <TabItem
-                        icon={Calendar}
-                        label={t('menu.events') || "Eventos"}
-                        isActive={location.pathname.includes('/miembro/eventos')}
-                        onClick={() => navigate('/miembro/eventos')}
-                    />
-
-                    {/* Live Button (Center) */}
-                    <TabItem
-                        icon={Video}
-                        label={t('menu.live') || "En Vivo"}
-                        isActive={location.pathname.includes('/miembro/en-vivo')}
-                        onClick={() => navigate('/miembro/en-vivo')}
-                        isSpecial
-                    />
-
-                    <TabItem
-                        icon={List}
-                        label={t('menu.order') || "Orden"}
-                        isActive={location.pathname.includes('/miembro/liturgia')}
-                        onClick={() => navigate('/miembro/liturgia')}
-                    />
-                    <TabItem
-                        icon={User}
-                        label={t('menu.profile') || "Perfil"}
-                        isActive={location.pathname.includes('/miembro/perfil')}
-                        onClick={() => navigate('/miembro/perfil')}
-                    />
+                <div className="absolute bottom-0 left-0 right-0 h-[5.5rem] z-50">
+                    <NotchedNavBar />
                 </div>
 
+            </div>
+        </div>
+    );
+};
+
+// --- SVG NOTCHED NAV BAR COMPONENT (Member Version) ---
+const NotchedNavBar = () => {
+    const { t } = useLanguage();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [width, setWidth] = useState(0);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const observer = new ResizeObserver(entries => {
+            requestAnimationFrame(() => {
+                if (entries[0]) setWidth(entries[0].contentRect.width);
+            });
+        });
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, []);
+
+    const tabs = [
+        { path: '/miembro/inicio', icon: Home, label: t('menu.home') || 'Inicio' },
+        { path: '/miembro/eventos', icon: Calendar, label: t('menu.events') || 'Eventos' },
+        { path: '/miembro/en-vivo', icon: Video, label: t('menu.live') || 'En Vivo' },
+        { path: '/miembro/liturgia', icon: List, label: t('menu.order') || 'Orden' },
+        { path: '/miembro/perfil', icon: User, label: t('menu.profile') || 'Perfil' },
+    ];
+
+    const activeIndex = tabs.findIndex(t => location.pathname.includes(t.path));
+    const validIndex = activeIndex === -1 ? 0 : activeIndex;
+
+    if (width === 0) return <div ref={containerRef} className="w-full h-full" />;
+
+    const tabWidth = width / 5;
+    const centerX = (validIndex * tabWidth) + (tabWidth / 2);
+    const holeWidth = 76;
+    const depth = 38;
+
+    const path = `
+    M 0 30 
+    Q 0 0 30 0
+    L ${centerX - holeWidth / 2 - 15} 0
+    C ${centerX - holeWidth / 2} 0, ${centerX - holeWidth / 2.5} ${depth}, ${centerX} ${depth}
+    C ${centerX + holeWidth / 2.5} ${depth}, ${centerX + holeWidth / 2} 0, ${centerX + holeWidth / 2 + 15} 0
+    L ${width - 30} 0
+    Q ${width} 0 ${width} 30
+    L ${width} 100
+    L 0 100
+    Z
+  `;
+
+    return (
+        <div ref={containerRef} className="relative w-full h-full">
+            <svg className="absolute inset-0 w-full h-full drop-shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pointer-events-none">
+                <motion.path
+                    d={path}
+                    className="fill-white"
+                    animate={{ d: path }}
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                />
+            </svg>
+
+            <div className="relative w-full h-full flex items-end">
+                {tabs.map((tab, idx) => {
+                    const isActive = idx === validIndex;
+                    return (
+                        <button
+                            key={tab.path}
+                            onClick={() => navigate(tab.path)}
+                            className="flex-1 h-full flex flex-col items-center justify-end pb-4 relative z-10 group"
+                        >
+                            <div className="relative">
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="active-notch-bubble-member"
+                                        className="absolute left-1/2 -ml-[1.75rem] -top-[3.25rem] w-14 h-14 bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 rounded-full shadow-[0_10px_20px_-5px_rgba(79,70,229,0.5)] border-[3px] border-white flex items-center justify-center text-white z-20"
+                                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                                    >
+                                        <tab.icon size={26} strokeWidth={2.5} />
+                                    </motion.div>
+                                )}
+
+                                <div className={`transition-all duration-300 ${isActive ? 'opacity-0 scale-50' : 'opacity-100 scale-100 text-slate-400 group-hover:text-indigo-500'}`}>
+                                    {isActive ? <div className="w-6 h-6" /> : <tab.icon size={26} strokeWidth={2} />}
+                                </div>
+                            </div>
+
+                            <span className={`text-[10px] font-bold mt-1 transition-all duration-300 ${isActive ? 'opacity-0 translate-y-2' : 'text-slate-400 opacity-100'}`}>
+                                {tab.label}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );
