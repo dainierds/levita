@@ -9,6 +9,7 @@ import { EventsView } from './views/EventsView';
 import { OrderView } from './views/OrderView';
 import { TranslationView } from './views/TranslationView';
 import { PrayerView } from './views/PrayerView';
+import { ProfileView } from './views/ProfileView';
 
 import {
   Home, Video, List, Heart, User, Calendar, LogOut, Globe,
@@ -252,7 +253,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
       case ViewState.PRAYER:
         return <PrayerView tenantId={initialTenantId} />;
       case ViewState.PROFILE:
-        return <SimpleView title="Mi Perfil" />;
+        return <ProfileView tenantId={initialTenantId} />;
       case ViewState.TRANSLATION:
         return <TranslationView tenantId={initialTenantId} />;
       default:

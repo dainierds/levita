@@ -410,6 +410,10 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'visitor.board_desc': 'Miembros de la Junta',
         'visitor.leaders_desc': 'Líderes de Depto',
         'visitor.admin_desc': 'Administración',
+        'visitor.welcome_visitor': '¡Bienvenido, Visitante!',
+        'visitor.profile_subtitle': 'Tu espacio personal en la app',
+        'visitor.prayer_reminder': 'Oramos por ti y con toda la iglesia.',
+        'common.available': 'DISPONIBLE',
 
         // --- DATE & TIME ---
         'day.monday': 'Lunes',
@@ -915,6 +919,10 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'visitor.board_desc': 'Board Members',
         'visitor.leaders_desc': 'Dept Leaders',
         'visitor.admin_desc': 'Administration',
+        'visitor.welcome_visitor': 'Welcome, Visitor!',
+        'visitor.profile_subtitle': 'Your personal space in the app',
+        'visitor.prayer_reminder': 'We pray for you and with the whole church.',
+        'common.available': 'AVAILABLE',
 
         // --- DATE & TIME ---
         'day.monday': 'Monday',
@@ -1073,6 +1081,10 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         // Missing Roles
         'role.board': 'Junta',
         'role.leaders': 'Líderes',
+        'visitor.welcome_visitor': 'Bem-vindo, Visitante!',
+        'visitor.profile_subtitle': 'Seu espaço pessoal no app',
+        'visitor.prayer_reminder': 'Oramos por você e com toda a igreja.',
+        'common.available': 'DISPONÍVEL',
     },
     fr: {
         'app.name': 'LEVITA',
@@ -1136,5 +1148,9 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         // Missing Roles
         'role.board': 'Comité',
         'role.leaders': 'Leaders',
+        'visitor.welcome_visitor': 'Bienvenue, Visiteur !',
+        'visitor.profile_subtitle': 'Votre espace personnel dans l\'app',
+        'visitor.prayer_reminder': 'Nous prions pour vous et avec toute l\'église.',
+        'common.available': 'DISPONIBLE',
     }
 };

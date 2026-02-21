@@ -1,11 +1,15 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, User, Bell, MapPin } from 'lucide-react';
+import { LogOut, User, Bell, MapPin, Download } from 'lucide-react';
 import { useTenantSettings } from '../../hooks/useTenantSettings';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PerfilMiembro: React.FC = () => {
     const { user, logout } = useAuth();
     const { settings } = useTenantSettings();
+    const { installApp, isInstalled } = usePWAInstall();
+    const { t } = useLanguage();
 
     return (
         <div className="p-4 space-y-6">
@@ -44,6 +48,19 @@ const PerfilMiembro: React.FC = () => {
                         </div>
                         <span className="text-xs text-green-500 font-bold bg-green-50 px-2 py-1 rounded-md">ACTIVADO</span>
                     </button>
+
+                    {!isInstalled && !window.matchMedia('(display-mode: standalone)').matches && (
+                        <button
+                            onClick={installApp}
+                            className="w-full flex items-center justify-between p-4 hover:bg-indigo-50 rounded-2xl transition-colors group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Download className="w-5 h-5 text-indigo-500" />
+                                <span className="text-slate-700 font-bold">{t('common.install_app') || 'Instalar App'}</span>
+                            </div>
+                            <span className="text-[10px] text-indigo-500 font-black bg-indigo-50 px-2 py-1 rounded-md uppercase group-hover:bg-white transition-colors">DISPONIBLE</span>
+                        </button>
+                    )}
                 </div>
 
                 <div className="p-6 border-t border-slate-100">
