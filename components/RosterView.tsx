@@ -341,7 +341,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         const poolIds = settings.dayPools?.[selectedDayName]?.[targetRoleConfig.key] || [];
 
         if (poolIds.length === 0) {
-            addNotification('warning', t('roster.empty_pool') || 'Poceta Vacía', t('roster.no_volunteers') || `No hay voluntarios configurados para ${selectedDayName}.`);
+            addNotification('warning', t('roster.empty_pool'), t('roster.no_volunteers', { day: selectedDayName }));
             return;
         }
 
@@ -489,8 +489,8 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             <div className="h-2 md:h-4 w-full flex-shrink-0"></div>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0">
                 <div>
-                    <h2 className="text-3xl font-bold text-slate-800">{t('roster.title') || "Itinerario de Turnos"}</h2>
-                    <p className="text-slate-500">{t('roster.subtitle') || "Arrastra y asigna roles a los servicios del calendario."}</p>
+                    <h2 className="text-3xl font-bold text-slate-800">{t('roster.title')}</h2>
+                    <p className="text-slate-500">{t('roster.subtitle')}</p>
                 </div>
                 {canEdit && (
                     <button
@@ -522,8 +522,8 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
                 <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
                     <div className="p-6 border-b border-slate-50 bg-slate-50/50">
-                        <h3 className="font-bold text-xl text-slate-800">{t('roster.available') || "Disponible"}</h3>
-                        <p className="text-xs text-slate-400">{t('roster.drag_hint') || "Arrastra a un Grupo o al Calendario"}</p>
+                        <h3 className="font-bold text-xl text-slate-800">{t('roster.available')}</h3>
+                        <p className="text-xs text-slate-400">{t('roster.drag_hint')}</p>
                     </div>
                     <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
 
@@ -566,8 +566,8 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                 {showGroupsColumn && (
                     <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
                         <div className="p-6 border-b border-slate-50 bg-slate-50/50">
-                            <h3 className="font-bold text-xl text-slate-800">{t('roster.groups') || "Grupos"}</h3>
-                            <p className="text-xs text-slate-400">{t('roster.groups_subtitle') || "Organiza voluntarios por día"}</p>
+                            <h3 className="font-bold text-xl text-slate-800">{t('roster.groups')}</h3>
+                            <p className="text-xs text-slate-400">{t('roster.groups_subtitle')}</p>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
                             {(!isTeamsTab && !isMusicTab) ? settings.meetingDays.map(day => {
@@ -588,7 +588,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
 
                                         {poolUsers.length === 0 ? (
                                             <div className="border-2 border-dashed border-slate-100 rounded-2xl p-4 text-center">
-                                                <p className="text-[10px] text-slate-400">{t('roster.drag_here') || "Arrastra aquí"}</p>
+                                                <p className="text-[10px] text-slate-400">{t('roster.drag_here')}</p>
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
@@ -633,7 +633,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                         </div>
                         <div className="flex gap-2">
                             <button className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 rounded-xl border border-slate-200">
-                                {t('common.history') || "Historial"}
+                                {t('common.history')}
                             </button>
                             {canEdit && selectedRoleTab === 'preacher' && (
                                 <label className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl flex items-center gap-2 cursor-pointer shadow-md transition-colors">
@@ -653,7 +653,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                     onClick={handleAutoAssignClick}
                                     className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center gap-2"
                                 >
-                                    <Sparkles size={14} /> {t('roster.auto_assign') || "Auto Asignar"} {t(currentRoleConfig?.translationKey || '') || currentRoleConfig?.defaultLabel}
+                                    <Sparkles size={14} /> {t('roster.auto_assign')} {t(currentRoleConfig?.translationKey || '') || currentRoleConfig?.defaultLabel}
                                 </button>
                             )}
                         </div>
@@ -788,7 +788,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <p className="text-xs text-slate-400 text-center">{canEdit ? (t('roster.drag_member_hint') || 'Arrastra un miembro aquí') : (t('roster.unassigned') || 'Sin asignar')}</p>
+                                                        <p className="text-xs text-slate-400 text-center">{canEdit ? t('roster.drag_member_hint') : t('roster.unassigned')}</p>
                                                     </>
                                                 )}
                                             </div>
