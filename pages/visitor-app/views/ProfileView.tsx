@@ -29,7 +29,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
             <div className="bg-white rounded-2xl p-6 shadow-lg">
                 <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <User className="w-6 h-6 text-indigo-600" />
-                    {t('ViewState.PROFILE') || 'Mi Perfil'}
+                    {t('menu.profile') || 'Mi Perfil'}
                 </h1>
             </div>
 
