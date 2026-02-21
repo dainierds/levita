@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Volume2, Globe, Radio, Headphones } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { translateText } from '../services/geminiService';
 import { db } from '../services/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -117,7 +118,11 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
             setTranslation(parsed.translation || "");
             setSegments(prev => {
               // Keep last 5 segments to avoid huge DOM
-              const newSegments = [...prev, { original: parsed.original, translation: parsed.translation || "" }];
+              const newSegments = [...prev, {
+                original: parsed.original,
+                translation: parsed.translation || "",
+                timestamp: Date.now()
+              }];
               return newSegments.slice(-5);
             });
           }
@@ -271,16 +276,31 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
             ref={scrollRef}
             className="flex-1 overflow-y-auto space-y-4 no-scrollbar mt-8 mask-fade-top"
           >
-            {/* History Segments */}
-            {segments.map((seg, i) => (
-              <div key={i} className={`transition-all duration-500 ${i === segments.length - 1 ? 'opacity-100 scale-100' : 'opacity-80 scale-95 origin-left'}`}>
-                <p className={`text-lg md:text-xl font-bold leading-relaxed ${i === segments.length - 1 ? 'text-indigo-900' : 'text-indigo-900/80'}`}>
-                  {targetLang === 'es'
-                    ? seg.original
-                    : (seg.translation || <span className="opacity-0">...</span>)}
-                </p>
-              </div>
-            ))}
+            <AnimatePresence mode="popLayout">
+              {/* History Segments */}
+              {segments.map((seg, i) => (
+                <motion.div
+                  key={seg.timestamp || i}
+                  layout
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: i === segments.length - 1 ? 1 : 0.7, y: 0, scale: i === segments.length - 1 ? 1 : 0.95 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 40,
+                    opacity: { duration: 0.2 }
+                  }}
+                  className="origin-left"
+                >
+                  <p className={`text-lg md:text-xl font-bold leading-relaxed ${i === segments.length - 1 ? 'text-indigo-900' : 'text-indigo-900/80'}`}>
+                    {targetLang === 'es'
+                      ? seg.original
+                      : (seg.translation || <span className="opacity-0">...</span>)}
+                  </p>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
             {segments.length === 0 && (
               <div className="h-full flex items-center justify-center text-indigo-300 italic">

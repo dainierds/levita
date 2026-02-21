@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../../services/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -40,31 +41,53 @@ const ProjectionView: React.FC = () => {
             {/* Container for Movie Credits Style Scrolling */}
             <div className="relative z-10 w-full max-w-[90%] md:max-w-[80%] h-[85vh] flex flex-col justify-end items-center mask-fade-top">
                 <div className="flex flex-col items-center gap-6 md:gap-8 w-full pb-10">
-                    {/* Show context, excluding the current live line to avoid duplication */}
-                    {segments
-                        .slice(-7)
-                        // Filter out the last segment if it matches the current hero line
-                        .filter((seg, index, arr) => {
-                            const isLast = index === arr.length - 1;
-                            const text = seg.translation || seg.original;
-                            // Strict check to ensure we don't hide previous identical lines, only the immediate duplicate
-                            return !(isLast && text === translation);
-                        })
-                        .map((seg, i) => (
-                            <p
-                                key={i}
-                                className="text-4xl md:text-6xl font-bold text-slate-300 text-center leading-tight drop-shadow-md transition-all duration-500 opacity-80"
-                            >
-                                {seg.translation || seg.original}
-                            </p>
-                        ))}
+                    <AnimatePresence mode="popLayout">
+                        {/* Show context, excluding the current live line to avoid duplication */}
+                        {segments
+                            .slice(-5)
+                            .filter((seg, index, arr) => {
+                                const isLast = index === arr.length - 1;
+                                const text = seg.translation || seg.original;
+                                return !(isLast && text === translation);
+                            })
+                            .map((seg, i) => (
+                                <motion.p
+                                    key={seg.timestamp || `seg-${i}`}
+                                    layout
+                                    initial={{ opacity: 0, y: 40 }}
+                                    animate={{ opacity: 0.6, y: 0, scale: 0.9 }}
+                                    exit={{ opacity: 0, y: -40, filter: 'blur(10px)' }}
+                                    transition={{
+                                        type: "spring",
+                                        stiffness: 200,
+                                        damping: 30,
+                                        opacity: { duration: 0.5 }
+                                    }}
+                                    className="text-4xl md:text-5xl font-bold text-slate-400 text-center leading-tight drop-shadow-md"
+                                >
+                                    {seg.translation || seg.original}
+                                </motion.p>
+                            ))}
 
-                    {/* Current Live Line */}
-                    {translation && (
-                        <p className="text-5xl md:text-7xl font-black text-white text-center leading-tight drop-shadow-2xl animate-fade-in-up">
-                            {translation}
-                        </p>
-                    )}
+                        {/* Current Live Line */}
+                        {translation && (
+                            <motion.p
+                                key="live-line"
+                                layout
+                                initial={{ opacity: 0, y: 60, scale: 0.8, filter: 'blur(20px)' }}
+                                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 150,
+                                    damping: 25,
+                                    opacity: { duration: 0.6 }
+                                }}
+                                className="text-5xl md:text-8xl font-black text-white text-center leading-tight drop-shadow-2xl"
+                            >
+                                {translation}
+                            </motion.p>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
 
@@ -73,12 +96,6 @@ const ProjectionView: React.FC = () => {
                     mask-image: linear-gradient(to bottom, transparent 0%, black 100%); 
                     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 100%); 
                 }
-                @keyframes fade-in-up {
-                    0% { opacity: 0; transform: translateY(40px) scale(0.95); filter: blur(10px); }
-                    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-                }
-                .animate-fade-in-up { animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-                
                 @keyframes pulse-slow {
                     0%, 100% { opacity: 0.5; }
                     50% { opacity: 0.8; }
