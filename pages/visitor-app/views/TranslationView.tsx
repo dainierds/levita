@@ -10,7 +10,7 @@ export const TranslationView: React.FC<TranslationViewProps> = ({ tenantId }) =>
     const { t } = useLanguage();
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="pt-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Main Translation Interface */}
             <div className="max-w-3xl mx-auto">
                 <LiveTranslation initialLanguage="en" tenantId={tenantId} />
