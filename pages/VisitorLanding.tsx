@@ -141,7 +141,14 @@ const VisitorLanding: React.FC = () => {
     const handleLanguageSelect = (code: string) => {
         setLanguage(code as any);
         setSelectedLang(code);
-        setStep('role_selection');
+
+        // Restriction: Only Spanish speakers can access departments (Leaders/Admin)
+        // Others go directly to the Visitor App
+        if (code === 'es') {
+            setStep('role_selection');
+        } else {
+            setStep('app');
+        }
     };
 
     if (step === 'language') {
