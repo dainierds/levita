@@ -359,6 +359,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
 
 // --- SVG NOTCHED NAV BAR COMPONENT ---
 const NotchedNavBar = ({ activeView, onNavigate }: { activeView: ViewState, onNavigate: (v: ViewState) => void }) => {
+  const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
 
