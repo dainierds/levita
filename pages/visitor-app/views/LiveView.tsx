@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Heart, Users, Share2, MoreHorizontal, User } from 'lucide-react';
 import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface LiveViewProps {
   tenantId?: string;
@@ -15,6 +16,7 @@ interface ChatMessage {
 }
 
 export const LiveView: React.FC<LiveViewProps> = ({ tenantId }) => {
+  const { t } = useLanguage();
   const [channelId, setChannelId] = useState<string>(''); // Default empty
   const [liveVideoId, setLiveVideoId] = useState<string | null>(null);
 
@@ -79,13 +81,13 @@ export const LiveView: React.FC<LiveViewProps> = ({ tenantId }) => {
               <iframe
                 className="absolute inset-0 w-full h-full"
                 src={`https://www.youtube.com/embed/live_stream?channel=${channelId}`}
-                title="Transmisión en Vivo"
+                title={t('visitor.live_stream')}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             ) : (
               <div className="flex items-center justify-center h-full text-white/50">
-                <p>Esperando señal...</p>
+                <p>{t('visitor.waiting_signal')}</p>
               </div>
             )}
           </div>
@@ -95,10 +97,10 @@ export const LiveView: React.FC<LiveViewProps> = ({ tenantId }) => {
         <div>
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
             <button className="px-4 py-2 bg-indigo-600 text-white rounded-full font-bold text-sm shadow-lg shadow-indigo-200 flex items-center gap-2 hover:bg-indigo-700 transition-all">
-              <Heart size={16} className="fill-white" /> Amén
+              <Heart size={16} className="fill-white" /> {t('visitor.amen')}
             </button>
             <button className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-full font-bold text-sm border border-slate-200 dark:border-slate-700 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
-              🖐️ Levantar Mano
+              🖐️ {t('visitor.raise_hand')}
             </button>
             <div className="flex-1" />
             <button className="p-3 rounded-full bg-slate-50 dark:bg-slate-700 text-slate-400 hover:text-pink-500 hover:bg-pink-50 transition-all">
@@ -118,9 +120,9 @@ export const LiveView: React.FC<LiveViewProps> = ({ tenantId }) => {
           {/* Chat Header */}
           <div className="p-5 border-b border-slate-100 dark:border-slate-700/50 flex items-center justify-between bg-white dark:bg-slate-800 z-10">
             <div>
-              <h3 className="font-black text-slate-800 dark:text-white text-lg">Chat en Vivo</h3>
+              <h3 className="font-black text-slate-800 dark:text-white text-lg">{t('visitor.live_chat')}</h3>
               <p className="text-xs text-slate-400 font-medium flex items-center gap-1">
-                {liveVideoId ? <span className="text-red-500 flex items-center gap-1"><span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> EN VIVO</span> : 'Conectando...'}
+                {liveVideoId ? <span className="text-red-500 flex items-center gap-1"><span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> {t('member.live_status')}</span> : t('visitor.connecting')}
               </p>
             </div>
           </div>
@@ -136,9 +138,9 @@ export const LiveView: React.FC<LiveViewProps> = ({ tenantId }) => {
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center">
                 <MoreHorizontal size={32} className="mb-4 opacity-50" />
-                <p className="font-bold">Esperando transmisión...</p>
-                <p className="text-xs mt-2">El chat aparecerá cuando inicie el video en vivo.</p>
-                {!channelId && <p className="text-xs text-red-400 mt-4">⚠️ Falta configurar Channel ID</p>}
+                <p className="font-bold">{t('visitor.waiting_transmission')}</p>
+                <p className="text-xs mt-2">{t('visitor.chat_hint')}</p>
+                {!channelId && <p className="text-xs text-red-400 mt-4">⚠️ {t('visitor.channel_id_missing')}</p>}
               </div>
             )}
           </div>

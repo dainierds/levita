@@ -10,6 +10,7 @@ import { OrderView } from './views/OrderView';
 import { TranslationView } from './views/TranslationView';
 import { PrayerView } from './views/PrayerView';
 import { ProfileView } from './views/ProfileView';
+import { useLanguage } from '../../context/LanguageContext';
 
 import {
   Home, Video, List, Heart, User, Calendar, LogOut, Globe,
@@ -18,15 +19,18 @@ import {
 import { useNotifications } from '../../hooks/useNotifications';
 import { motion } from 'framer-motion';
 
-const SimpleView: React.FC<{ title: string }> = ({ title }) => (
-  <div className="flex flex-col items-center justify-center h-full text-gray-400 animate-in fade-in">
-    <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center mb-6">
-      <Search size={32} className="opacity-30 text-slate-500" />
+const SimpleView: React.FC<{ title: string }> = ({ title }) => {
+  const { t } = useLanguage();
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-gray-400 animate-in fade-in">
+      <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center mb-6">
+        <Search size={32} className="opacity-30 text-slate-500" />
+      </div>
+      <h2 className="text-2xl font-bold mb-2 text-slate-600">{title}</h2>
+      <p>{t('common.loading')}</p>
     </div>
-    <h2 className="text-2xl font-bold mb-2 text-slate-600">{title}</h2>
-    <p>Próximamente</p>
-  </div>
-);
+  );
+};
 
 interface AppProps {
   initialTenantId?: string;
@@ -35,6 +39,7 @@ interface AppProps {
 }
 
 const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) => {
+  const { t, language } = useLanguage();
   const [activeView, setActiveView] = useState<ViewState>(ViewState.HOME);
 
   // Data State
@@ -272,8 +277,8 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
 
   // Ticker Content for Header
   const tickerText = nextService
-    ? `PRÓXIMO CULTO: ${nextService.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${formatTime12h(nextService.time)}  ✦  PREDICADOR: ${nextService.preacher?.toUpperCase() || 'POR DEFINIR'}  ✦  `
-    : 'BIENVENIDOS A LA IGLESIA  ✦  ';
+    ? `${t('visitor.next_service_prefix')}: ${nextService.dateObj.toLocaleDateString(language === 'es' ? 'es-ES' : language === 'pt' ? 'pt-BR' : language === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${formatTime12h(nextService.time)}  ✦  ${t('visitor.preacher_prefix')}: ${nextService.preacher?.toUpperCase() || t('common.tbd').toUpperCase()}  ✦  `
+    : `${t('visitor.welcome_ticker')}  ✦  `;
   const displayTicker = tickerText.repeat(4);
 
   return (
@@ -293,8 +298,8 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
                 V
               </div>
               <div>
-                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bienvenido</h2>
-                <p className="text-lg font-black text-slate-900 leading-none">Visitante</p>
+                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.welcome')}</h2>
+                <p className="text-lg font-black text-slate-900 leading-none">{t('role.visitor')}</p>
               </div>
             </div>
             <div className="flex gap-4 text-slate-600 items-center">
@@ -370,11 +375,11 @@ const NotchedNavBar = ({ activeView, onNavigate }: { activeView: ViewState, onNa
   }, []);
 
   const tabs = [
-    { id: ViewState.HOME, icon: Home, label: 'Inicio' },
-    { id: ViewState.EVENTS, icon: Calendar, label: 'Eventos' },
-    { id: ViewState.LIVE, icon: Video, label: 'En Vivo' },
-    { id: ViewState.TRANSLATION, icon: Globe, label: 'Traducción' },
-    { id: ViewState.PROFILE, icon: User, label: 'Perfil' },
+    { id: ViewState.HOME, icon: Home, label: t('menu.home') },
+    { id: ViewState.EVENTS, icon: Calendar, label: t('menu.events') },
+    { id: ViewState.LIVE, icon: Video, label: t('menu.live') },
+    { id: ViewState.TRANSLATION, icon: Globe, label: t('member.translation') },
+    { id: ViewState.PROFILE, icon: User, label: t('menu.profile') },
   ];
 
   const activeIndex = tabs.findIndex(t => t.id === activeView);

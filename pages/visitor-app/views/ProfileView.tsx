@@ -15,9 +15,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                alert(t('notifications.enabled') || '¡Notificaciones activadas!');
+                alert(t('notifications.enabled'));
             } else {
-                alert(t('notifications.denied') || 'Permiso denegado.');
+                alert(t('notifications.denied'));
             }
         } catch (e) {
             console.error(e);
@@ -29,7 +29,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
             <div className="bg-white rounded-2xl p-6 shadow-lg">
                 <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <User className="w-6 h-6 text-indigo-600" />
-                    {t('menu.profile') || 'Mi Perfil'}
+                    {t('menu.profile')}
                 </h1>
             </div>
 
@@ -38,10 +38,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
                     <div className="w-24 h-24 bg-white/20 rounded-full mx-auto flex items-center justify-center text-4xl font-bold mb-4 border-4 border-white/30 backdrop-blur-md">
                         V
                     </div>
-                    <h2 className="text-2xl font-bold">{t('visitor.welcome_visitor') || '¡Bienvenido!'}</h2>
-                    <p className="text-indigo-100">{t('visitor.profile_subtitle') || 'Gracias por acompañarnos hoy'}</p>
+                    <h2 className="text-2xl font-bold">{t('visitor.welcome_visitor')}</h2>
+                    <p className="text-indigo-100">{t('visitor.profile_subtitle')}</p>
                     <span className="inline-block px-4 py-1.5 bg-white/20 rounded-full text-xs font-bold uppercase mt-4">
-                        {t('role.visitor') || 'Visitante'}
+                        {t('role.visitor')}
                     </span>
                 </div>
 
@@ -52,7 +52,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
                     >
                         <div className="flex items-center gap-3">
                             <Bell className="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                            <span className="text-gray-700 font-medium">{t('common.enable_notifications') || 'Activar Notificaciones'}</span>
+                            <span className="text-gray-700 font-medium">{t('common.enable_notifications')}</span>
                         </div>
                         <ChevronRightIcon />
                     </button>
@@ -64,10 +64,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
                         >
                             <div className="flex items-center gap-3">
                                 <Download className="w-5 h-5 text-indigo-500" />
-                                <span className="text-slate-700 font-bold">{t('common.install_app') || 'Instalar App'}</span>
+                                <span className="text-slate-700 font-bold">{t('common.install_app')}</span>
                             </div>
                             <span className="text-[10px] text-indigo-500 font-black bg-indigo-50 px-2 py-1 rounded-md uppercase group-hover:bg-white transition-colors">
-                                {t('common.available') || 'DISPONIBLE'}
+                                {t('common.available')}
                             </span>
                         </button>
                     )}
@@ -75,9 +75,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
 
                 <div className="p-8 bg-slate-50 text-center">
                     <p className="text-sm text-slate-500 italic">
-                        {t('visitor.prayer_reminder') || '"Porque donde están dos o tres congregados en mi nombre, allí estoy yo en medio de ellos."'}
+                        {t('visitor.prayer_reminder')}
                     </p>
-                    <p className="text-xs text-slate-400 mt-2">Mateo 18:20</p>
+                    {/* <p className="text-xs text-slate-400 mt-2">Mateo 18:20</p> */}
                 </div>
             </div>
         </div>

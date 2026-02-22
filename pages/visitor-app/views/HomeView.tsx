@@ -3,6 +3,7 @@ import { ViewState } from '../types';
 import { ChurchEvent, ServicePlan, ChurchSettings } from '../../../types';
 import { Globe, Gift, List, Heart, MapPin, ChevronRight, UserCheck, Radio, Calendar, Clock, Facebook, Instagram, Youtube } from 'lucide-react';
 import EventStoryCard from '../../../components/EventStoryCard';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface HomeViewProps {
   onNavigate: (view: ViewState) => void;
@@ -10,11 +11,14 @@ interface HomeViewProps {
   events?: ChurchEvent[];
   nextPlan?: ServicePlan | null;
   settings?: ChurchSettings | null;
+  nextService?: any;
 }
 
 // --- SUB-COMPONENTS (Copied & Adapted from MemberApp to maintain consistency) ---
 
 const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({ onNavigate }) => {
+  const { t } = useLanguage();
+
   return (
     <div className="grid grid-cols-2 gap-4 px-6 mb-8">
       <button
@@ -24,7 +28,7 @@ const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({
         <div className="w-14 h-14 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center">
           <Globe size={26} strokeWidth={2} />
         </div>
-        <span className="text-sm font-bold text-slate-600">Traducción</span>
+        <span className="text-sm font-bold text-slate-600">{t('member.translation')}</span>
       </button>
 
       <button
@@ -34,7 +38,7 @@ const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({
         <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
           <Gift size={26} strokeWidth={2} />
         </div>
-        <span className="text-sm font-bold text-slate-600">Ofrendas</span>
+        <span className="text-sm font-bold text-slate-600">{t('visitor.give')}</span>
       </button>
 
       <button
@@ -44,7 +48,7 @@ const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({
         <div className="w-14 h-14 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center">
           <List size={26} strokeWidth={2} />
         </div>
-        <span className="text-sm font-bold text-slate-600">Programa</span>
+        <span className="text-sm font-bold text-slate-600">{t('member.program')}</span>
       </button>
 
       <button
@@ -54,7 +58,7 @@ const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({
         <div className="w-14 h-14 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center">
           <Heart size={26} strokeWidth={2} />
         </div>
-        <span className="text-sm font-bold text-slate-600">Oración</span>
+        <span className="text-sm font-bold text-slate-600">{t('member.prayer')}</span>
       </button>
     </div>
   );
@@ -62,8 +66,9 @@ const QuickActionsGrid: React.FC<{ onNavigate: (view: ViewState) => void }> = ({
 
 
 export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, events = [], nextPlan, settings, nextService }) => {
+  const { t, language } = useLanguage();
 
-  // ... (Data logic remains unchanged) ...
+  // Sort events by date and filter active + future only
   const upcomingEvents = events
     .filter(e => {
       const eventDate = new Date(e.date + 'T00:00:00');
@@ -78,8 +83,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
 
   // Ticker Content
   const tickerText = nextService
-    ? `PRÓXIMO CULTO: ${nextService.dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${nextService.time}  ✦  PREDICADOR: ${nextService.preacher?.toUpperCase() || 'POR DEFINIR'}  ✦  `
-    : 'BIENVENIDOS A LA IGLESIA  ✦  ';
+    ? `${t('visitor.next_service_prefix')}: ${nextService.dateObj.toLocaleDateString(language === 'es' ? 'es-ES' : language === 'pt' ? 'pt-BR' : language === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()} - ${nextService.time}  ✦  ${t('visitor.preacher_prefix')}: ${nextService.preacher?.toUpperCase() || t('common.tbd').toUpperCase()}  ✦  `
+    : `${t('visitor.welcome_ticker')}  ✦  `;
 
   // Repeat text to ensure smooth loop
   const displayTicker = tickerText.repeat(4);
@@ -91,8 +96,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
       {/* Stories Carousel Section */}
       <div className="mb-6">
         <div className="flex items-center justify-between px-6 mb-4">
-          <h3 className="font-bold text-slate-900 text-lg tracking-tight">Próximos Eventos</h3>
-          <span onClick={() => onNavigate(ViewState.EVENTS)} className="text-indigo-600 text-xs font-bold cursor-pointer">Ver todo</span>
+          <h3 className="font-bold text-slate-900 text-lg tracking-tight">{t('visitor.upcoming_events')}</h3>
+          <span onClick={() => onNavigate(ViewState.EVENTS)} className="text-indigo-600 text-xs font-bold cursor-pointer">{t('common.see_all')}</span>
         </div>
 
         <div className="flex gap-4 overflow-x-auto px-6 pb-4 snap-x snap-mandatory no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
@@ -105,7 +110,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
             />
           )) : (
             <div className="w-full text-center py-10 text-slate-400 text-sm font-bold bg-slate-50 rounded-3xl mx-6 border-dashed border-2 border-slate-200">
-              No hay historias
+              {t('visitor.no_events')}
             </div>
           )}
         </div>
@@ -134,16 +139,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
             <>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
                 <Radio size={32} className="mb-2 opacity-50" />
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-600">OFFLINE</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{t('member.offline')}</p>
                 {nextPlan && (
-                  <p className="text-[10px] text-slate-600 mt-1">Próximo: {new Date(nextPlan.date + 'T00:00:00').toLocaleDateString()} {nextPlan.startTime}</p>
+                  <p className="text-[10px] text-slate-600 mt-1">{t('dashboard.next_service')}: {new Date(nextPlan.date + 'T00:00:00').toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US')} {nextPlan.startTime}</p>
                 )}
               </div>
             </>
           )}
           {nextPlan?.isActive && (
             <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600 px-3 py-1 rounded-full z-20">
-              <span className="text-[10px] font-bold text-white tracking-wider animate-pulse">EN VIVO</span>
+              <span className="text-[10px] font-bold text-white tracking-wider animate-pulse">{t('member.live_status')}</span>
             </div>
           )}
         </div>
@@ -160,7 +165,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onEventSelect, e
               <MapPin size={24} />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ubicación</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('visitor.location')}</p>
               <p className="font-bold text-slate-800 text-sm line-clamp-1">{address}</p>
             </div>
             <ChevronRight size={20} className="text-slate-300" />

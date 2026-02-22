@@ -1,6 +1,7 @@
 import React from 'react';
 import { Music, BookOpen, Mic, User, Headphones } from 'lucide-react';
 import { ServicePlan, ChurchSettings } from '../../../types';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface OrderViewProps {
   servicePlan?: ServicePlan | null;
@@ -8,6 +9,8 @@ interface OrderViewProps {
 }
 
 export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) => {
+  const { t, language } = useLanguage();
+
   const getIcon = (type: string) => {
     switch (type.toUpperCase()) {
       case 'WORSHIP': return <Music size={20} />;
@@ -34,7 +37,7 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
     currentTime.setHours(startHour, startMin, 0, 0);
 
     return servicePlan.items.map(item => {
-      const timeStr = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const timeStr = currentTime.toLocaleTimeString(language === 'es' ? 'es-ES' : 'en-US', { hour: '2-digit', minute: '2-digit' });
       // Add duration
       currentTime.setMinutes(currentTime.getMinutes() + (item.durationMinutes || 5));
 
@@ -48,7 +51,7 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
   };
 
   const items = calculateItems();
-  const dateStr = servicePlan ? new Date(servicePlan.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Próximo Servicio';
+  const dateStr = servicePlan ? new Date(servicePlan.date).toLocaleDateString(language === 'es' ? 'es-ES' : language === 'pt' ? 'pt-BR' : language === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' }) : t('dashboard.next_service');
 
   // LOGIC: Use Service Plan Team directly
   const activePreacher = servicePlan?.team?.preacher || '---';
@@ -60,7 +63,7 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
     <div className="max-w-3xl mx-auto py-4">
 
       <div className="text-center mb-10">
-        <h2 className="text-3xl font-black text-gray-900 dark:text-gray-200">Orden del Culto</h2>
+        <h2 className="text-3xl font-black text-gray-900 dark:text-gray-200">{t('visitor.order_title')}</h2>
         <div className="inline-block mt-2 px-6 py-2 rounded-full shadow-neu-pressed dark:shadow-neu-dark-pressed text-brand-500 font-bold text-sm capitalize">
           {dateStr}
         </div>
@@ -69,7 +72,7 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
       {/* Team Section (Synced with Member App) */}
       {(servicePlan?.team || settings?.activeTeamId) && (
         <div className="mb-12 bg-neu-base dark:bg-neu-base-dark rounded-[2rem] p-6 shadow-neu dark:shadow-neu-dark border border-transparent mx-auto max-w-2xl">
-          <h3 className="font-bold text-gray-500 dark:text-gray-400 mb-6 text-xs uppercase tracking-widest text-center">Equipo Ministerial</h3>
+          <h3 className="font-bold text-gray-500 dark:text-gray-400 mb-6 text-xs uppercase tracking-widest text-center">{t('visitor.team_section')}</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-12 px-4">
 
@@ -79,7 +82,7 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
                 <User size={20} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Anciano de Turno</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('role.elder')}</p>
                 <p className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[140px]">{activeElder}</p>
               </div>
             </div>
@@ -90,7 +93,7 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
                 <Mic size={20} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Predicador</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('role.preacher')}</p>
                 <p className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[140px]">{activePreacher}</p>
               </div>
             </div>
@@ -101,7 +104,7 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
                 <BookOpen size={20} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Maestro de ES</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('role.sabbathSchoolTeacher')}</p>
                 <p className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[140px]">{activeTeacher}</p>
               </div>
             </div>
@@ -112,7 +115,7 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
                 <Headphones size={20} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Operador de Audio</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('role.audioOperator')}</p>
                 <p className="font-bold text-gray-800 dark:text-gray-200 text-sm truncate max-w-[140px]">{activeAudio}</p>
               </div>
             </div>
@@ -129,8 +132,8 @@ export const OrderView: React.FC<OrderViewProps> = ({ servicePlan, settings }) =
 
         {items.length === 0 ? (
           <div className="text-center py-12 px-4 rounded-[2rem] bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark mx-auto max-w-lg mt-8">
-            <p className="text-gray-400 font-bold">No hay orden del culto definido aún.</p>
-            <p className="text-xs text-gray-400 mt-2">El equipo pastoral está preparando el programa.</p>
+            <p className="text-gray-400 font-bold">{t('visitor.no_order_title')}</p>
+            <p className="text-xs text-gray-400 mt-2">{t('visitor.no_order_desc')}</p>
           </div>
         ) : (
           <div className="space-y-12">
