@@ -4,9 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { translateText } from '../services/geminiService';
 import { db } from '../services/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { useLanguage } from '../context/LanguageContext';
 
 export const LANGUAGES = [
+  { code: 'es', label: 'Español' },
   { code: 'en', label: 'English' },
+  { code: 'pt', label: 'Português' },
+  { code: 'fr', label: 'Français' },
 ];
 
 interface LiveTranslationProps {
@@ -15,6 +19,7 @@ interface LiveTranslationProps {
 }
 
 const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en', tenantId }) => {
+  const { t, language } = useLanguage();
   // 'isListening' now means "Receiving/Active"
   const [isActive, setIsActive] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -225,10 +230,10 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
         <div>
           <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
             <img src="/logo.png" className="w-8 h-8 rounded-full shadow-sm" alt="Logo" />
-            {targetLang === 'es' ? 'Transcripción' : 'Traducción en Vivo'}
+            {targetLang === 'es' ? t('visitor.transcription') : t('visitor.live_translation')}
           </h3>
           <p className="text-sm text-slate-500">
-            {isActive ? 'Recibiendo señal en vivo...' : 'Traducción en Pausa'}
+            {isActive ? t('visitor.receiving_signal') : t('visitor.translation_paused')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -258,9 +263,9 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
       <div className="space-y-6">
         {/* Transcription Area */}
         <div className="p-6 bg-slate-50 rounded-3xl min-h-[100px] relative hidden md:block">
-          <span className="absolute top-4 left-4 text-[10px] font-bold uppercase text-slate-400">Original (Audio Sala)</span>
+          <span className="absolute top-4 left-4 text-[10px] font-bold uppercase text-slate-400">{t('visitor.original_audio')}</span>
           <p className="mt-4 text-slate-600 font-medium leading-relaxed">
-            {transcript || <span className="text-slate-300 italic">...esperando audio...</span>}
+            {transcript || <span className="text-slate-300 italic">{t('visitor.waiting_audio')}</span>}
           </p>
         </div>
 
@@ -268,7 +273,7 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
         <div className="p-6 bg-indigo-50 rounded-3xl h-[400px] relative border border-indigo-100 transition-all flex flex-col">
           <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
             <span className="text-[10px] font-bold uppercase text-indigo-400">
-              {targetLang === 'es' ? 'Texto en Vivo' : `Traducción (${LANGUAGES.find(l => l.code === targetLang)?.label})`}
+              {targetLang === 'es' ? t('visitor.live_translation') : `${t('member.translation')} (${LANGUAGES.find(l => l.code === targetLang)?.label})`}
             </span>
           </div>
 
@@ -304,7 +309,7 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
 
             {segments.length === 0 && (
               <div className="h-full flex items-center justify-center text-indigo-300 italic">
-                {isActive ? "Esperando señal..." : "Pulsa conectar para iniciar."}
+                {isActive ? t('visitor.waiting_signal') : t('visitor.press_to_start')}
               </div>
             )}
           </div>
@@ -326,7 +331,7 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
       {
         isActive && (
           <p className="text-center text-xs font-bold text-slate-400 mt-4 animate-pulse">
-            Conectado al Audio Principal
+            {t('visitor.connected_audio')}
           </p>
         )
       }
