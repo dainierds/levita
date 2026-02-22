@@ -26,13 +26,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
 
     return (
         <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-                <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <User className="w-6 h-6 text-indigo-600" />
-                    {t('menu.profile')}
-                </h1>
-            </div>
-
             <div className="bg-white rounded-[2rem] shadow-lg overflow-hidden">
                 <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-center text-white">
                     <div className="w-24 h-24 bg-white/20 rounded-full mx-auto flex items-center justify-center text-4xl font-bold mb-4 border-4 border-white/30 backdrop-blur-md">
