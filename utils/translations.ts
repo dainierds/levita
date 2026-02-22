@@ -1236,6 +1236,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'visitor.preacher_prefix': 'PREGADOR',
         'visitor.welcome_ticker': 'BEM-VINDOS À IGREJA',
         'common.available': 'DISPONÍVEL',
+        'events.view_list': 'Lista',
+        'events.view_calendar': 'Calendário',
 
     },
     fr: {
