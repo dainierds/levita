@@ -98,6 +98,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'dashboard.upcoming_events': 'Próximos Eventos',
         'dashboard.recent_activity': 'Actividad Reciente',
         'dashboard.notifications': 'Notificaciones',
+        'dashboard.no_service': 'Sin Servicio Activo',
+        'dashboard.activate_plan': 'Activa un plan en Orden de Cultos.',
 
         // --- MENUS / NAVIGATION ---
         'menu.home': 'Inicio',
@@ -650,6 +652,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'dashboard.upcoming_events': 'Upcoming Events',
         'dashboard.recent_activity': 'Recent Activity',
         'dashboard.notifications': 'Notifications',
+        'dashboard.no_service': 'No Active Service',
+        'dashboard.activate_plan': 'Activate a plan in Service Order.',
 
         // --- MENUS / NAVIGATION ---
         'menu.home': 'Home',
@@ -1123,6 +1127,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'language.french': 'Francês',
         'dashboard.welcome': 'Olá, {name}.',
         'dashboard.subtitle': 'Aqui está o que está acontecendo hoje na igreja.',
+        'dashboard.no_service': 'Nenhum Culto Ativo',
+        'dashboard.activate_plan': 'Ative um plano na Ordem de Cultos.',
         'menu.dashboard': 'Painel',
         'menu.home': 'Início',
         'menu.events': 'Eventos',
@@ -1259,6 +1265,8 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         'language.french': 'Français',
         'dashboard.welcome': 'Bonjour, {name}.',
         'dashboard.subtitle': 'Voici ce qui se passe aujourd\'hui.',
+        'dashboard.no_service': 'Aucun Culte Actif',
+        'dashboard.activate_plan': 'Activez un plan dans l\'Ordre des Cultes.',
         'menu.dashboard': 'Tableau de bord',
         'menu.home': 'Accueil',
         'menu.events': 'Événements',
