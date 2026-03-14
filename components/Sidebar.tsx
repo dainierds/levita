@@ -111,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, role, ti
         </div>
       </div>
 
-      <nav className="flex-1 px-4 space-y-2 mt-4">
+      <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto no-scrollbar pb-4">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
