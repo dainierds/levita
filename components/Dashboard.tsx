@@ -337,7 +337,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                         <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
                           {(currentService.plan.team as any).elder.charAt(0)}
                         </div>
-                        <span className="text-sm font-black text-slate-700 truncate">{(currentService.plan.team as any).elder}</span>
+                        <span className="text-sm font-black text-slate-700 break-words leading-tight">{(currentService.plan.team as any).elder}</span>
                         <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
                       </>
                     ) : (
@@ -360,7 +360,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                         <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
                           {(currentService.plan.team as any).sabbathSchoolTeacher.charAt(0)}
                         </div>
-                        <span className="text-sm font-black text-slate-700 truncate">{(currentService.plan.team as any).sabbathSchoolTeacher}</span>
+                        <span className="text-sm font-black text-slate-700 break-words leading-tight">{(currentService.plan.team as any).sabbathSchoolTeacher}</span>
                         <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
                       </>
                     ) : (
@@ -383,7 +383,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                         <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
                           {(currentService.plan.team as any).preacher.charAt(0)}
                         </div>
-                        <span className="text-sm font-black text-slate-700 truncate">{(currentService.plan.team as any).preacher}</span>
+                        <span className="text-sm font-black text-slate-700 break-words leading-tight">{(currentService.plan.team as any).preacher}</span>
                         <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
                       </>
                     ) : (
@@ -406,7 +406,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                         <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
                           {(currentService.plan.team as any).audioOperator.charAt(0)}
                         </div>
-                        <span className="text-sm font-black text-slate-700 truncate">{(currentService.plan.team as any).audioOperator}</span>
+                        <span className="text-sm font-black text-slate-700 break-words leading-tight">{(currentService.plan.team as any).audioOperator}</span>
                         <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
                       </>
                     ) : (
