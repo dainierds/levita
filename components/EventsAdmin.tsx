@@ -584,9 +584,14 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {events.map((ev) => (
                         <div key={ev.id} className="group relative bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all">
-                            <div className={`h-24 bg-gradient-to-r ${ev.bannerGradient || 'from-indigo-500 to-purple-500'} p-6 relative`}>
+                            <div 
+                                className={`h-40 ${!(ev.originalImageUrl || ev.imageUrl) ? `bg-gradient-to-r ${ev.bannerGradient || 'from-indigo-500 to-purple-500'}` : 'bg-slate-800'} relative bg-cover bg-center`}
+                                style={(ev.originalImageUrl || ev.imageUrl) ? { backgroundImage: `url(${ev.originalImageUrl || ev.imageUrl})` } : {}}
+                            >
+                                {(ev.originalImageUrl || ev.imageUrl) && <div className="absolute inset-0 bg-black/30" />}
+                                
                                 {!readOnly && (
-                                    <div className="absolute top-4 right-4 flex gap-2">
+                                    <div className="absolute top-4 right-4 flex gap-2 z-10">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -616,7 +621,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                 )}
                             </div>
 
-                            <div className="p-6 -mt-12 relative z-10">
+                            <div className="p-6 -mt-8 relative z-10">
                                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-50 mb-4">
                                     <h3 className="font-bold text-lg text-slate-800 truncate">{ev.title}</h3>
                                     <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
