@@ -34,11 +34,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 10);
-  const activePlan = plans.find(p => p.isActive);
-
-  // --- LOGIC: Resolved Next Service (Plan vs Team vs Recurrence) ---
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  // Ignore active plans that are from older dates
+  const activePlan = plans.find(p => p.isActive && new Date(p.date + 'T00:00:00') >= today);
 
   // 1. Future Service Plans
   const futurePlans = plans
