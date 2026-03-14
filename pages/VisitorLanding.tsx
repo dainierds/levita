@@ -144,9 +144,9 @@ const VisitorLanding: React.FC = () => {
 
                 setAllChurches(loadedChurches);
 
-                // If we have churches, we show the picker instead of picking one automatically
+                // If we have churches, we stay on 'language' step first
                 if (loadedChurches.length > 0) {
-                    setStep('church_picker');
+                    setStep('language');
                 } else {
                     // Critical fallback: if NO churches exist (should not happen), try load 't1'?
                     const t1Ref = await getDoc(doc(db, 'tenants', 't1'));
@@ -172,12 +172,23 @@ const VisitorLanding: React.FC = () => {
             localStorage.setItem('levita_default_church_id', tenant.id);
         }
 
-        setStep('language');
+        // Proceed based on previously selected language
+        if (selectedLang === 'es') {
+            setStep('role_selection');
+        } else {
+            setStep('app');
+        }
     };
 
     const handleLanguageSelect = (code: string) => {
         setLanguage(code as any);
         setSelectedLang(code);
+
+        // If no church selected yet, go to picker
+        if (!tenantId) {
+            setStep('church_picker');
+            return;
+        }
 
         // Restriction: Only Spanish speakers can access departments (Leaders/Admin)
         // Others go directly to the Visitor App
