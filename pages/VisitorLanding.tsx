@@ -140,7 +140,11 @@ const VisitorLanding: React.FC = () => {
                 const qTenants = query(collection(db, 'tenants'));
                 const tenantsSnap = await getDocs(qTenants);
                 const loadedChurches = tenantsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChurchTenant))
-                    .sort((a, b) => (a.settings?.churchName || '').localeCompare(b.settings?.churchName || ''));
+                    .sort((a, b) => {
+                        const nameA = a.settings?.churchName || a.name || '';
+                        const nameB = b.settings?.churchName || b.name || '';
+                        return nameA.localeCompare(nameB);
+                    });
 
                 setAllChurches(loadedChurches);
 
@@ -200,10 +204,12 @@ const VisitorLanding: React.FC = () => {
     };
 
     if (step === 'church_picker') {
-        const filteredChurches = allChurches.filter(c =>
-            (c.settings?.churchName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (c.settings?.address || '').toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        const filteredChurches = allChurches.filter(c => {
+            const displayName = c.settings?.churchName || c.name || '';
+            const address = c.settings?.address || '';
+            return displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   address.toLowerCase().includes(searchQuery.toLowerCase());
+        });
 
         return (
             <div className="min-h-screen bg-[#F7F8FA] flex flex-col p-6 items-center justify-center">
@@ -233,11 +239,11 @@ const VisitorLanding: React.FC = () => {
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-500 font-black text-xl">
-                                        {(church.settings?.churchName || 'I')[0]}
+                                        {(church.settings?.churchName || church.name || 'I')[0]}
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-slate-800 group-hover:text-indigo-900 transition-colors">
-                                            {church.settings?.churchName || 'Iglesia Sin Nombre'}
+                                            {church.settings?.churchName || church.name || 'Iglesia Sin Nombre'}
                                         </h3>
                                         {church.settings?.address && (
                                             <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
