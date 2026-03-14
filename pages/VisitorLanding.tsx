@@ -6,7 +6,7 @@ import VisitorApp from './visitor-app/App';
 import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
 import { usePlans } from '../hooks/usePlans';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, query, limit, getDocs, doc, getDoc, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { ChurchEvent, ChurchSettings, ChurchTenant } from '../types';
@@ -25,6 +25,8 @@ const VisitorLanding: React.FC = () => {
     const { events } = useEvents();
     const { plans } = usePlans();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const urlTenantId = searchParams.get('t') || searchParams.get('church');
 
     const [step, setStep] = useState<'language' | 'role_selection' | 'app' | 'ministry_selection' | 'ministry_login'>('language');
     const [selectedLang, setSelectedLang] = useState<string>('es');
@@ -100,7 +102,19 @@ const VisitorLanding: React.FC = () => {
         const fetchPublicSettings = async () => {
             console.log("VisitorLanding: Starting fetch...");
             try {
-                let tid = '';
+                // 1. Try URL parameter first
+                if (urlTenantId) {
+                    const tenantRef = doc(db, 'tenants', urlTenantId);
+                    const tenantSnap = await getDoc(tenantRef);
+                    if (tenantSnap.exists()) {
+                        const tData = tenantSnap.data() as ChurchTenant;
+                        setTenantId(urlTenantId);
+                        setSettings(tData.settings || DEFAULT_SETTINGS);
+                        return;
+                    }
+                }
+
+                // 2. Fallback to existing global search
                 const qTenants = query(collection(db, 'tenants'));
                 const tenantsSnap = await getDocs(qTenants);
 
@@ -120,16 +134,12 @@ const VisitorLanding: React.FC = () => {
                     return;
                 }
 
-                if (!tid) {
-                    const tenantRef = await getDoc(doc(db, 'tenants', 't1'));
-                    if (tenantRef.exists()) {
-                        tid = 't1';
-                        const tData = tenantRef.data() as ChurchTenant;
-                        const sData = tData.settings || DEFAULT_SETTINGS;
-                        setTenantId(tid);
-                        setSettings(sData);
-                        return;
-                    }
+                // 3. Absolute Last Resort: Hardcoded 't1'
+                const tenantRef = await getDoc(doc(db, 'tenants', 't1'));
+                if (tenantRef.exists()) {
+                    const tData = tenantRef.data() as ChurchTenant;
+                    setTenantId('t1');
+                    setSettings(tData.settings || DEFAULT_SETTINGS);
                 }
             } catch (error) {
                 console.error("Error fetching public settings:", error);
