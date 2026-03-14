@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { Globe, ArrowRight, Heart, User, Lock, Users, Palette, Shield, LogIn, BookOpen, Smartphone } from 'lucide-react';
+import { Globe, ArrowRight, Heart, User, Lock, Users, Palette, Shield, LogIn, BookOpen, Smartphone, Search, MapPin as MapPinIcon, Check } from 'lucide-react';
 import VisitorApp from './visitor-app/App';
 import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
@@ -28,7 +28,7 @@ const VisitorLanding: React.FC = () => {
     const [searchParams] = useSearchParams();
     const urlTenantId = searchParams.get('t') || searchParams.get('church');
 
-    const [step, setStep] = useState<'language' | 'role_selection' | 'app' | 'ministry_selection' | 'ministry_login'>('language');
+    const [step, setStep] = useState<'language' | 'role_selection' | 'app' | 'ministry_selection' | 'ministry_login' | 'church_picker'>('language');
     const [selectedLang, setSelectedLang] = useState<string>('es');
     const [showMemberLogin, setShowMemberLogin] = useState(false);
     const [settings, setSettings] = useState<ChurchSettings | null>(null);
@@ -40,6 +40,10 @@ const VisitorLanding: React.FC = () => {
     const [password, setPassword] = useState('');
     const [loginLoading, setLoginLoading] = useState(false);
     const [loginError, setLoginError] = useState('');
+
+    const [allChurches, setAllChurches] = useState<ChurchTenant[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSavingDefault, setIsSavingDefault] = useState(false);
 
     // Redirect authenticated users
     useEffect(() => {
@@ -110,36 +114,48 @@ const VisitorLanding: React.FC = () => {
                         const tData = tenantSnap.data() as ChurchTenant;
                         setTenantId(urlTenantId);
                         setSettings(tData.settings || DEFAULT_SETTINGS);
+                        setStep('language');
                         return;
                     }
                 }
 
-                // 2. Fallback to existing global search
+                // 2. Try LocalStorage for default church
+                const savedDefaultId = localStorage.getItem('levita_default_church_id');
+                if (savedDefaultId) {
+                    const tenantRef = doc(db, 'tenants', savedDefaultId);
+                    const tenantSnap = await getDoc(tenantRef);
+                    if (tenantSnap.exists()) {
+                        const tData = tenantSnap.data() as ChurchTenant;
+                        setTenantId(savedDefaultId);
+                        setSettings(tData.settings || DEFAULT_SETTINGS);
+                        setStep('language');
+                        return;
+                    } else {
+                        // If saved ID is invalid (rare but possible if deleted), clear it
+                        localStorage.removeItem('levita_default_church_id');
+                    }
+                }
+
+                // 3. Fallback to existing global search (or just go to picker)
                 const qTenants = query(collection(db, 'tenants'));
                 const tenantsSnap = await getDocs(qTenants);
+                const loadedChurches = tenantsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ChurchTenant))
+                    .sort((a, b) => (a.settings?.churchName || '').localeCompare(b.settings?.churchName || ''));
 
-                let selectedTid = '';
-                let selectedSettings = DEFAULT_SETTINGS;
+                setAllChurches(loadedChurches);
 
-                if (!tenantsSnap.empty) {
-                    const bestMatch = tenantsSnap.docs.find(d => d.data().settings) || tenantsSnap.docs[0];
-                    selectedTid = bestMatch.id;
-                    const tData = bestMatch.data() as ChurchTenant;
-                    selectedSettings = tData.settings || DEFAULT_SETTINGS;
-                }
-
-                if (selectedTid) {
-                    setTenantId(selectedTid);
-                    setSettings(selectedSettings);
-                    return;
-                }
-
-                // 3. Absolute Last Resort: Hardcoded 't1'
-                const tenantRef = await getDoc(doc(db, 'tenants', 't1'));
-                if (tenantRef.exists()) {
-                    const tData = tenantRef.data() as ChurchTenant;
-                    setTenantId('t1');
-                    setSettings(tData.settings || DEFAULT_SETTINGS);
+                // If we have churches, we show the picker instead of picking one automatically
+                if (loadedChurches.length > 0) {
+                    setStep('church_picker');
+                } else {
+                    // Critical fallback: if NO churches exist (should not happen), try load 't1'?
+                    const t1Ref = await getDoc(doc(db, 'tenants', 't1'));
+                    if (t1Ref.exists()) {
+                        const t1Data = t1Ref.data() as ChurchTenant;
+                        setTenantId('t1');
+                        setSettings(t1Data.settings || DEFAULT_SETTINGS);
+                        setStep('language');
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching public settings:", error);
@@ -147,6 +163,17 @@ const VisitorLanding: React.FC = () => {
         };
         fetchPublicSettings();
     }, []);
+
+    const handleChurchSelect = (tenant: ChurchTenant) => {
+        setTenantId(tenant.id);
+        setSettings(tenant.settings || DEFAULT_SETTINGS);
+
+        if (isSavingDefault) {
+            localStorage.setItem('levita_default_church_id', tenant.id);
+        }
+
+        setStep('language');
+    };
 
     const handleLanguageSelect = (code: string) => {
         setLanguage(code as any);
@@ -160,6 +187,84 @@ const VisitorLanding: React.FC = () => {
             setStep('app');
         }
     };
+
+    if (step === 'church_picker') {
+        const filteredChurches = allChurches.filter(c =>
+            (c.settings?.churchName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (c.settings?.address || '').toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        return (
+            <div className="min-h-screen bg-[#F7F8FA] flex flex-col p-6 items-center justify-center">
+                <div className="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl p-8 flex flex-col h-[600px] animate-in fade-in zoom-in duration-300">
+                    <div className="text-center mb-8">
+                        <h1 className="text-2xl font-black text-slate-900 mb-2">Selecciona tu Iglesia</h1>
+                        <p className="text-slate-500 text-sm">Busca y elige la congregación que deseas visitar hoy</p>
+                    </div>
+
+                    <div className="relative mb-6">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre o ubicación..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-slate-700 font-medium outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                        />
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                        {filteredChurches.map((church) => (
+                            <button
+                                key={church.id}
+                                onClick={() => handleChurchSelect(church)}
+                                className="w-full group bg-white border-2 border-slate-50 p-5 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 transition-all text-left flex items-center justify-between"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-500 font-black text-xl">
+                                        {(church.settings?.churchName || 'I')[0]}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 group-hover:text-indigo-900 transition-colors">
+                                            {church.settings?.churchName || 'Iglesia Sin Nombre'}
+                                        </h3>
+                                        {church.settings?.address && (
+                                            <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
+                                                <MapPinIcon size={12} />
+                                                <span className="truncate max-w-[200px]">{church.settings.address}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <ArrowRight className="text-slate-200 group-hover:text-indigo-500 transition-transform group-hover:translate-x-1" size={20} />
+                            </button>
+                        ))}
+
+                        {filteredChurches.length === 0 && (
+                            <div className="text-center py-12 text-slate-400">
+                                <Search size={48} className="mx-auto mb-4 opacity-20" />
+                                <p>No encontramos ninguna iglesia con ese nombre.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
+                        <button
+                            onClick={() => setIsSavingDefault(!isSavingDefault)}
+                            className="flex items-center gap-3 group"
+                        >
+                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isSavingDefault ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-200' : 'border-slate-200 group-hover:border-slate-300'}`}>
+                                {isSavingDefault && <Check size={14} className="text-white" />}
+                            </div>
+                            <span className={`text-sm font-bold transition-all ${isSavingDefault ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-500'}`}>
+                                Recordar mi iglesia siempre
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (step === 'language') {
         return (
@@ -443,7 +548,7 @@ const VisitorLanding: React.FC = () => {
             <VisitorApp
                 initialTenantId={tenantId}
                 initialSettings={settings}
-                onExit={() => setStep('language')}
+                onExit={() => setStep('church_picker')}
             />
             {showMemberLogin && <MemberLoginModal onClose={() => setShowMemberLogin(false)} initialTenantId={tenantId} initialChurchName={settings?.churchName} />}
         </div>

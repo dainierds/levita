@@ -258,7 +258,7 @@ const App: React.FC<AppProps> = ({ initialTenantId, initialSettings, onExit }) =
       case ViewState.PRAYER:
         return <PrayerView tenantId={initialTenantId} />;
       case ViewState.PROFILE:
-        return <ProfileView tenantId={initialTenantId} />;
+        return <ProfileView tenantId={initialTenantId} onExit={onExit} />;
       case ViewState.TRANSLATION:
         return <TranslationView tenantId={initialTenantId} />;
       default:

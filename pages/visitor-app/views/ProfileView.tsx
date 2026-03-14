@@ -1,13 +1,14 @@
 import React from 'react';
-import { User, Bell, Download } from 'lucide-react';
+import { User, Bell, Download, RefreshCw } from 'lucide-react';
 import { usePWAInstall } from '../../../hooks/usePWAInstall';
 import { useLanguage } from '../../../context/LanguageContext';
 
 interface ProfileViewProps {
     tenantId?: string;
+    onExit?: () => void;
 }
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
+export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId, onExit }) => {
     const { installApp, isInstalled } = usePWAInstall();
     const { t } = useLanguage();
 
@@ -21,6 +22,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
             }
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const handleChangeChurch = () => {
+        if (window.confirm(t('visitor.confirm_change_church') || '¿Deseas cambiar tu iglesia predeterminada?')) {
+            localStorage.removeItem('levita_default_church_id');
+            if (onExit) onExit();
         }
     };
 
@@ -46,6 +54,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ tenantId }) => {
                         <div className="flex items-center gap-3">
                             <Bell className="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" />
                             <span className="text-gray-700 font-medium">{t('common.enable_notifications')}</span>
+                        </div>
+                        <ChevronRightIcon />
+                    </button>
+
+                    <button
+                        onClick={handleChangeChurch}
+                        className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-red-50 rounded-2xl transition-all group text-left border border-slate-100"
+                    >
+                        <div className="flex items-center gap-3">
+                            <RefreshCw className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" />
+                            <span className="text-gray-700 font-medium">{t('visitor.change_default_church') || 'Cambiar Iglesia'}</span>
                         </div>
                         <ChevronRightIcon />
                     </button>
