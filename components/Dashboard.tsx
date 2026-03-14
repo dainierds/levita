@@ -34,11 +34,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 10);
+  const activePlan = plans.find(p => p.isActive);
+
+  // --- LOGIC: Resolved Next Service (Plan vs Team vs Recurrence) ---
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
-  // Ignore active plans that are from older dates
-  const activePlan = plans.find(p => p.isActive && new Date(p.date + 'T00:00:00') >= today);
 
   // 1. Future Service Plans
   const futurePlans = plans
@@ -52,7 +52,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
         dateObj: dateObj,
         time: p.startTime, // Plan has explicit time
         preacher: p.team.preacher,
-        team: p.team,
         type: 'PLAN'
       };
     });
@@ -118,7 +117,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
         dateObj: dateObj,
         time: recTime,
         preacher: t.members.preacher,
-        team: t.members,
         type: 'TEAM'
       };
     })
@@ -134,36 +132,36 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
   const resolvedNextItem = [...futurePlans, ...uniqueTeams].sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime())[0];
 
 
-  // --- Display Values ---
-  const activeTeamId = settings?.activeTeamId;
-  const globalActiveTeam = settings?.teams?.find(t => t.id === activeTeamId);
+  // --- Display Values (TeamRoster style) ---
+  const getNextDayOfWeek = (dayName: string) => {
+      const daysMap: { [key: string]: number } = {
+          'Domingo': 0, 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5, 'Sábado': 6
+      };
+      const targetDay = daysMap[dayName];
+      const date = new Date();
+      if (targetDay === undefined) return date;
 
-  let currentDisplayTeam = null;
+      const currentDay = date.getDay();
+      let daysUntil = targetDay - currentDay;
+      // If today matches, show today. If past, show next week.
+      if (daysUntil < 0) daysUntil += 7;
 
-  if (globalActiveTeam) {
-    currentDisplayTeam = {
-      teamName: globalActiveTeam.name,
-      preacher: globalActiveTeam.members.preacher,
-      musicDirector: globalActiveTeam.members.musicDirector || (globalActiveTeam.members as any).worshipLeader,
-      audioOperator: globalActiveTeam.members.audioOperator,
-      elder: globalActiveTeam.members.elder,
-      sabbathSchoolTeacher: globalActiveTeam.members.sabbathSchoolTeacher
-    };
-  } else {
-    // If active plan is today or future, use its team. Otherwise, prefer resolvedNextItem.
-    if (activePlan) {
-      const planDate = new Date(activePlan.date + 'T00:00:00');
-      if (planDate >= today) {
-        currentDisplayTeam = activePlan.team;
-      } else {
-        currentDisplayTeam = resolvedNextItem?.team || activePlan.team;
-      }
-    } else {
-      currentDisplayTeam = resolvedNextItem?.team || null;
-    }
-  }
+      date.setDate(date.getDate() + daysUntil);
+      return date;
+  };
 
-  const displayTeam = currentDisplayTeam;
+  const upcomingServices = (settings?.meetingDays || []).map(dayName => {
+      const date = getNextDayOfWeek(dayName);
+      const localDateStr = date.toLocaleDateString('en-CA');
+      const foundPlan = plans.find(p => p.date === localDateStr);
+      return {
+          dayName,
+          date,
+          plan: foundPlan || null
+      };
+  }).sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const currentService = upcomingServices.length > 0 ? upcomingServices[0] : null;
 
 
   const [musicTeamMembers, setMusicTeamMembers] = useState<UserType[]>([]);
@@ -323,7 +321,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
               {t('team_manager.title') || "Equipo de Turno"}
             </h3>
 
-            {displayTeam ? (
+            {currentService ? (
               <div className="grid grid-cols-2 gap-4 flex-1">
                 {/* Elder */}
                 <div className="p-3 rounded-2xl border-2 border-blue-100 bg-white shadow-sm flex flex-col justify-between">
@@ -334,12 +332,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">{t('role.elder') || "Anciano"}</span>
                   </div>
                   <div className="bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex items-center gap-2">
-                    {displayTeam.elder ? (
+                    {currentService.plan && (currentService.plan.team as any).elder ? (
                       <>
                         <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
-                          {displayTeam.elder.charAt(0)}
+                          {(currentService.plan.team as any).elder.charAt(0)}
                         </div>
-                        <span className="text-sm font-black text-slate-700 truncate">{displayTeam.elder}</span>
+                        <span className="text-sm font-black text-slate-700 truncate">{(currentService.plan.team as any).elder}</span>
                         <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
                       </>
                     ) : (
@@ -357,12 +355,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">{t('role.sabbathSchoolTeacher') || "Maestro de ES"}</span>
                   </div>
                   <div className="bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex items-center gap-2">
-                    {(displayTeam as any).sabbathSchoolTeacher ? (
+                    {currentService.plan && (currentService.plan.team as any).sabbathSchoolTeacher ? (
                       <>
                         <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
-                          {(displayTeam as any).sabbathSchoolTeacher.charAt(0)}
+                          {(currentService.plan.team as any).sabbathSchoolTeacher.charAt(0)}
                         </div>
-                        <span className="text-sm font-black text-slate-700 truncate">{(displayTeam as any).sabbathSchoolTeacher}</span>
+                        <span className="text-sm font-black text-slate-700 truncate">{(currentService.plan.team as any).sabbathSchoolTeacher}</span>
                         <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
                       </>
                     ) : (
@@ -380,12 +378,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">{t('role.preacher') || "Predicador"}</span>
                   </div>
                   <div className="bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex items-center gap-2">
-                    {displayTeam.preacher ? (
+                    {currentService.plan && (currentService.plan.team as any).preacher ? (
                       <>
                         <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
-                          {displayTeam.preacher.charAt(0)}
+                          {(currentService.plan.team as any).preacher.charAt(0)}
                         </div>
-                        <span className="text-sm font-black text-slate-700 truncate">{displayTeam.preacher}</span>
+                        <span className="text-sm font-black text-slate-700 truncate">{(currentService.plan.team as any).preacher}</span>
                         <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
                       </>
                     ) : (
@@ -403,12 +401,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">{t('role.audioOperator') || "Operador de Audio"}</span>
                   </div>
                   <div className="bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex items-center gap-2">
-                    {displayTeam.audioOperator ? (
+                    {currentService.plan && (currentService.plan.team as any).audioOperator ? (
                       <>
                         <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
-                          {displayTeam.audioOperator.charAt(0)}
+                          {(currentService.plan.team as any).audioOperator.charAt(0)}
                         </div>
-                        <span className="text-sm font-black text-slate-700 truncate">{displayTeam.audioOperator}</span>
+                        <span className="text-sm font-black text-slate-700 truncate">{(currentService.plan.team as any).audioOperator}</span>
                         <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
                       </>
                     ) : (
