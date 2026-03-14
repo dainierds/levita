@@ -10,6 +10,9 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { parseCSV, parseICS } from '../utils/eventImport';
 import imageCompression from 'browser-image-compression';
 import { parseEventsFromDocument } from '../services/geminiService';
+import Cropper from 'react-easy-crop';
+import getCroppedImg from '../utils/cropImage';
+import { useCallback } from 'react';
 
 interface EventsAdminProps {
     events: ChurchEvent[];
@@ -41,6 +44,14 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
     const [showModal, setShowModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingEventId, setEditingEventId] = useState<string | null>(null);
+
+    // Cropper State
+    const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+    const [originalFileName, setOriginalFileName] = useState('');
+    const [isCropping, setIsCropping] = useState(false);
 
     // View Mode State
     const [viewMode, setViewMode] = useState<'LIST' | 'CALENDAR'>('LIST');
@@ -227,13 +238,31 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
         }
     };
 
+    const onCropComplete = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    }, []);
+
     const handleImageUploadForEvent = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        setOriginalFileName(file.name);
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            setCropImageSrc(reader.result as string);
+            setIsCropping(true);
+        };
+        e.target.value = '';
+    };
+
+    const handleCropConfirm = async () => {
+        if (!cropImageSrc || !croppedAreaPixels || !user?.tenantId) return;
+
         setIsSubmitting(true);
         try {
-            console.log(`Original size: ${file.size / 1024 / 1024} MB`);
+            const croppedImageBlob = await getCroppedImg(cropImageSrc, croppedAreaPixels, 0);
+            if (!croppedImageBlob) throw new Error("Cropping failed");
 
             const options = {
                 maxSizeMB: 0.2, // Compress to ~200KB
@@ -241,21 +270,21 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                 useWebWorker: true
             };
 
-            let uploadFile = file;
+            let uploadFile: File | Blob = croppedImageBlob;
             try {
-                if (file.type.startsWith('image/')) {
-                    const compressedFile = await imageCompression(file, options);
-                    console.log(`Compressed size: ${compressedFile.size / 1024 / 1024} MB`);
-                    uploadFile = compressedFile;
-                }
+                const compressedFile = await imageCompression(new File([croppedImageBlob], originalFileName || 'cropped.jpg', { type: 'image/jpeg' }), options);
+                uploadFile = compressedFile;
             } catch (err) {
                 console.warn("Compression failed, using original.", err);
             }
 
-            const storageRef = ref(storage, `events/images/${Date.now()}_${uploadFile.name}`);
+            const storageRef = ref(storage, `events/images/${Date.now()}_${originalFileName || 'cropped.jpg'}`);
             await uploadBytes(storageRef, uploadFile);
             const url = await getDownloadURL(storageRef);
+            
             setNewEvent(prev => ({ ...prev, imageUrl: url }));
+            setIsCropping(false);
+            setCropImageSrc(null);
         } catch (error) {
             console.error("Error uploading image:", error);
             alert(t('events.error_upload_image') || "Error al subir la imagen");
@@ -825,6 +854,52 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                             <button onClick={() => setShowModal(false)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-200">{t('common.cancel') || "Cancelar"}</button>
                             <button onClick={handleCreateEvent} disabled={isSubmitting || !newEvent.title || !newEvent.date} className="px-8 py-3 rounded-xl font-bold bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 disabled:opacity-50">
                                 {isSubmitting ? (t('common.saving') || 'Guardando...') : (t('common.save') || 'Guardar')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isCropping && cropImageSrc && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <h3 className="text-xl font-bold text-slate-800">Recortar Imagen</h3>
+                            <button onClick={() => { setIsCropping(false); setCropImageSrc(null); }} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="relative h-96 w-full bg-slate-100">
+                            <Cropper
+                                image={cropImageSrc}
+                                crop={crop}
+                                zoom={zoom}
+                                aspect={9 / 16}
+                                onCropChange={setCrop}
+                                onCropComplete={onCropComplete}
+                                onZoomChange={setZoom}
+                            />
+                        </div>
+                        <div className="p-6 flex flex-col gap-4">
+                            <div className="flex items-center gap-4">
+                                <span className="text-xs font-bold text-slate-500">Zoom</span>
+                                <input
+                                    type="range"
+                                    value={zoom}
+                                    min={1}
+                                    max={3}
+                                    step={0.1}
+                                    onChange={(e) => setZoom(Number(e.target.value))}
+                                    className="flex-1 accent-indigo-600"
+                                />
+                            </div>
+                            <button
+                                onClick={handleCropConfirm}
+                                disabled={isSubmitting}
+                                className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                            >
+                                {isSubmitting ? <Loader2 className="animate-spin" /> : <Check size={20} />}
+                                Confirmar y Subir
                             </button>
                         </div>
                     </div>
