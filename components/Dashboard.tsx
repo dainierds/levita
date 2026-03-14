@@ -141,7 +141,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
     preacher: globalActiveTeam.members.preacher,
     musicDirector: globalActiveTeam.members.musicDirector || (globalActiveTeam.members as any).worshipLeader,
     audioOperator: globalActiveTeam.members.audioOperator,
-    elder: globalActiveTeam.members.elder
+    elder: globalActiveTeam.members.elder,
+    sabbathSchoolTeacher: globalActiveTeam.members.sabbathSchoolTeacher
   } : (activePlan?.team || null);
 
 
@@ -296,60 +297,108 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
           </div>
 
           {/* Card 2: Active Team Roster */}
-          <div className="card-soft p-6 h-full">
-            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-              <UserCheck size={18} className="text-indigo-500" />
-              {displayTeam?.teamName || (t('dashboard.official_team') || 'Equipo Oficial')}
+          <div className="card-soft p-6 h-full flex flex-col">
+            <h3 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2 tracking-tight">
+              <UserCheck size={24} className="text-indigo-600" />
+              {t('team_manager.title') || "Equipo de Turno"}
             </h3>
 
             {displayTeam ? (
-              <div className="space-y-4">
-                {/* Preacher */}
-                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                    <Mic2 size={18} />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('role.preacher') || "Predicador"}</span>
-                    <p className="font-bold text-slate-800">{displayTeam.preacher || (t('common.tbd') || 'No asignado')}</p>
-                  </div>
-                </div>
-
-                {/* Music Director */}
-                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
-                    <Music size={18} />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('role.music_director') || "Director Música"}</span>
-                    <p className="font-bold text-slate-800">{displayTeam.musicDirector || (t('common.tbd') || 'No asignado')}</p>
-                  </div>
-                </div>
-
-                {/* Audio */}
-                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-                    <Mic size={18} />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('role.audio') || "Audio"}</span>
-                    <p className="font-bold text-slate-800">{displayTeam.audioOperator || (t('common.tbd') || 'No asignado')}</p>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-2 gap-4 flex-1">
                 {/* Elder */}
-                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                    <UserCheck size={18} />
+                <div className="p-3 rounded-2xl border-2 border-blue-100 bg-white shadow-sm flex flex-col justify-between">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center">
+                      <UserCheck size={16} />
+                    </div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">{t('role.elder') || "Anciano"}</span>
                   </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('role.elder') || "Anciano de Turno"}</span>
-                    <p className="font-bold text-slate-800">{displayTeam.elder || (t('common.tbd') || 'No asignado')}</p>
+                  <div className="bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex items-center gap-2">
+                    {displayTeam.elder ? (
+                      <>
+                        <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
+                          {displayTeam.elder.charAt(0)}
+                        </div>
+                        <span className="text-sm font-black text-slate-700 truncate">{displayTeam.elder}</span>
+                        <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
+                      </>
+                    ) : (
+                      <span className="text-slate-400 font-bold italic text-xs mx-auto">{t('common.tbd') || "por definir"}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sabbath School Teacher */}
+                <div className="p-3 rounded-2xl border-2 border-emerald-100 bg-white shadow-sm flex flex-col justify-between">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center">
+                      <BookOpen size={16} />
+                    </div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">{t('role.sabbathSchoolTeacher') || "Maestro de ES"}</span>
+                  </div>
+                  <div className="bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex items-center gap-2">
+                    {(displayTeam as any).sabbathSchoolTeacher ? (
+                      <>
+                        <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
+                          {(displayTeam as any).sabbathSchoolTeacher.charAt(0)}
+                        </div>
+                        <span className="text-sm font-black text-slate-700 truncate">{(displayTeam as any).sabbathSchoolTeacher}</span>
+                        <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
+                      </>
+                    ) : (
+                      <span className="text-slate-400 font-bold italic text-xs mx-auto">{t('common.tbd') || "por definir"}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Preacher */}
+                <div className="p-3 rounded-2xl border-2 border-purple-100 bg-white shadow-sm flex flex-col justify-between">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-500 flex items-center justify-center">
+                      <Mic2 size={16} />
+                    </div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">{t('role.preacher') || "Predicador"}</span>
+                  </div>
+                  <div className="bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex items-center gap-2">
+                    {displayTeam.preacher ? (
+                      <>
+                        <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
+                          {displayTeam.preacher.charAt(0)}
+                        </div>
+                        <span className="text-sm font-black text-slate-700 truncate">{displayTeam.preacher}</span>
+                        <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
+                      </>
+                    ) : (
+                      <span className="text-slate-400 font-bold italic text-xs mx-auto">{t('common.tbd') || "por definir"}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Audio Operator */}
+                <div className="p-3 rounded-2xl border-2 border-orange-100 bg-white shadow-sm flex flex-col justify-between">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center">
+                      <Mic size={16} />
+                    </div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">{t('role.audioOperator') || "Operador de Audio"}</span>
+                  </div>
+                  <div className="bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex items-center gap-2">
+                    {displayTeam.audioOperator ? (
+                      <>
+                        <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
+                          {displayTeam.audioOperator.charAt(0)}
+                        </div>
+                        <span className="text-sm font-black text-slate-700 truncate">{displayTeam.audioOperator}</span>
+                        <CheckCircle2 size={14} className="text-green-500 ml-auto flex-shrink-0" />
+                      </>
+                    ) : (
+                      <span className="text-slate-400 font-bold italic text-xs mx-auto">{t('common.tbd') || "por definir"}</span>
+                    )}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-slate-400">
+              <div className="flex flex-col items-center justify-center flex-1 text-slate-400">
                 <p className="text-sm">{t('dashboard.no_team') || "No hay equipo asignado."}</p>
               </div>
             )}
