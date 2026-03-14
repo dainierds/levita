@@ -214,43 +214,45 @@ END:VCALENDAR`;
     }
 
     return (
-      <div key={event.id} className={`group bg-neu-base dark:bg-neu-base-dark rounded-[2.5rem] shadow-neu dark:shadow-neu-dark p-4 transition-all duration-300 ${!isModal && 'hover:-translate-y-2'}`}>
+      <div key={event.id} className={`group bg-neu-base rounded-[2.5rem] shadow-neu p-4 transition-all duration-300 ${!isModal && 'hover:-translate-y-2'}`}>
 
         {/* Image Container */}
-        <div className="relative h-48 rounded-[2rem] overflow-hidden shadow-neu-pressed dark:shadow-neu-dark-pressed p-1 bg-gray-100 dark:bg-gray-800">
+        <div className="relative h-48 rounded-[2rem] overflow-hidden shadow-neu-pressed p-1 bg-gray-100">
           <img
-            src={event.imageUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${event.id}&backgroundColor=f3f4f6,e5e7eb,d1d5db`}
+            src={event.originalImageUrl || event.imageUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${event.id}&backgroundColor=f3f4f6,e5e7eb,d1d5db`}
             alt={event.title}
             className={`w-full h-full object-cover rounded-[1.8rem] opacity-90 transition-transform duration-700 ${!isModal && 'group-hover:scale-110'}`}
           />
-          <div className="absolute top-4 right-4 bg-neu-base/90 dark:bg-neu-base-dark/90 backdrop-blur px-4 py-2 rounded-xl shadow-lg flex flex-col items-center min-w-[60px]">
+          <div className="absolute top-4 right-4 bg-neu-base/90 backdrop-blur px-4 py-2 rounded-xl shadow-lg flex flex-col items-center min-w-[60px]">
             <span className="text-xs font-bold text-gray-400 uppercase">{month}</span>
-            <span className="text-xl font-black text-gray-800 dark:text-gray-100">{day}</span>
+            <span className="text-xl font-black text-gray-800">{day}</span>
             {isMultiDay && endDateObj && (
               <>
                 <span className="h-px w-3 bg-gray-300 my-1"></span>
-                <span className="text-xl font-black text-gray-800 dark:text-gray-100">{endDateObj.getDate()}</span>
+                <span className="text-xl font-black text-gray-800">{endDateObj.getDate()}</span>
               </>
             )}
           </div>
         </div>
 
         <div className="p-4 mt-2">
-          <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200 mb-4">{event.title}</h3>
+          <h3 className="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2">
+             {event.title}
+          </h3>
 
           <div className="space-y-3">
-            <div className="flex items-center p-3 rounded-xl bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark">
-              <div className="p-2 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-500 mr-3">
+            <div className="flex items-center p-3 rounded-xl bg-neu-base shadow-neu">
+              <div className="p-2 rounded-full bg-brand-100 text-brand-500 mr-3">
                 <Clock size={16} />
               </div>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{timeStr}</span>
+              <span className="text-sm font-medium text-gray-500">{timeStr}</span>
             </div>
 
-            <div className="flex items-center p-3 rounded-xl bg-neu-base dark:bg-neu-base-dark shadow-neu dark:shadow-neu-dark">
-              <div className="p-2 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-500 mr-3">
+            <div className="flex items-center p-3 rounded-xl bg-neu-base shadow-neu">
+              <div className="p-2 rounded-full bg-orange-100 text-orange-500 mr-3">
                 <MapPin size={16} />
               </div>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              <span className="text-sm font-medium text-gray-500">
                 {event.placeName || t('visitor.location_tbd')}
               </span>
             </div>
@@ -263,14 +265,14 @@ END:VCALENDAR`;
           <div className="mt-6 flex gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); addToGoogleCalendar(event); }}
-              className="flex-1 py-3 px-2 rounded-xl font-bold text-xs bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 shadow-neu dark:shadow-neu-dark active:shadow-neu-pressed hover:text-blue-500 flex flex-col items-center gap-1"
+              className="flex-1 py-3 px-2 rounded-xl font-bold text-xs bg-white text-gray-600 shadow-neu active:shadow-neu-pressed hover:text-blue-500 flex flex-col items-center gap-1"
               title={t('visitor.google_calendar')}
             >
               <CalendarIcon size={16} /> Google
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); downloadICal(event); }}
-              className="flex-1 py-3 px-2 rounded-xl font-bold text-xs bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 shadow-neu dark:shadow-neu-dark active:shadow-neu-pressed hover:text-green-500 flex flex-col items-center gap-1"
+              className="flex-1 py-3 px-2 rounded-xl font-bold text-xs bg-white text-gray-600 shadow-neu active:shadow-neu-pressed hover:text-green-500 flex flex-col items-center gap-1"
               title={t('visitor.apple_calendar')}
             >
               <Download size={16} /> Apple/iCal
