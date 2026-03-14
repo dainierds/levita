@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { Globe, ArrowRight, Heart, User, Lock, Users, Palette, Shield, LogIn, BookOpen, Smartphone, Search, MapPin as MapPinIcon, Check } from 'lucide-react';
+import { Globe, ArrowRight, Heart, User, Lock, Users, Palette, Shield, LogIn, BookOpen, Smartphone, Search, MapPin as MapPinIcon, Check, Building2, RefreshCw } from 'lucide-react';
 import VisitorApp from './visitor-app/App';
 import MemberLoginModal from '../components/MemberLoginModal';
 import { useEvents } from '../hooks/useEvents';
@@ -212,68 +212,71 @@ const VisitorLanding: React.FC = () => {
         });
 
         return (
-            <div className="min-h-screen bg-[#F7F8FA] flex flex-col p-6 items-center justify-center">
-                <div className="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl p-8 flex flex-col h-[600px] animate-in fade-in zoom-in duration-300">
+            <div className="min-h-screen bg-slate-950 flex flex-col p-6 items-center justify-center">
+                <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl p-8 flex flex-col h-[600px] animate-in fade-in zoom-in duration-300">
                     <div className="text-center mb-8">
-                        <h1 className="text-2xl font-black text-slate-900 mb-2">Selecciona tu Iglesia</h1>
-                        <p className="text-slate-500 text-sm">Busca y elige la congregación que deseas visitar hoy</p>
+                        <div className="w-16 h-16 bg-indigo-600/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-indigo-500/30">
+                            <Building2 size={32} />
+                        </div>
+                        <h1 className="text-2xl font-black text-white mb-2">Selecciona tu Iglesia</h1>
+                        <p className="text-slate-400 text-sm">Busca y elige la congregación que deseas visitar hoy</p>
                     </div>
 
                     <div className="relative mb-6">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
                         <input
                             type="text"
                             placeholder="Buscar por nombre o ubicación..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-slate-700 font-medium outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                            className="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-slate-200 font-medium outline-none focus:border-indigo-500/50 focus:bg-slate-900 transition-all placeholder:text-slate-600"
                         />
                     </div>
 
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-slate-800">
                         {filteredChurches.map((church) => (
                             <button
                                 key={church.id}
                                 onClick={() => handleChurchSelect(church)}
-                                className="w-full group bg-white border-2 border-slate-50 p-5 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 transition-all text-left flex items-center justify-between"
+                                className="w-full group bg-slate-950/50 border-2 border-slate-800/50 p-5 rounded-2xl hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all text-left flex items-center justify-between"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-500 font-black text-xl">
+                                    <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-slate-300 font-black text-xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
                                         {(church.settings?.churchName || church.name || 'I')[0]}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-800 group-hover:text-indigo-900 transition-colors">
+                                        <h3 className="font-bold text-slate-200 group-hover:text-white transition-colors">
                                             {church.settings?.churchName || church.name || 'Iglesia Sin Nombre'}
                                         </h3>
                                         {church.settings?.address && (
-                                            <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
+                                            <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
                                                 <MapPinIcon size={12} />
                                                 <span className="truncate max-w-[200px]">{church.settings.address}</span>
                                             </div>
                                         )}
                                     </div>
                                 </div>
-                                <ArrowRight className="text-slate-200 group-hover:text-indigo-500 transition-transform group-hover:translate-x-1" size={20} />
+                                <ArrowRight className="text-slate-600 group-hover:text-indigo-400 transition-transform group-hover:translate-x-1" size={20} />
                             </button>
                         ))}
 
                         {filteredChurches.length === 0 && (
-                            <div className="text-center py-12 text-slate-400">
+                            <div className="text-center py-12 text-slate-500">
                                 <Search size={48} className="mx-auto mb-4 opacity-20" />
                                 <p>No encontramos ninguna iglesia con ese nombre.</p>
                             </div>
                         )}
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
+                    <div className="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between">
                         <button
                             onClick={() => setIsSavingDefault(!isSavingDefault)}
                             className="flex items-center gap-3 group"
                         >
-                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isSavingDefault ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-200' : 'border-slate-200 group-hover:border-slate-300'}`}>
+                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isSavingDefault ? 'bg-indigo-500 border-indigo-500 shadow-lg shadow-indigo-900/50' : 'border-slate-700 group-hover:border-slate-600'}`}>
                                 {isSavingDefault && <Check size={14} className="text-white" />}
                             </div>
-                            <span className={`text-sm font-bold transition-all ${isSavingDefault ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-500'}`}>
+                            <span className={`text-sm font-bold transition-all ${isSavingDefault ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-400'}`}>
                                 Recordar mi iglesia siempre
                             </span>
                         </button>
@@ -285,14 +288,14 @@ const VisitorLanding: React.FC = () => {
 
     if (step === 'language') {
         return (
-            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
-                <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+                <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
                     <div className="text-center mb-10">
-                        <div className="w-20 h-20 rounded-full overflow-hidden shadow-sm mx-auto mb-6">
+                        <div className="w-20 h-20 rounded-full overflow-hidden shadow-sm mx-auto mb-6 border-2 border-indigo-500/30">
                             <img src="/levita-logo-new.jpg" alt="Levita Logo" className="w-full h-full object-cover" />
                         </div>
-                        <h1 className="text-2xl font-black text-slate-900 mb-2">LEVITA</h1>
-                        <p className="text-slate-500">Church Operating System</p>
+                        <h1 className="text-2xl font-black text-white mb-2">LEVITA</h1>
+                        <p className="text-slate-400">Church Operating System</p>
                     </div>
 
                     <div className="space-y-4">
@@ -300,15 +303,15 @@ const VisitorLanding: React.FC = () => {
                             <button
                                 key={lang.code}
                                 onClick={() => handleLanguageSelect(lang.code)}
-                                className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200 text-left"
+                                className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-800 hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all duration-200 text-left"
                             >
                                 <img
                                     src={lang.flagUrl}
                                     alt={lang.label}
-                                    className="w-8 h-6 object-cover rounded shadow-sm"
+                                    className="w-8 h-6 object-cover rounded shadow-sm opacity-80 group-hover:opacity-100 transition-opacity"
                                 />
-                                <span className="text-lg font-bold text-slate-700 group-hover:text-indigo-900">{lang.label}</span>
-                                <div className="absolute right-4 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-lg font-bold text-slate-300 group-hover:text-white">{lang.label}</span>
+                                <div className="absolute right-4 text-indigo-400 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1">
                                     <ArrowRight size={20} />
                                 </div>
                             </button>
@@ -322,58 +325,54 @@ const VisitorLanding: React.FC = () => {
 
     if (step === 'role_selection') {
         return (
-            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
-                <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+                <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
                     <div className="text-center mb-10">
-                        <h1 className="text-2xl font-black text-slate-900 mb-2">{t('visitor.who_are_you') || "¿Quién eres?"}</h1>
-                        <p className="text-slate-500">{t('visitor.select_profile') || "Selecciona tu perfil"}</p>
+                        <h1 className="text-2xl font-black text-white mb-2">{t('visitor.who_are_you') || "¿Quién eres?"}</h1>
+                        <p className="text-slate-400">{t('visitor.select_profile') || "Selecciona tu perfil"}</p>
                     </div>
 
                     <div className="space-y-4">
                         <button
                             onClick={() => setStep('app')}
-                            className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-pink-500 hover:bg-pink-50 transition-all duration-200 text-left"
+                            className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-800 hover:border-pink-500/50 hover:bg-pink-500/10 transition-all duration-200 text-left"
                         >
-                            <div className="w-12 h-12 bg-pink-100 text-pink-500 rounded-xl flex items-center justify-center">
+                            <div className="w-12 h-12 bg-pink-500/20 text-pink-400 rounded-xl flex items-center justify-center group-hover:bg-pink-500 group-hover:text-white transition-all">
                                 <Heart size={24} />
                             </div>
-                            <span className="text-lg font-bold text-slate-700 group-hover:text-pink-900">{t('role.visitor') || "Soy Visitante"}</span>
-                            <div className="absolute right-4 text-pink-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-lg font-bold text-slate-300 group-hover:text-white">{t('role.visitor') || "Soy Visitante"}</span>
+                            <div className="absolute right-4 text-pink-400 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1">
                                 <ArrowRight size={20} />
                             </div>
                         </button>
 
                         <button
                             onClick={() => setShowMemberLogin(true)}
-                            className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200 text-left"
+                            className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all duration-200 text-left"
                         >
-                            <div className="w-12 h-12 bg-indigo-100 text-indigo-500 rounded-xl flex items-center justify-center">
+                            <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all">
                                 <Users size={24} />
                             </div>
-                            <span className="text-lg font-bold text-slate-700 group-hover:text-indigo-900">{t('role.member') || "Soy Miembro"}</span>
-                            <div className="absolute right-4 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <ArrowRight size={20} />
-                            </div>
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); setStep('ministry_selection'); }}
-                            className="w-full group relative flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-slate-500 hover:bg-slate-50 transition-all duration-200 text-left"
-                        >
-                            <div className="w-12 h-12 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center">
-                                <Shield size={24} />
-                            </div>
-                            <span className="text-lg font-bold text-slate-700 group-hover:text-slate-900">{t('visitor.leaders_ministries') || "Líderes y Ministerios"}</span>
-                            <div className="absolute right-4 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-lg font-bold text-slate-300 group-hover:text-white">{t('role.member') || "Soy Miembro"}</span>
+                            <div className="absolute right-4 text-indigo-400 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1">
                                 <ArrowRight size={20} />
                             </div>
                         </button>
                     </div>
 
+                    <div className="mt-10 pt-6 border-t border-slate-800 text-center">
+                        <p className="text-slate-500 text-xs mb-4">Acceso a departamentos de liderazgo</p>
+                        <button
+                            onClick={() => setStep('ministry_selection')}
+                            className="text-slate-400 hover:text-indigo-400 font-bold transition-colors flex items-center gap-2 mx-auto"
+                        >
+                            <Shield size={16} /> {t('visitor.leaders_ministries') || "Líderes y Ministerios"}
+                        </button>
+                    </div>
+
                     <button
                         onClick={() => setStep('language')}
-                        className="w-full mt-8 text-center text-sm font-bold text-slate-300 hover:text-indigo-500 transition-colors"
+                        className="w-full mt-8 text-center text-sm font-bold text-slate-500 hover:text-indigo-500 transition-colors"
                     >
                         {t('common.back') || "Volver"}
                     </button>
@@ -385,15 +384,15 @@ const VisitorLanding: React.FC = () => {
 
     if (step === 'ministry_selection') {
         return (
-            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
-                <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
-                    <button onClick={() => setStep('role_selection')} className="mb-8 text-slate-400 hover:text-slate-600 font-bold flex items-center gap-2">
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+                <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
+                    <button onClick={() => setStep('role_selection')} className="mb-8 text-slate-500 hover:text-indigo-400 font-bold flex items-center gap-2 transition-colors">
                         ← {t('common.back') || "Volver"}
                     </button>
 
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-black text-slate-800 mb-4">{t('visitor.select_department') || "Selecciona tu Departamento"}</h2>
-                        <p className="text-lg text-slate-500">{t('visitor.select_area_hint') || "¿A qué área deseas ingresar?"}</p>
+                        <h2 className="text-3xl font-black text-white mb-4">{t('visitor.select_department') || "Selecciona tu Departamento"}</h2>
+                        <p className="text-lg text-slate-400">{t('visitor.select_area_hint') || "¿A qué área deseas ingresar?"}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -401,14 +400,14 @@ const VisitorLanding: React.FC = () => {
                         <button
                             type="button"
                             onClick={(e) => { e.preventDefault(); navigate('/musica'); }}
-                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-pink-200 transition-all flex items-center gap-6"
+                            className="group bg-slate-950/50 p-6 rounded-[2rem] border-2 border-slate-800 hover:border-pink-500/50 hover:bg-slate-800/50 transition-all flex items-center gap-6"
                         >
-                            <div className="w-16 h-16 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-600 group-hover:scale-110 transition-transform">
+                            <div className="w-16 h-16 bg-pink-500/20 rounded-2xl flex items-center justify-center text-pink-400 group-hover:bg-pink-500 group-hover:text-white group-hover:scale-110 transition-all">
                                 <span className="text-2xl">🎵</span>
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">{t('role.music') || "Alabanza"}</h3>
-                                <p className="text-sm text-slate-400">{t('visitor.music_desc') || "Acceso a la App de Música"}</p>
+                                <h3 className="text-xl font-bold text-slate-200 group-hover:text-white transition-colors">{t('role.music') || "Alabanza"}</h3>
+                                <p className="text-sm text-slate-500">{t('visitor.music_desc') || "Acceso a la App de Música"}</p>
                             </div>
                         </button>
 
@@ -416,14 +415,14 @@ const VisitorLanding: React.FC = () => {
                         <button
                             type="button"
                             onClick={(e) => { e.preventDefault(); handleMinistrySelect('Anciano', 'anciano@levita.com'); }}
-                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-blue-200 transition-all flex items-center gap-6"
+                            className="group bg-slate-950/50 p-6 rounded-[2rem] border-2 border-slate-800 hover:border-blue-500/50 hover:bg-slate-800/50 transition-all flex items-center gap-6"
                         >
-                            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                            <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400 group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 transition-all">
                                 <span className="text-2xl">👴</span>
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">{t('role.elder') || "Ancianos"}</h3>
-                                <p className="text-sm text-slate-400">{t('visitor.elder_desc') || "Cuidado Pastoral y Miembros"}</p>
+                                <h3 className="text-xl font-bold text-slate-200 group-hover:text-white transition-colors">{t('role.elder') || "Ancianos"}</h3>
+                                <p className="text-sm text-slate-500">{t('visitor.elder_desc') || "Cuidado Pastoral y Miembros"}</p>
                             </div>
                         </button>
 
@@ -431,14 +430,14 @@ const VisitorLanding: React.FC = () => {
                         <button
                             type="button"
                             onClick={(e) => { e.preventDefault(); handleMinistrySelect('Audio', 'luis@levita.com'); }}
-                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-amber-200 transition-all flex items-center gap-6"
+                            className="group bg-slate-950/50 p-6 rounded-[2rem] border-2 border-slate-800 hover:border-amber-500/50 hover:bg-slate-800/50 transition-all flex items-center gap-6"
                         >
-                            <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+                            <div className="w-16 h-16 bg-amber-500/20 rounded-2xl flex items-center justify-center text-amber-400 group-hover:bg-amber-500 group-hover:text-white group-hover:scale-110 transition-all">
                                 <span className="text-2xl">🎧</span>
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">{t('role.audio') || "Audio / Multimedia"}</h3>
-                                <p className="text-sm text-slate-400">{t('visitor.audio_desc') || "Control de Pantalla y Sonido"}</p>
+                                <h3 className="text-xl font-bold text-slate-200 group-hover:text-white transition-colors">{t('role.audio') || "Audio / Multimedia"}</h3>
+                                <p className="text-sm text-slate-500">{t('visitor.audio_desc') || "Control de Pantalla y Sonido"}</p>
                             </div>
                         </button>
 
@@ -446,14 +445,14 @@ const VisitorLanding: React.FC = () => {
                         <button
                             type="button"
                             onClick={(e) => { e.preventDefault(); handleMinistrySelect('Junta de Iglesia', 'junta@levita.com'); }}
-                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-indigo-200 transition-all flex items-center gap-6"
+                            className="group bg-slate-950/50 p-6 rounded-[2rem] border-2 border-slate-800 hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all flex items-center gap-6"
                         >
-                            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
+                            <div className="w-16 h-16 bg-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-110 transition-all">
                                 <Users size={32} />
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">{t('role.board') || "Junta de Iglesia"}</h3>
-                                <p className="text-sm text-slate-400">{t('visitor.board_desc') || "Acceso a Panel y Reportes"}</p>
+                                <h3 className="text-xl font-bold text-slate-200 group-hover:text-white transition-colors">{t('role.board') || "Junta de Iglesia"}</h3>
+                                <p className="text-sm text-slate-500">{t('visitor.board_desc') || "Acceso a Panel y Reportes"}</p>
                             </div>
                         </button>
 
@@ -461,14 +460,14 @@ const VisitorLanding: React.FC = () => {
                         <button
                             type="button"
                             onClick={(e) => { e.preventDefault(); handleMinistrySelect('Líderes', 'lider@levita.com'); }}
-                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-emerald-200 transition-all flex items-center gap-6"
+                            className="group bg-slate-950/50 p-6 rounded-[2rem] border-2 border-slate-800 hover:border-emerald-500/50 hover:bg-slate-800/50 transition-all flex items-center gap-6"
                         >
-                            <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                            <div className="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 transition-all">
                                 <BookOpen size={32} />
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">{t('role.leaders') || "Líderes / Directores"}</h3>
-                                <p className="text-sm text-slate-400">{t('visitor.leaders_desc') || "Gestión de Turnos y Departamentos"}</p>
+                                <h3 className="text-xl font-bold text-slate-200 group-hover:text-white transition-colors">{t('role.leaders') || "Líderes / Directores"}</h3>
+                                <p className="text-sm text-slate-500">{t('visitor.leaders_desc') || "Gestión de Turnos y Departamentos"}</p>
                             </div>
                         </button>
 
@@ -476,82 +475,80 @@ const VisitorLanding: React.FC = () => {
                         <button
                             type="button"
                             onClick={(e) => { e.preventDefault(); handleMinistrySelect('Administración', 'pastor@levita.com'); }}
-                            className="group bg-white p-6 rounded-[2rem] shadow-lg hover:shadow-xl border border-transparent hover:border-slate-200 transition-all flex items-center gap-6"
+                            className="group bg-slate-950/50 p-6 rounded-[2rem] border-2 border-slate-800 hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all flex items-center gap-6"
                         >
-                            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 group-hover:scale-110 transition-transform">
+                            <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-110 transition-all">
                                 <Shield size={32} />
                             </div>
                             <div className="text-left">
-                                <h3 className="text-xl font-bold text-slate-800">{t('role.admin') || "Administración"}</h3>
-                                <p className="text-sm text-slate-400">{t('visitor.admin_desc') || "Panel General y Configuración"}</p>
+                                <h3 className="text-xl font-bold text-slate-200 group-hover:text-white transition-colors">{t('role.admin') || "Administración"}</h3>
+                                <p className="text-sm text-slate-500">{t('visitor.admin_desc') || "Panel General y Configuración"}</p>
                             </div>
                         </button>
                     </div>
-                </div >
-            </div >
+                </div>
+            </div>
         );
     }
 
     if (step === 'ministry_login') {
         return (
-            <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-6">
-                <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300 relative">
-                    <button onClick={() => setStep('ministry_selection')} className="absolute top-8 left-8 text-slate-300 hover:text-slate-500">
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+                <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300 relative">
+                    <button onClick={() => setStep('ministry_selection')} className="absolute top-8 left-8 text-slate-500 hover:text-white transition-colors">
                         ←
                     </button>
 
-                    <div className="text-center mb-8 mt-4">
-                        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 mx-auto mb-6">
-                            <LogIn size={32} />
+                    <div className="text-center mb-10 pt-4">
+                        <div className="w-20 h-20 bg-indigo-600/20 text-indigo-400 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border border-indigo-500/30">
+                            <LogIn size={40} />
                         </div>
-                        <h2 className="text-2xl font-bold text-slate-800">{t('common.login') || "Login"}</h2>
-                        <p className="text-slate-400 text-sm mt-2">
-                            {t('visitor.access_to') || "Acceso a"} {ministryContext || 'Líderes'}
-                        </p>
+                        <h2 className="text-2xl font-black text-white mb-2">{t('common.login') || "Login"}</h2>
+                        <p className="text-slate-400 text-sm">{t('visitor.access_to') || "Acceso a"} {ministryContext || 'Líderes'}</p>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-4">
-                        {loginError && (
-                            <div className="p-3 bg-red-50/50 border border-red-100 rounded-xl text-red-500 text-xs text-center font-bold">
-                                {loginError}
-                            </div>
-                        )}
-
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('common.email') || "Email"}</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1">Email</label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 outline-none focus:border-indigo-500 focus:bg-white transition-all"
-                                placeholder="usuario@levita.com"
+                                className="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl py-4 px-6 text-white outline-none focus:border-indigo-500 transition-all placeholder:text-slate-700"
+                                placeholder="tu@email.com"
                                 required
                             />
                         </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{t('common.password') || "Contraseña"}</label>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1">{t('common.password') || "Contraseña"}</label>
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                                className="w-full bg-slate-950 border-2 border-slate-800 rounded-2xl py-4 px-6 text-white outline-none focus:border-indigo-500 transition-all placeholder:text-slate-700"
                                 placeholder="••••••••"
                                 required
                             />
                         </div>
 
+                        {loginError && (
+                            <p className="text-red-400 text-sm text-center font-bold animate-pulse">
+                                {loginError}
+                            </p>
+                        )}
+
                         <button
-                            type="button"
-                            onClick={(e) => handleLogin(e)}
+                            type="submit"
                             disabled={loginLoading}
-                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-900/20 transition-all mt-4 disabled:opacity-50 flex justify-center"
+                            className="w-full mt-4 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-2xl font-black shadow-lg shadow-indigo-900/50 transition-all flex items-center justify-center gap-2"
                         >
-                            {loginLoading ? <span className="animate-spin">⏳</span> : (t('common.login') || 'Entrar')}
+                            {loginLoading ? <RefreshCw className="animate-spin" size={20} /> : <>{t('common.login') || 'Entrar'} <ArrowRight size={20} /></>}
                         </button>
                     </form>
 
-                    <div className="mt-8 pt-6 border-t border-slate-50">
-                        <p className="text-xs text-center text-slate-400">
+                    <div className="mt-8 pt-6 border-t border-slate-800">
+                        <p className="text-xs text-center text-slate-600">
                             Levita Church OS
                         </p>
                     </div>
