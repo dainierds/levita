@@ -51,6 +51,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
     const [originalFileName, setOriginalFileName] = useState('');
+    const [originalFile, setOriginalFile] = useState<File | null>(null);
     const [isCropping, setIsCropping] = useState(false);
 
     // View Mode State
@@ -72,6 +73,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
         placeName: '',
         address: '',
         imageUrl: '',
+        originalImageUrl: '',
         storyStyle: 'poster'
     });
 
@@ -92,7 +94,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
             const fields = [
                 'title', 'description', 'date', 'endDate', 'time', 'type',
                 'location', 'activeInBanner', 'bannerGradient', 'targetAudience',
-                'placeName', 'address', 'imageUrl', 'storyStyle', 'tenantId'
+                'placeName', 'address', 'imageUrl', 'originalImageUrl', 'storyStyle', 'tenantId'
             ];
 
             fields.forEach(f => {
@@ -125,7 +127,9 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                 bannerGradient: 'from-purple-500 to-pink-500',
                 targetAudience: 'PUBLIC',
                 placeName: '',
-                address: ''
+                address: '',
+                imageUrl: '',
+                originalImageUrl: ''
             });
             setSelectedEmoji('📅');
         } catch (error) {
@@ -246,6 +250,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
         const file = e.target.files?.[0];
         if (!file) return;
 
+        setOriginalFile(file);
         setOriginalFileName(file.name);
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -271,20 +276,35 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
             };
 
             let uploadFile: File | Blob = croppedImageBlob;
+            let uploadOriginalFile: File | Blob | null = originalFile;
+
             try {
                 const compressedFile = await imageCompression(new File([croppedImageBlob], originalFileName || 'cropped.jpg', { type: 'image/jpeg' }), options);
                 uploadFile = compressedFile;
+                
+                if (originalFile) {
+                    const compressedOriginal = await imageCompression(originalFile, options);
+                    uploadOriginalFile = compressedOriginal;
+                }
             } catch (err) {
                 console.warn("Compression failed, using original.", err);
             }
 
-            const storageRef = ref(storage, `events/images/${Date.now()}_${originalFileName || 'cropped.jpg'}`);
+            const storageRef = ref(storage, `events/images/${Date.now()}_story_${originalFileName || 'cropped.jpg'}`);
             await uploadBytes(storageRef, uploadFile);
             const url = await getDownloadURL(storageRef);
             
-            setNewEvent(prev => ({ ...prev, imageUrl: url }));
+            let originalUrl = url;
+            if (uploadOriginalFile) {
+                 const origStorageRef = ref(storage, `events/images/${Date.now()}_original_${originalFileName || 'orig.jpg'}`);
+                 await uploadBytes(origStorageRef, uploadOriginalFile);
+                 originalUrl = await getDownloadURL(origStorageRef);
+            }
+            
+            setNewEvent(prev => ({ ...prev, imageUrl: url, originalImageUrl: originalUrl }));
             setIsCropping(false);
             setCropImageSrc(null);
+            setOriginalFile(null);
         } catch (error) {
             console.error("Error uploading image:", error);
             alert(t('events.error_upload_image') || "Error al subir la imagen");
@@ -336,6 +356,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
             placeName: ev.placeName || '',
             address: ev.address || '',
             imageUrl: ev.imageUrl || '',
+            originalImageUrl: ev.originalImageUrl || '',
             storyStyle: ev.storyStyle || 'poster'
         });
         setShowModal(true);
@@ -667,7 +688,7 @@ const EventsAdmin: React.FC<EventsAdminProps> = ({ events, tier, role = 'ADMIN' 
                                         <div className="flex-1">
                                             <p className="text-[10px] text-slate-400 mb-2">{t('events.recommended_size') || "Recomendado: 1080x1920px (9:16)"}</p>
                                             {newEvent.imageUrl && (
-                                                <button onClick={() => setNewEvent(prev => ({ ...prev, imageUrl: '' }))} className="text-red-500 text-xs font-bold hover:underline">{t('events.remove_image') || "Eliminar Imagen"}</button>
+                                                <button onClick={() => setNewEvent(prev => ({ ...prev, imageUrl: '', originalImageUrl: '' }))} className="text-red-500 text-xs font-bold hover:underline">{t('events.remove_image') || "Eliminar Imagen"}</button>
                                             )}
                                         </div>
                                     </div>

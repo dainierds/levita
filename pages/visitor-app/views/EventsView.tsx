@@ -137,7 +137,7 @@ END:VCALENDAR`;
             {/* Header Image (Clear) */}
             <div className="relative h-64 w-full">
               <img
-                src={event.imageUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${event.id}`}
+                src={event.originalImageUrl || event.imageUrl || `https://api.dicebear.com/9.x/shapes/svg?seed=${event.id}`}
                 className="w-full h-full object-cover"
                 alt={event.title}
               />
