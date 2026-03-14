@@ -39,7 +39,7 @@ const QuickActionsGrid = () => {
   );
 };
 
-const EventStoryCard = ({ event, index }: { event: ChurchEvent, index: number }) => {
+const EventStoryCard: React.FC<{ event: ChurchEvent, index: number }> = ({ event, index }) => {
   const colors = ["bg-indigo-600", "bg-pink-600", "bg-orange-500", "bg-emerald-500", "bg-purple-600", "bg-blue-600"];
   const color = colors[index % colors.length];
 

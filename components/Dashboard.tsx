@@ -52,6 +52,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
         dateObj: dateObj,
         time: p.startTime, // Plan has explicit time
         preacher: p.team.preacher,
+        team: p.team,
         type: 'PLAN'
       };
     });
@@ -117,6 +118,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
         dateObj: dateObj,
         time: recTime,
         preacher: t.members.preacher,
+        team: t.members,
         type: 'TEAM'
       };
     })
@@ -136,14 +138,32 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
   const activeTeamId = settings?.activeTeamId;
   const globalActiveTeam = settings?.teams?.find(t => t.id === activeTeamId);
 
-  const displayTeam = globalActiveTeam ? {
-    teamName: globalActiveTeam.name,
-    preacher: globalActiveTeam.members.preacher,
-    musicDirector: globalActiveTeam.members.musicDirector || (globalActiveTeam.members as any).worshipLeader,
-    audioOperator: globalActiveTeam.members.audioOperator,
-    elder: globalActiveTeam.members.elder,
-    sabbathSchoolTeacher: globalActiveTeam.members.sabbathSchoolTeacher
-  } : (activePlan?.team || null);
+  let currentDisplayTeam = null;
+
+  if (globalActiveTeam) {
+    currentDisplayTeam = {
+      teamName: globalActiveTeam.name,
+      preacher: globalActiveTeam.members.preacher,
+      musicDirector: globalActiveTeam.members.musicDirector || (globalActiveTeam.members as any).worshipLeader,
+      audioOperator: globalActiveTeam.members.audioOperator,
+      elder: globalActiveTeam.members.elder,
+      sabbathSchoolTeacher: globalActiveTeam.members.sabbathSchoolTeacher
+    };
+  } else {
+    // If active plan is today or future, use its team. Otherwise, prefer resolvedNextItem.
+    if (activePlan) {
+      const planDate = new Date(activePlan.date + 'T00:00:00');
+      if (planDate >= today) {
+        currentDisplayTeam = activePlan.team;
+      } else {
+        currentDisplayTeam = resolvedNextItem?.team || activePlan.team;
+      }
+    } else {
+      currentDisplayTeam = resolvedNextItem?.team || null;
+    }
+  }
+
+  const displayTeam = currentDisplayTeam;
 
 
   const [musicTeamMembers, setMusicTeamMembers] = useState<UserType[]>([]);
