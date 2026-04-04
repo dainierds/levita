@@ -40,18 +40,23 @@ const TranslationMaster: React.FC = () => {
         if (!user?.tenantId) return;
 
         const docRef = doc(db, 'tenants', user.tenantId, 'live', 'translation_status');
-        const unsubscribe = onSnapshot(docRef, (doc) => {
-            if (doc.exists()) {
-                const data = doc.data();
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                
+                // Check heartbeat (timeout after 15 seconds)
+                const isHeartbeatAlive = data.lastHeartbeat ? (Date.now() - data.lastHeartbeat) < 15000 : true;
+                const effectivelyActive = data.isActive && isHeartbeatAlive;
+
                 setRemoteStatus({
-                    isActive: data.isActive,
+                    isActive: effectivelyActive,
                     operatorId: data.operatorId,
                     operatorName: data.operatorName
                 });
 
-                // If remote says INACTIVE but we are LOCAL ACTIVE -> stop
+                // If remote says INACTIVE (or timed out) but we are LOCAL ACTIVE -> stop
                 // This handles "Force Reset" from another admin
-                if (!data.isActive && isActive) {
+                if (!effectivelyActive && isActive && data.operatorId !== user?.id) {
                     setIsActive(false);
                 }
             } else {
@@ -61,7 +66,7 @@ const TranslationMaster: React.FC = () => {
         });
 
         return () => unsubscribe();
-    }, [user?.tenantId, isActive]);
+    }, [user?.tenantId, isActive, user?.id]);
 
 
     // 1. Initial Device Enumeration (and permission request if needed)
@@ -284,7 +289,44 @@ const TranslationMaster: React.FC = () => {
         return () => {
             cleanupAudio();
         };
-    }, [isActive, inputDevice, retryCount]);
+    }, [isActive, inputDevice, retryCount, user?.id, user?.tenantId, user?.name]);
+
+    // Handle Unmount and Tab Close explicitly to release the lock
+    useEffect(() => {
+        const releaseLock = () => {
+            if (isActive && user?.tenantId) {
+                const docRef = doc(db, 'tenants', user.tenantId, 'live', 'translation_status');
+                // Synchronous/Fire-and-forget release
+                setDoc(docRef, { isActive: false, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+            }
+        };
+
+        window.addEventListener('beforeunload', releaseLock);
+        return () => {
+            window.removeEventListener('beforeunload', releaseLock);
+            releaseLock(); // Also run on component unmount
+        };
+    }, [isActive, user?.tenantId]);
+
+    // Send Heartbeat while Active
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isActive && user?.tenantId) {
+            const docRef = doc(db, 'tenants', user.tenantId, 'live', 'translation_status');
+            
+            // Initial heartbeat
+            setDoc(docRef, { lastHeartbeat: Date.now() }, { merge: true }).catch(() => {});
+
+            // Heartbeat every 5 seconds
+            interval = setInterval(() => {
+                setDoc(docRef, { lastHeartbeat: Date.now() }, { merge: true }).catch(() => {});
+            }, 5000);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isActive, user?.tenantId]);
 
     const cleanupAudio = () => {
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
