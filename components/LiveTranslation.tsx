@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Volume2, Globe, Radio, Headphones } from 'lucide-react';
+import { Mic, MicOff, Volume2, Globe, Radio, Headphones, Maximize, Minimize } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translateText } from '../services/geminiService';
 import { db } from '../services/firebase';
@@ -28,6 +28,7 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
   const [targetLang, setTargetLang] = useState(initialLanguage);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Previous text to avoid re-translating same content
   const lastTranslatedTextRef = useRef('');
@@ -270,47 +271,54 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
         </div>
 
         {/* Translation Area (Teleprompter) */}
-        <div className="p-6 bg-indigo-50 rounded-3xl h-[400px] relative border border-indigo-100 transition-all flex flex-col">
-          <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-            <span className="text-[10px] font-bold uppercase text-indigo-400">
+        <div className={`transition-all ${
+          isFullscreen 
+            ? 'fixed inset-0 z-[9999] bg-black flex flex-col' 
+            : 'bg-black rounded-[2rem] h-[400px] relative border border-slate-800 flex flex-col overflow-hidden shadow-2xl'
+        }`}>
+          <div className={`absolute left-0 right-0 flex justify-between items-center z-50 ${isFullscreen ? 'p-8 top-0' : 'p-6 top-0'}`}>
+            <span className="text-[10px] font-black uppercase text-white/30 tracking-widest bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-md">
               {targetLang === 'es' ? t('visitor.live_translation') : `${t('member.translation')} (${LANGUAGES.find(l => l.code === targetLang)?.label})`}
             </span>
+            <button 
+              onClick={() => setIsFullscreen(!isFullscreen)} 
+              className="text-white/50 hover:text-white p-2.5 bg-white/5 hover:bg-white/10 rounded-full backdrop-blur-md transition-all"
+            >
+              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            </button>
           </div>
 
-          <div
-            ref={scrollRef}
-            className="flex-1 overflow-y-auto w-full flex flex-col items-center justify-end space-y-6 no-scrollbar mt-8 mask-fade-top pb-10"
-          >
-            <AnimatePresence mode="popLayout">
-              {/* History Segments */}
-              {segments.map((seg, i) => {
-                const isLatest = i === segments.length - 1;
-                return (
-                  <motion.p
-                    key={seg.timestamp || i}
-                    layout
-                    initial={isLatest ? { opacity: 0, y: 30, scale: 0.9 } : { opacity: 0, y: 20 }}
-                    animate={isLatest 
-                      ? { opacity: 1, y: 0, scale: 1 } 
-                      : { opacity: 0.5, y: 0, scale: 0.9 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 30 }}
-                    className={`w-full text-center ${isLatest 
-                      ? 'text-2xl md:text-3xl font-black text-indigo-900 leading-tight drop-shadow-md' 
-                      : 'text-xl md:text-2xl font-bold text-indigo-900/50'}`}
-                  >
-                    {targetLang === 'es'
-                      ? seg.original
-                      : (seg.translation || <span className="opacity-0">...</span>)}
-                  </motion.p>
-                );
-              })}
-            </AnimatePresence>
-
-            {segments.length === 0 && (
-              <div className="w-full flex items-center justify-center text-indigo-300 italic h-full">
-                {isActive ? t('visitor.waiting_signal') : t('visitor.press_to_start')}
+          {/* Focus Focus Area - matching ProjectionView exactly */}
+          <div className="relative w-full h-full flex items-center justify-center p-6 md:p-12 bg-blue-900/10 overflow-hidden rounded-[inherit]">
+            <div className="absolute inset-0 flex flex-col items-center justify-center opacity-20 blur-md pointer-events-none px-4">
+              {segments.slice(-2).map((seg, i) => (
+                <p key={seg.timestamp || i} className={`${isFullscreen ? 'text-4xl md:text-6xl mb-6' : 'text-2xl md:text-3xl mb-4'} font-bold text-white text-center`}>
+                   {targetLang === 'es' ? seg.original : (seg.translation || '...')}
+                </p>
+              ))}
+            </div>
+            
+            {!isActive && segments.length === 0 ? (
+              <div className="text-white/30 italic z-10 text-center font-medium">
+                {t('visitor.press_to_start')}
               </div>
+            ) : isActive && !translation ? (
+              <div className="text-white/30 italic z-10 text-center font-medium animate-pulse">
+                {t('visitor.waiting_signal')}
+              </div>
+            ) : (
+              <AnimatePresence mode="wait">
+                <motion.div
+                    key={translation}
+                    initial={{ opacity: 0, scale: 0.8, filter: 'blur(10px)' }}
+                    animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, scale: 1.1, filter: 'blur(5px)' }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className={`z-10 ${isFullscreen ? 'text-5xl md:text-7xl lg:text-8xl' : 'text-3xl md:text-4xl'} font-black text-white text-center drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] leading-tight px-4`}
+                >
+                    {translation || "..."}
+                </motion.div>
+              </AnimatePresence>
             )}
           </div>
         </div>
