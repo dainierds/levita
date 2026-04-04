@@ -205,14 +205,7 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
   // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
-      setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTo({
-            top: scrollRef.current.scrollHeight,
-            behavior: 'smooth'
-          });
-        }
-      }, 100);
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [segments, translation]);
 
@@ -286,38 +279,36 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
 
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto space-y-6 no-scrollbar mt-8 mask-fade-top pb-32 scroll-smooth"
+            className="flex-1 overflow-y-auto w-full flex flex-col items-center justify-end space-y-6 no-scrollbar mt-8 mask-fade-top pb-10"
           >
-            <AnimatePresence initial={false}>
+            <AnimatePresence mode="popLayout">
               {/* History Segments */}
-              {segments.map((seg, i) => (
-                <motion.div
-                  key={seg.timestamp || i}
-                  layout
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ 
-                    opacity: i === segments.length - 1 ? 1 : 0.4, 
-                    y: 0, 
-                    scale: 1 
-                  }}
-                  exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: 'hidden' }}
-                  transition={{
-                    duration: 1.2,
-                    ease: [0.25, 1, 0.5, 1] // Cinematic ease-out
-                  }}
-                  className="origin-left"
-                >
-                  <p className={`text-lg md:text-2xl font-medium leading-relaxed transition-colors duration-1000 ${i === segments.length - 1 ? 'text-indigo-900' : 'text-indigo-900/50'}`}>
+              {segments.map((seg, i) => {
+                const isLatest = i === segments.length - 1;
+                return (
+                  <motion.p
+                    key={seg.timestamp || i}
+                    layout
+                    initial={isLatest ? { opacity: 0, y: 30, scale: 0.9 } : { opacity: 0, y: 20 }}
+                    animate={isLatest 
+                      ? { opacity: 1, y: 0, scale: 1 } 
+                      : { opacity: 0.5, y: 0, scale: 0.9 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                    className={`w-full text-center ${isLatest 
+                      ? 'text-2xl md:text-3xl font-black text-indigo-900 leading-tight drop-shadow-md' 
+                      : 'text-xl md:text-2xl font-bold text-indigo-900/50'}`}
+                  >
                     {targetLang === 'es'
                       ? seg.original
                       : (seg.translation || <span className="opacity-0">...</span>)}
-                  </p>
-                </motion.div>
-              ))}
+                  </motion.p>
+                );
+              })}
             </AnimatePresence>
 
             {segments.length === 0 && (
-              <div className="h-full flex items-center justify-center text-indigo-300 italic transition-opacity duration-1000">
+              <div className="w-full flex items-center justify-center text-indigo-300 italic h-full">
                 {isActive ? t('visitor.waiting_signal') : t('visitor.press_to_start')}
               </div>
             )}
