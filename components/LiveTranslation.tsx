@@ -205,7 +205,14 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
   // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
     }
   }, [segments, translation]);
 
@@ -279,26 +286,28 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
 
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto space-y-4 no-scrollbar mt-8 mask-fade-top"
+            className="flex-1 overflow-y-auto space-y-6 no-scrollbar mt-8 mask-fade-top pb-32 scroll-smooth"
           >
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence initial={false}>
               {/* History Segments */}
               {segments.map((seg, i) => (
                 <motion.div
                   key={seg.timestamp || i}
                   layout
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: i === segments.length - 1 ? 1 : 0.7, y: 0, scale: i === segments.length - 1 ? 1 : 0.95 }}
-                  exit={{ opacity: 0, y: -20 }}
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ 
+                    opacity: i === segments.length - 1 ? 1 : 0.4, 
+                    y: 0, 
+                    scale: 1 
+                  }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: 'hidden' }}
                   transition={{
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 40,
-                    opacity: { duration: 0.2 }
+                    duration: 1.2,
+                    ease: [0.25, 1, 0.5, 1] // Cinematic ease-out
                   }}
                   className="origin-left"
                 >
-                  <p className={`text-lg md:text-xl font-bold leading-relaxed ${i === segments.length - 1 ? 'text-indigo-900' : 'text-indigo-900/80'}`}>
+                  <p className={`text-lg md:text-2xl font-medium leading-relaxed transition-colors duration-1000 ${i === segments.length - 1 ? 'text-indigo-900' : 'text-indigo-900/50'}`}>
                     {targetLang === 'es'
                       ? seg.original
                       : (seg.translation || <span className="opacity-0">...</span>)}
@@ -308,7 +317,7 @@ const LiveTranslation: React.FC<LiveTranslationProps> = ({ initialLanguage = 'en
             </AnimatePresence>
 
             {segments.length === 0 && (
-              <div className="h-full flex items-center justify-center text-indigo-300 italic">
+              <div className="h-full flex items-center justify-center text-indigo-300 italic transition-opacity duration-1000">
                 {isActive ? t('visitor.waiting_signal') : t('visitor.press_to_start')}
               </div>
             )}
