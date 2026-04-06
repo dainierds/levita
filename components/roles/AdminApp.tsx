@@ -340,7 +340,7 @@ const AdminApp: React.FC<AdminAppProps> = ({ user, settings, notifications, curr
                     )}
 
                     {currentView === 'music_dept' && (
-                        <MusicDepartment users={users} tier={currentTenantTier} role={role} />
+                        <MusicDepartment users={users} tier={currentTenantTier} role={role} settings={settings} />
                     )}
 
                     {currentView === 'sermons' && (

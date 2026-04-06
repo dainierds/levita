@@ -273,3 +273,75 @@ export const parseRoleScheduleFromDocument = async (file: File, contextYear: num
     throw error;
   }
 };
+
+export interface MusicAssignmentResult {
+  date: string;
+  mainGroup: string[];
+  specialSS: string[];
+  specialDivine: string[];
+}
+
+export const parseMusicScheduleFromDocument = async (file: File, contextYear: number, contextMonth: number): Promise<MusicAssignmentResult[]> => {
+  try {
+    const monthName = new Date(contextYear, contextMonth).toLocaleString('es-ES', { month: 'long' });
+
+    let promptContent: any[] = [];
+    const basePrompt = `
+        Analyze this document or image containing a Music Department Schedule (Alabanzas, Especiales, etc.).
+        Target Context: Year: ${contextYear}. default Month Start: ${monthName}.
+        
+        The document might be:
+        1. "Grupo de alabanza" (The main group leading worship for the day, usually multiple names).
+        2. "Alabanzas martes" (People leading worship on Tuesday, usually just 1 or 2 names).
+        3. "Especiales" (Special songs, broken down into "Escuela Sabática" and "Culto al Divino").
+        
+        Task: Extract ALL dates and assignments found in the document. For EACH date, provide an object categorizing everyone assigned for that date into arrays of names.
+        
+        Return a Strict JSON Array of objects:
+        [
+          {
+            "date": "YYYY-MM-DD", // Full date inferred from headers and days.
+            "mainGroup": ["Name 1", "Name 2"], // Extract names under Alabanzas / Grupos
+            "specialSS": ["Name 1"], // Extract names for Especial Escuela Sabática
+            "specialDivine": ["Name 1", "Name 2"] // Extract names for Especial Culto al Divino
+          }
+        ]
+        
+        Rules:
+        - If someone says "Dainier y Jennifer", split them into ["Dainier", "Jennifer"].
+        - Include both first and last names if present (e.g. "Limariz Ortiz").
+        - If a field is not present for a date in the document, leave its array empty. Example: a document for "Especiales" will likely have an empty mainGroup. A document for "Grupo de Alabanza" will have empty specials.
+        - Merge assignments for the same date if they appear in separated blocks, or group them correctly.
+        - Use context year ${contextYear}. Ignore empty days.
+        - Return ONLY JSON.
+        `;
+
+    if (file.type === 'application/pdf') {
+      const text = await extractTextFromPDF(file);
+      promptContent = [basePrompt + `\n\nDOCUMENT TEXT:\n${text}`];
+    } else if (file.type.startsWith('image/')) {
+      const imagePart = await fileToGenerativePart(file);
+      promptContent = [basePrompt, imagePart];
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') { // .docx
+      const text = await extractTextFromDocx(file);
+      promptContent = [basePrompt + `\n\nDOCUMENT TEXT:\n${text}`];
+    } else {
+      throw new Error("Unsupported file type");
+    }
+
+    const result = await model.generateContent(promptContent);
+    const response = await result.response;
+    const text = response.text();
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    console.log("Gemini Music Parse:", cleanText);
+    return JSON.parse(cleanText);
+
+  } catch (error: any) {
+    console.error("Error parsing music schedule:", error);
+    if (error.message?.includes('404') || error.status === 404) {
+      throw new Error("Error 404: API no disponible.");
+    }
+    throw error;
+  }
+};
