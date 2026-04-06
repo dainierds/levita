@@ -158,7 +158,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ settings, plans }) => {
 
                         {/* Roles Grid */}
                         <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {ROLES_CONFIG.map(roleItem => {
+                            {ROLES_CONFIG.filter(role => role.key !== 'sabbathSchoolTeacher' || currentService.date.getDay() === 6).map(roleItem => {
                                 const assignedName = currentService.plan ? (currentService.plan.team as any)[roleItem.key] : '';
 
                                 return (

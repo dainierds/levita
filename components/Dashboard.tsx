@@ -350,6 +350,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                 </div>
 
                 {/* Sabbath School Teacher */}
+                {(!currentService || currentService.date.getDay() === 6) && (
                 <div className="p-3 rounded-2xl border-2 border-emerald-100 bg-white shadow-sm flex flex-col justify-between">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center">
@@ -358,7 +359,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">{t('role.sabbathSchoolTeacher') || "Maestro de ES"}</span>
                   </div>
                   <div className="bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex items-center gap-2">
-                    {currentService.plan && (currentService.plan.team as any).sabbathSchoolTeacher ? (
+                    {currentService?.plan && (currentService.plan.team as any).sabbathSchoolTeacher ? (
                       <>
                         <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex flex-shrink-0 items-center justify-center font-black text-[10px]">
                           {(currentService.plan.team as any).sabbathSchoolTeacher.charAt(0)}
@@ -371,6 +372,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
                     )}
                   </div>
                 </div>
+                )}
 
                 {/* Preacher */}
                 <div className="p-3 rounded-2xl border-2 border-purple-100 bg-white shadow-sm flex flex-col justify-between">
