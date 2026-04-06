@@ -372,6 +372,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier, role = '
                             {serviceDays.map(date => {
                                 const dateStr = formatDateForDB(date);
                                 const todayTeam = teams.find(t => t.date === dateStr);
+                                const isSaturday = date.getDay() === 6;
                                 
                                 return (
                                     <div key={dateStr} className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow flex flex-col h-full">
@@ -404,7 +405,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier, role = '
                                             >
                                                 <h4 className="text-[10px] uppercase font-bold text-indigo-500 mb-2 px-1 flex items-center gap-1">
                                                     <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
-                                                    Especial E.S.
+                                                    {isSaturday ? 'Especial E.S.' : 'Especial 1'}
                                                 </h4>
                                                 {renderMemberChips(todayTeam?.soloist1 || [], dateStr, 'soloist1')}
                                             </div>
@@ -417,7 +418,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier, role = '
                                             >
                                                 <h4 className="text-[10px] uppercase font-bold text-purple-500 mb-2 px-1 flex items-center gap-1">
                                                     <div className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
-                                                    Especial Culto
+                                                    {isSaturday ? 'Especial Culto' : 'Especial 2'}
                                                 </h4>
                                                 {renderMemberChips(todayTeam?.soloist2 || [], dateStr, 'soloist2')}
                                             </div>
