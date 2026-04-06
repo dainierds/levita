@@ -7,7 +7,7 @@ import { useNotification } from './NotificationSystem';
 import TeamManager from './TeamManager';
 import { db } from '../services/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
-import { parsePreacherScheduleFromDocument, PreacherAssignment } from '../services/geminiService';
+import { parseRoleScheduleFromDocument, RoleAssignment } from '../services/geminiService';
 
 interface RosterViewProps {
     plans: ServicePlan[];
@@ -33,10 +33,12 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
     const [showTeamManager, setShowTeamManager] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
+    const currentRoleConfig = ROLES_CONFIG.find(r => r.key === selectedRoleTab);
+
     // AI Import Handler
-    const handleImportPreachers = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImportRoleSchedule = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+        if (!file || !currentRoleConfig) return;
 
         setIsImporting(true);
         addNotification('info', t('roster.processing') || 'Procesando...', t('roster.ai_reading') || 'La IA está leyendo el documento. Por favor espera.');
@@ -44,8 +46,9 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         try {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
+            const roleNameForAI = t(currentRoleConfig.translationKey) || currentRoleConfig.defaultLabel;
 
-            const assignments = await parsePreacherScheduleFromDocument(file, year, month);
+            const assignments = await parseRoleScheduleFromDocument(file, year, month, roleNameForAI);
 
             console.log("AI Parsed Assignments:", assignments);
 
@@ -61,7 +64,7 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
             for (const item of assignments) {
                 const [y, m, d] = item.date.split('-').map(Number);
                 const itemDate = new Date(y, m - 1, d);
-                await updateAssignment(itemDate, 'preacher', item.preacher);
+                await updateAssignment(itemDate, selectedRoleTab, item.assignee);
                 successCount++;
                 affectedDates.push(item.date);
             }
@@ -433,7 +436,6 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
         setCurrentDate(newDate);
     };
 
-    const currentRoleConfig = ROLES_CONFIG.find(r => r.key === selectedRoleTab);
     const handleBucketDrop = async (e: React.DragEvent, targetDay: string) => {
         if (!canEdit) return;
         e.preventDefault();
@@ -635,14 +637,14 @@ const RosterView: React.FC<RosterViewProps> = ({ plans, savePlan, settings, user
                             <button className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 rounded-xl border border-slate-200">
                                 {t('common.history')}
                             </button>
-                            {canEdit && selectedRoleTab === 'preacher' && (
+                            {canEdit && (selectedRoleTab === 'preacher' || selectedRoleTab === 'elder' || selectedRoleTab === 'sabbathSchoolTeacher') && (
                                 <label className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl flex items-center gap-2 cursor-pointer shadow-md transition-colors">
                                     <Sparkles size={14} /> {t('roster.import_ai') || "Importar Lista IA"}
                                     <input
                                         type="file"
                                         accept="image/*,.pdf,.docx"
                                         className="hidden"
-                                        onChange={handleImportPreachers}
+                                        onChange={handleImportRoleSchedule}
                                         disabled={isImporting}
                                     />
                                 </label>

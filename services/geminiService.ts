@@ -209,28 +209,28 @@ export const parseEventsFromDocument = async (file: File): Promise<any[]> => {
   }
 };
 
-export interface PreacherAssignment {
+export interface RoleAssignment {
   date: string; // YYYY-MM-DD
-  preacher: string;
+  assignee: string;
   notes?: string;
 }
 
-export const parsePreacherScheduleFromDocument = async (file: File, contextYear: number, contextMonth: number): Promise<PreacherAssignment[]> => {
+export const parseRoleScheduleFromDocument = async (file: File, contextYear: number, contextMonth: number, roleName: string): Promise<RoleAssignment[]> => {
   try {
     const monthName = new Date(contextYear, contextMonth).toLocaleString('es-ES', { month: 'long' });
 
     let promptContent: any[] = [];
     const basePrompt = `
-        Analyze this document or image containing a Preacher Schedule (Rol de Predicación).
+        Analyze this document or image containing a Schedule (Rol) for ${roleName}.
         Target Context: Year: ${contextYear}. default Month Start: ${monthName} (Use only if no month headers found).
         
-        Task: Extract ALL dates and assigned preachers found in the document, across ALL months present.
+        Task: Extract ALL dates and assigned people (${roleName}) found in the document, across ALL months present.
         
         Return a Strict JSON Array of objects:
         [
           {
             "date": "YYYY-MM-DD", // Full date. Infer year/month from document headers if available.
-            "preacher": "Name String",
+            "assignee": "Name String",
             "notes": "Any extra info (e.g. topic, special sabbath)"
           }
         ]
@@ -262,11 +262,11 @@ export const parsePreacherScheduleFromDocument = async (file: File, contextYear:
     const text = response.text();
     const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    console.log("Gemini Preacher Parse:", cleanText);
+    console.log(`Gemini ${roleName} Parse:`, cleanText);
     return JSON.parse(cleanText);
 
   } catch (error: any) {
-    console.error("Error parsing preacher schedule:", error);
+    console.error(`Error parsing ${roleName} schedule:`, error);
     if (error.message?.includes('404') || error.status === 404) {
       throw new Error("Error 404: API no disponible. Verifica tu configuración de Google Cloud.");
     }
