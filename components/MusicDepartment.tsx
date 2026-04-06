@@ -393,7 +393,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier, role = '
                                                 onDragOver={e => !readOnly && e.preventDefault()}
                                                 onDrop={e => handleDrop(e, dateStr, 'memberIds')}
                                             >
-                                                <h4 className="text-[10px] uppercase font-bold text-slate-500 mb-2 px-1">Grupo / Alabanza</h4>
+                                                <h4 className="text-[10px] uppercase font-bold text-slate-500 mb-2 px-1">Grupo de Alabanza</h4>
                                                 {renderMemberChips(todayTeam?.memberIds || [], dateStr, 'memberIds')}
                                             </div>
 
@@ -405,7 +405,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier, role = '
                                             >
                                                 <h4 className="text-[10px] uppercase font-bold text-indigo-500 mb-2 px-1 flex items-center gap-1">
                                                     <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
-                                                    {isSaturday ? 'Especial E.S.' : 'Especial 1'}
+                                                    Solista 1er Servicio
                                                 </h4>
                                                 {renderMemberChips(todayTeam?.soloist1 || [], dateStr, 'soloist1')}
                                             </div>
@@ -418,7 +418,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier, role = '
                                             >
                                                 <h4 className="text-[10px] uppercase font-bold text-purple-500 mb-2 px-1 flex items-center gap-1">
                                                     <div className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
-                                                    {isSaturday ? 'Especial Culto' : 'Especial 2'}
+                                                    Solista 2do Servicio
                                                 </h4>
                                                 {renderMemberChips(todayTeam?.soloist2 || [], dateStr, 'soloist2')}
                                             </div>
