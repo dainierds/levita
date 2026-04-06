@@ -73,12 +73,13 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier, role = '
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const days: Date[] = [];
         
-        // Use meetingDays if available, default to Saturday and Tuesday based on the doc upload examples
-        const daysOfWeek = settings?.meetingDays?.length ? settings.meetingDays : ['Saturday', 'Tuesday'];
+        const daysOfWeek = settings?.meetingDays?.length ? settings.meetingDays : ['Sábado', 'Martes'];
         
         const dayMap: { [key: string]: number } = {
             'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
-            'Thursday': 4, 'Friday': 5, 'Saturday': 6
+            'Thursday': 4, 'Friday': 5, 'Saturday': 6,
+            'Domingo': 0, 'Lunes': 1, 'Martes': 2, 'Miércoles': 3,
+            'Jueves': 4, 'Viernes': 5, 'Sábado': 6
         };
         const allowedDays = daysOfWeek.map((d: string) => dayMap[d]);
 
@@ -306,7 +307,7 @@ const MusicDepartment: React.FC<MusicDepartmentProps> = ({ users, tier, role = '
                 
                 {/* LEFT SIDEBAR: MEMBERS TO DRAG */}
                 <div className="lg:col-span-1 space-y-4">
-                    {!readOnly && tier === 'PREMIUM' && (
+                    {!readOnly && (
                         <button
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isProcessingAI}
