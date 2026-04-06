@@ -184,7 +184,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, role = 'ADMIN', s
         if (!snapshot.empty) {
           const data = snapshot.docs[0].data();
           const memberIds = data.memberIds as string[];
-          const members = users.filter(u => memberIds.includes(u.id));
+          const members = memberIds.map(id => {
+              const found = users.find(u => u.id === id);
+              return found || { id, name: id } as UserType;
+          });
           setMusicTeamMembers(members);
         } else {
           setMusicTeamMembers([]);
