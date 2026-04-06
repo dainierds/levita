@@ -504,9 +504,26 @@ const MusicMinistryApp: React.FC = () => {
                                                 </div>
                                             )}
 
+                                            {/* Team Members */}
+                                            {teamMembers.length > 0 && (
+                                                <div className="mb-6">
+                                                    <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Grupo de Alabanza</h5>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        {teamMembers.map((member, idx) => (
+                                                            <div key={member.id || idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl">
+                                                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0">
+                                                                    {member.name ? member.name.charAt(0) : '?'}
+                                                                </div>
+                                                                <p className="font-bold text-xs text-slate-700 truncate">{member.name}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             {/* Soloists */}
                                             {(s1Names.length > 0 || s2Names.length > 0) && (
-                                                <div className="mb-6 grid grid-cols-1 gap-3">
+                                                <div className="grid grid-cols-1 gap-3">
                                                     {s1Names.length > 0 && (
                                                         <div className="bg-indigo-50 p-3 rounded-xl flex items-center gap-3">
                                                             <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center shrink-0">
@@ -531,18 +548,6 @@ const MusicMinistryApp: React.FC = () => {
                                                     )}
                                                 </div>
                                             )}
-
-                                            {/* Team Members */}
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {teamMembers.map((member, idx) => (
-                                                    <div key={member.id || idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl">
-                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0">
-                                                            {member.name ? member.name.charAt(0) : '?'}
-                                                        </div>
-                                                        <p className="font-bold text-xs text-slate-700 truncate">{member.name}</p>
-                                                    </div>
-                                                ))}
-                                            </div>
                                         </div>
                                     );
                                 }) : (
@@ -660,8 +665,25 @@ const MusicMinistryApp: React.FC = () => {
 
 
 
+                                    {/* Member Names List */}
+                                    {teamMembers.length > 0 && (
+                                        <div className="mb-3">
+                                            <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Grupo de Alabanza</h5>
+                                            <div className="flex flex-wrap gap-2">
+                                                {teamMembers.map((member, idx) => (
+                                                    <div key={idx} className="bg-slate-50 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                                        <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                                                            {member.name.charAt(0)}
+                                                        </div>
+                                                        <span className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{member.name}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {(resolveNames(team.soloist1).length > 0 || resolveNames(team.soloist2).length > 0) && (
-                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2 mb-3">
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2">
                                             {resolveNames(team.soloist1).length > 0 && (
                                                 <div className="flex items-center gap-2">
                                                     <Mic2 size={12} className="text-indigo-500 shrink-0" />
@@ -687,18 +709,9 @@ const MusicMinistryApp: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Member Names List */}
-                                    <div className="flex flex-wrap gap-2">
-                                        {teamMembers.map((member, idx) => (
-                                            <div key={idx} className="bg-slate-50 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                                                <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">
-                                                    {member.name.charAt(0)}
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-600 truncate max-w-[120px]">{member.name}</span>
-                                            </div>
-                                        ))}
-                                        {teamMembers.length === 0 && <span className="text-xs text-slate-400 italic"> - Sin asignaciones - </span>}
-                                    </div>
+                                    {teamMembers.length === 0 && resolveNames(team.soloist1).length === 0 && resolveNames(team.soloist2).length === 0 && (
+                                        <span className="text-xs text-slate-400 italic mt-2"> - Sin asignaciones - </span>
+                                    )}
                                 </div>
                             );
                         })}
