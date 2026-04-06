@@ -287,7 +287,7 @@ const MusicMinistryApp: React.FC = () => {
 
     const resolveName = (id: string) => {
         const u = allMusicUsers.find(u => u.id === id);
-        return u ? u.name : 'Pendiente';
+        return u ? u.name : id;
     };
 
     const resolveNames = (ids: string[]) => {
@@ -482,7 +482,10 @@ const MusicMinistryApp: React.FC = () => {
                             <div className="space-y-6">
                                 {upcomingTeams.length > 0 ? upcomingTeams.map(team => {
                                     const dateInfo = formatDate(team.date);
-                                    const teamMembers = allMusicUsers.filter(u => team.memberIds.includes(u.id));
+                                    const teamMembers = team.memberIds.map(id => {
+                                        const found = allMusicUsers.find(u => u.id === id);
+                                        return found || { id, name: id };
+                                    });
                                     const s1Names = resolveNames(team.soloist1);
                                     const s2Names = resolveNames(team.soloist2);
 
@@ -644,7 +647,10 @@ const MusicMinistryApp: React.FC = () => {
                     <div className="space-y-4">
                         {calendarTeams.map((team) => {
                             const dateInfo = formatDate(team.date);
-                            const teamMembers = allMusicUsers.filter(u => team.memberIds.includes(u.id));
+                            const teamMembers = team.memberIds.map(id => {
+                                const found = allMusicUsers.find(u => u.id === id);
+                                return found || { id, name: id };
+                            });
 
                             return (
                                 <div key={team.id} className="bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-sm border border-slate-100">
