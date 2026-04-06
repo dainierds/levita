@@ -274,16 +274,7 @@ const MusicMinistryApp: React.FC = () => {
         return () => clearInterval(interval);
     }, [combinedBanners.length]);
 
-    const getGroupLabel = (count: number, service: number) => {
-        let type = '';
-        if (count === 1) type = 'Solista';
-        else if (count === 2) type = 'Dúo';
-        else if (count === 3) type = 'Trío';
-        else if (count === 4) type = 'Cuarteto';
-        else type = 'Grupo';
 
-        return `${type} ${service}er Servicio`;
-    };
 
     const resolveName = (id: string) => {
         const u = allMusicUsers.find(u => u.id === id);
@@ -522,7 +513,7 @@ const MusicMinistryApp: React.FC = () => {
                                                                 <Mic2 size={14} />
                                                             </div>
                                                             <div className="overflow-hidden">
-                                                                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">{getGroupLabel(s1Names.length, 1)}</p>
+                                                                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Solista 1er Servicio</p>
                                                                 <p className="font-bold text-indigo-900 text-sm truncate">{s1Names.join(', ')}</p>
                                                             </div>
                                                         </div>
@@ -533,7 +524,7 @@ const MusicMinistryApp: React.FC = () => {
                                                                 <Mic2 size={14} />
                                                             </div>
                                                             <div className="overflow-hidden">
-                                                                <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">{getGroupLabel(s2Names.length, 2)}</p>
+                                                                <p className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Solista 2do Servicio</p>
                                                                 <p className="font-bold text-purple-900 text-sm truncate">{s2Names.join(', ')}</p>
                                                             </div>
                                                         </div>
@@ -676,9 +667,7 @@ const MusicMinistryApp: React.FC = () => {
                                                     <Mic2 size={12} className="text-indigo-500 shrink-0" />
                                                     <p className="text-xs text-slate-700">
                                                         <span className="font-bold text-indigo-600 uppercase text-[10px] mr-2">
-                                                            Primer Servicio: {resolveNames(team.soloist1).length === 1 ? 'Solista' :
-                                                                resolveNames(team.soloist1).length === 2 ? 'Dúo' :
-                                                                    resolveNames(team.soloist1).length === 3 ? 'Trío' : 'Cuarteto'}
+                                                            Solista 1er Servicio:
                                                         </span>
                                                         {resolveNames(team.soloist1).join(', ')}
                                                     </p>
@@ -689,9 +678,7 @@ const MusicMinistryApp: React.FC = () => {
                                                     <Mic2 size={12} className="text-purple-500 shrink-0" />
                                                     <p className="text-xs text-slate-700">
                                                         <span className="font-bold text-purple-600 uppercase text-[10px] mr-2">
-                                                            Segundo Servicio: {resolveNames(team.soloist2).length === 1 ? 'Solista' :
-                                                                resolveNames(team.soloist2).length === 2 ? 'Dúo' :
-                                                                    resolveNames(team.soloist2).length === 3 ? 'Trío' : 'Cuarteto'}
+                                                            Solista 2do Servicio:
                                                         </span>
                                                         {resolveNames(team.soloist2).join(', ')}
                                                     </p>
